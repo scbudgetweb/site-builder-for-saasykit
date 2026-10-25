@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-10-25
 
 - Renamed to `scbudgetweb/site-builder-for-saasykit` (it was `scbudgetweb/saasykit-site-builder`) before the first release. It's an independent add-on, not made or endorsed by SaaSykit.
 - Documentation:

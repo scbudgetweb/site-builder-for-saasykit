@@ -1,0 +1,429 @@
+<?php
+
+namespace ScBudgetWeb\SiteBuilder\Filament\Pages;
+
+use Filament\Actions\Action;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+use Illuminate\Contracts\Support\Htmlable;
+use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
+use ScBudgetWeb\SiteBuilder\Models\Page as SitePage;
+use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
+use ScBudgetWeb\SiteBuilder\SiteBuilder;
+
+/**
+ * Admin › Website › Navigation: the header links (with dropdowns and mega menus), the mobile menu and the footer.
+ * Opens with the saved menus, or the theme's standard links when nothing is saved yet. For the people who build
+ * pages (the "update pages" permission), since they decide where pages are linked from.
+ *
+ * @property-read Schema $form
+ */
+class ManageNavigation extends Page
+{
+    protected string $view = 'site-builder::filament.pages.manage-navigation';
+
+    protected static ?int $navigationSort = 3;
+
+    protected static ?string $slug = 'navigation';
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    public ?array $data = [];
+
+    /**
+     * Every page (drafts too, so a menu can be prepared before publishing), as id => [title, isPublished].
+     *
+     * @var array<int, array{title: string, isPublished: bool}>|null
+     */
+    private ?array $pages = null;
+
+    public static function getNavigationGroup(): ?string
+    {
+        return app(SiteBuilder::class)->navigationGroup();
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('Navigation');
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return __('Navigation');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return __('The links in the website header and footer. Add your own pages, built-in pages or any web address.');
+    }
+
+    public static function canAccess(): bool
+    {
+        $permission = config('site-builder.permissions.pages.update');
+
+        return is_string($permission) && (bool) auth()->user()?->can($permission);
+    }
+
+    public function mount(NavigationMenus $menus): void
+    {
+        $this->fillForm($menus);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('resetToDefault')
+                ->label(__('Reset to default'))
+                ->icon(Heroicon::OutlinedArrowUturnLeft)
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalHeading(__('Reset the menus?'))
+                ->modalDescription(__('This puts back the standard header and footer links and mobile menu settings. Your changes to the menus will be lost.'))
+                ->modalSubmitActionLabel(__('Reset'))
+                ->action(function (NavigationMenus $menus): void {
+                    $menus->reset();
+                    $this->fillForm($menus);
+
+                    Notification::make()->title(__('The standard header and footer links are back.'))->success()->send();
+                }),
+        ];
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema
+            ->components([
+                Form::make([
+                    Tabs::make()
+                        ->persistTabInQueryString('navigation-tab')
+                        ->tabs([
+                            Tab::make(__('Header'))
+                                ->icon(Heroicon::OutlinedBars3)
+                                ->schema([$this->headerRepeater()]),
+                            Tab::make(__('Mobile menu'))
+                                ->icon(Heroicon::OutlinedDevicePhoneMobile)
+                                ->schema($this->mobileFields()),
+                            Tab::make(__('Footer'))
+                                ->icon(Heroicon::OutlinedRectangleGroup)
+                                ->schema($this->footerFields()),
+                        ]),
+                ])
+                    ->livewireSubmitHandler('save')
+                    ->footer([
+                        Actions::make([
+                            Action::make('save')
+                                ->label(__('Save changes'))
+                                ->submit('save'),
+                        ]),
+                    ]),
+            ])
+            ->statePath('data');
+    }
+
+    public function save(NavigationMenus $menus): void
+    {
+        $data = $this->form->getState();
+
+        $menus->save($data['header'] ?? [], $data['footer'] ?? [], $data['mobile'] ?? []);
+
+        Notification::make()
+            ->title(__('Navigation saved'))
+            ->success()
+            ->send();
+    }
+
+    private function fillForm(NavigationMenus $menus): void
+    {
+        $this->form->fill([
+            'header' => $menus->headerItems(),
+            'footer' => $menus->footerSettings(),
+            'mobile' => $menus->mobile(),
+        ]);
+    }
+
+    private function headerRepeater(): Repeater
+    {
+        return Repeater::make('header')
+            ->hiddenLabel()
+            ->helperText(__('The main links in the header, on desktop and in the mobile menu. Give a link "Dropdown links" to turn it into a dropdown, or choose a mega menu for a wide panel with columns. The Log in and account buttons are added automatically.'))
+            ->schema([
+                ...$this->linkFields(isHeaderItem: true),
+                Select::make('menu')
+                    ->label(__('Menu style'))
+                    ->options([
+                        NavigationMenus::MENU_DROPDOWN => __('Dropdown (a list under the link)'),
+                        NavigationMenus::MENU_MEGA => __('Mega menu (a full-width panel with columns)'),
+                    ])
+                    ->default(NavigationMenus::MENU_DROPDOWN)
+                    ->afterStateHydrated(fn (Select $component, ?string $state) => $component->state($state ?? NavigationMenus::MENU_DROPDOWN))
+                    ->selectablePlaceholder(false)
+                    ->live(),
+                Repeater::make('children')
+                    ->label(__('Dropdown links'))
+                    ->schema($this->linkFields(isHeaderItem: false))
+                    ->visible(fn (Get $get): bool => $get('menu') !== NavigationMenus::MENU_MEGA)
+                    ->minItems(fn (Get $get): int => $get('type') === NavigationMenus::TYPE_NONE ? 1 : 0)
+                    ->maxItems(NavigationMenus::MAX_DROPDOWN_ITEMS)
+                    ->defaultItems(0)
+                    ->collapsible()
+                    ->collapsed()
+                    ->itemLabel(fn (array $state): string => $this->itemLabel($state))
+                    ->addActionLabel(__('Add dropdown link')),
+                ...$this->megaMenuFields(),
+            ])
+            ->maxItems(NavigationMenus::MAX_HEADER_ITEMS)
+            ->defaultItems(0)
+            ->reorderableWithButtons()
+            ->collapsible()
+            ->collapsed()
+            ->itemLabel(fn (array $state): string => $this->itemLabel($state))
+            ->addActionLabel(__('Add header link'));
+    }
+
+    /**
+     * @return array<int, Select|Toggle|TextInput>
+     */
+    private function mobileFields(): array
+    {
+        return [
+            Select::make('mobile.open_from')
+                ->label(__('Opens from'))
+                ->options(array_map(fn (string $label): string => __($label), NavigationMenus::MOBILE_OPEN_FROM))
+                ->helperText(__('The menu (☰) on phones and tablets covers the screen and scrolls on its own. Dropdowns and mega menus open and close inside it.'))
+                ->selectablePlaceholder(false),
+            Toggle::make('mobile.show_logo')
+                ->label(__('Show the logo at the top'))
+                ->helperText(__('The header logo (Branding › Brand), or the site name when none is uploaded.'))
+                ->live(),
+            TextInput::make('mobile.tagline')
+                ->label(__('Text under the logo (optional)'))
+                ->placeholder(__('e.g. Book your local hall'))
+                ->maxLength(60)
+                ->visible(fn (Get $get): bool => (bool) $get('mobile.show_logo')),
+        ];
+    }
+
+    /**
+     * @return array<int, TextInput|Repeater>
+     */
+    private function footerFields(): array
+    {
+        return [
+            TextInput::make('footer.tagline')
+                ->label(__('Tagline'))
+                ->helperText(__('Shown under the logo. Leave empty to hide it.'))
+                ->maxLength(200),
+            Repeater::make('footer.columns')
+                ->label(__('Link columns'))
+                ->schema([
+                    TextInput::make('heading')
+                        ->label(__('Column heading (optional)'))
+                        ->maxLength(60)
+                        ->live(onBlur: true),
+                    Repeater::make('links')
+                        ->label(__('Links'))
+                        ->schema($this->linkFields(isHeaderItem: false))
+                        ->minItems(1)
+                        ->maxItems(NavigationMenus::MAX_FOOTER_LINKS)
+                        ->reorderableWithButtons()
+                        ->collapsible()
+                        ->collapsed()
+                        ->itemLabel(fn (array $state): string => $this->itemLabel($state))
+                        ->addActionLabel(__('Add link')),
+                ])
+                ->maxItems(NavigationMenus::MAX_FOOTER_COLUMNS)
+                ->defaultItems(0)
+                ->reorderableWithButtons()
+                ->collapsible()
+                ->itemLabel(fn (array $state): string => filled($state['heading'] ?? null) ? (string) $state['heading'] : __('Column'))
+                ->addActionLabel(__('Add column')),
+            TextInput::make('footer.copyright')
+                ->label(__('Copyright line'))
+                ->placeholder(NavigationMenus::defaultCopyright())
+                ->helperText(__('{year} becomes the current year and {site_name} the site name. Leave empty for the standard line.'))
+                ->maxLength(200),
+        ];
+    }
+
+    /**
+     * One menu link: what it points at, its label and whether it opens in a new tab.
+     *
+     * @return array<int, Grid>
+     */
+    private function linkFields(bool $isHeaderItem): array
+    {
+        $types = [
+            NavigationMenus::TYPE_PAGE => __('A page you built'),
+            NavigationMenus::TYPE_BUILTIN => __('A built-in page'),
+            NavigationMenus::TYPE_URL => __('A web address'),
+        ];
+
+        if ($isHeaderItem) {
+            $types[NavigationMenus::TYPE_NONE] = __('Nothing (only opens its dropdown or mega menu)');
+        }
+
+        return [
+            Grid::make(2)->schema([
+                Select::make('type')
+                    ->label(__('Link to'))
+                    ->options($types)
+                    ->default(NavigationMenus::TYPE_BUILTIN)
+                    ->selectablePlaceholder(false)
+                    ->required()
+                    ->live(),
+                Select::make('page_id')
+                    ->label(__('Page'))
+                    ->options(fn (): array => array_map(
+                        fn (array $page): string => $page['isPublished'] ? $page['title'] : __(':title (draft, hidden until published)', ['title' => $page['title']]),
+                        $this->pages(),
+                    ))
+                    ->searchable()
+                    ->required()
+                    ->visible(fn (Get $get): bool => $get('type') === NavigationMenus::TYPE_PAGE),
+                Select::make('link')
+                    ->label(__('Built-in page'))
+                    ->options(fn (NavigationMenus $menus): array => $menus->builtinOptions())
+                    ->searchable()
+                    ->required()
+                    ->visible(fn (Get $get): bool => $get('type') === NavigationMenus::TYPE_BUILTIN),
+                TextInput::make('url')
+                    ->label(__('Web address'))
+                    ->required()
+                    ->maxLength(500)
+                    ->regex(NavigationMenus::URL_PATTERN)
+                    ->validationMessages(['regex' => __('Start the link with https://, / (a page on this site), # (a section on the page), mailto: or tel:.')])
+                    ->placeholder('https://')
+                    ->visible(fn (Get $get): bool => $get('type') === NavigationMenus::TYPE_URL),
+                TextInput::make('label')
+                    ->label(__('Label'))
+                    ->maxLength(60)
+                    ->required(fn (Get $get): bool => in_array($get('type'), [NavigationMenus::TYPE_URL, NavigationMenus::TYPE_NONE], true))
+                    ->placeholder(fn (Get $get): ?string => match ($get('type')) {
+                        NavigationMenus::TYPE_PAGE => __('Defaults to the page title'),
+                        NavigationMenus::TYPE_BUILTIN => __('Defaults to the page name'),
+                        default => null,
+                    })
+                    ->live(onBlur: true),
+                Toggle::make('new_tab')
+                    ->label(__('Open in a new tab'))
+                    ->inline(false)
+                    ->visible(fn (Get $get): bool => $get('type') !== NavigationMenus::TYPE_NONE),
+            ]),
+        ];
+    }
+
+    /**
+     * A mega menu: up to four columns of links (each with an optional icon and description), side by side, and an
+     * optional highlight panel on the right.
+     *
+     * @return array<int, Repeater|Fieldset>
+     */
+    private function megaMenuFields(): array
+    {
+        $isMega = fn (Get $get): bool => $get('menu') === NavigationMenus::MENU_MEGA;
+
+        return [
+            Repeater::make('columns')
+                ->label(__('Mega menu columns'))
+                ->schema([
+                    TextInput::make('heading')
+                        ->label(__('Column heading (optional)'))
+                        ->maxLength(60)
+                        ->live(onBlur: true),
+                    Repeater::make('links')
+                        ->label(__('Links'))
+                        ->schema([
+                            ...$this->linkFields(isHeaderItem: false),
+                            Grid::make(2)->schema([
+                                TextInput::make('description')
+                                    ->label(__('Short description (optional)'))
+                                    ->helperText(__('A line under the link, e.g. "Rooms for parties and meetings".'))
+                                    ->maxLength(120),
+                                PageBlock::iconSelect('icon', __('Icon (optional)'))->helperText(null),
+                            ]),
+                        ])
+                        ->minItems(1)
+                        ->maxItems(NavigationMenus::MAX_MEGA_LINKS)
+                        ->reorderableWithButtons()
+                        ->collapsible()
+                        ->collapsed()
+                        ->itemLabel(fn (array $state): string => $this->itemLabel($state))
+                        ->addActionLabel(__('Add link')),
+                ])
+                ->visible($isMega)
+                ->minItems(1)
+                ->maxItems(NavigationMenus::MAX_MEGA_COLUMNS)
+                ->defaultItems(1)
+                ->reorderableWithButtons()
+                ->collapsible()
+                ->itemLabel(fn (array $state): string => filled($state['heading'] ?? null) ? (string) $state['heading'] : __('Column'))
+                ->addActionLabel(__('Add column')),
+            Fieldset::make(__('Highlight panel (optional)'))
+                ->statePath('promo')
+                ->visible($isMega)
+                ->columns(2)
+                ->schema([
+                    TextInput::make('heading')->label(__('Heading'))->maxLength(80),
+                    TextInput::make('button_label')->label(__('Button text'))->maxLength(40),
+                    Textarea::make('text')->label(__('Text'))->rows(2)->maxLength(250),
+                    TextInput::make('button_url')
+                        ->label(__('Button link'))
+                        ->maxLength(500)
+                        ->regex(NavigationMenus::URL_PATTERN)
+                        ->validationMessages(['regex' => __('Start the link with https://, / (a page on this site), # (a section on the page), mailto: or tel:.')])
+                        ->requiredWith('button_label')
+                        ->placeholder('/contact'),
+                ]),
+        ];
+    }
+
+    /**
+     * The collapsed item's title: its label, or the name it will show with when the label is empty.
+     *
+     * @param  array<string, mixed>  $state
+     */
+    private function itemLabel(array $state): string
+    {
+        $page = is_numeric($state['page_id'] ?? null) ? ($this->pages()[(int) $state['page_id']] ?? null) : null;
+
+        $name = filled($state['label'] ?? null) ? (string) $state['label'] : match ($state['type'] ?? null) {
+            NavigationMenus::TYPE_PAGE => $page['title'] ?? __('Page'),
+            NavigationMenus::TYPE_BUILTIN => app(SiteBuilder::class)->link(is_string($state['link'] ?? null) ? $state['link'] : null)?->label() ?? __('Built-in page'),
+            NavigationMenus::TYPE_URL => (string) ($state['url'] ?? '') ?: __('Web address'),
+            default => __('Dropdown'),
+        };
+
+        if (($state['type'] ?? null) === NavigationMenus::TYPE_PAGE && $page !== null && ! $page['isPublished']) {
+            return __(':name (draft, hidden until published)', ['name' => $name]);
+        }
+
+        return $name;
+    }
+
+    /**
+     * @return array<int, array{title: string, isPublished: bool}>
+     */
+    private function pages(): array
+    {
+        return $this->pages ??= SitePage::query()
+            ->orderBy('title')
+            ->get(['id', 'title', 'status'])
+            ->mapWithKeys(fn (SitePage $page): array => [$page->id => ['title' => $page->title, 'isPublished' => $page->isPublished()]])
+            ->all();
+    }
+}

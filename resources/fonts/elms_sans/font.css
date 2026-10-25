@@ -1,0 +1,16 @@
+/* Elms Sans, self-hosted (SIL Open Font License, see OFL.txt). Variable font, subset to Latin + Latin Extended. */
+@font-face {
+    font-family: 'Elms Sans';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('elms-sans.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Elms Sans';
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('elms-sans-italic.woff2') format('woff2');
+}

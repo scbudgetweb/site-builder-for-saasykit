@@ -1,0 +1,16 @@
+/* Montserrat, self-hosted (SIL Open Font License, see OFL.txt). Variable font, subset to Latin + Latin Extended. */
+@font-face {
+    font-family: 'Montserrat';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('montserrat.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Montserrat';
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('montserrat-italic.woff2') format('woff2');
+}

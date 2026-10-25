@@ -1,0 +1,453 @@
+/*
+ * Site builder styles, imported by the host app's resources/css/app.css (see the README).
+ *
+ * The tokens below are the standard look. Admin › Website › Branding overrides them at runtime with an
+ * unlayered :root <style> (branding/head), so a rebrand needs no rebuild.
+ *
+ * Never name classes after DaisyUI components (btn, card, badge, menu, input, select…): DaisyUI is in
+ * SaaSykit's public CSS and its rules would win (lesson 5). Buttons are .site-button for that reason.
+ */
+
+/*
+ * Header, footer and page text colour tokens. Used by the theme's header, footer and blocks as utilities
+ * such as bg-sb-header-bg and text-sb-footer-link.
+ */
+@theme {
+    --color-sb-scheme-dark-heading: var(--color-gray-900);
+    --color-sb-scheme-dark-body: var(--color-gray-900);
+    --color-sb-scheme-light-heading: #ffffff;
+    --color-sb-scheme-light-body: #ffffff;
+
+    --color-sb-header-bg: #ffffff;
+    --color-sb-header-text: var(--color-gray-900);
+    --color-sb-header-link: var(--color-gray-600);
+    --color-sb-header-link-hover: var(--color-primary-600);
+    --color-sb-header-account-link: var(--color-primary-600);
+    --color-sb-header-account-link-hover: var(--color-primary-700);
+    --color-sb-header-button: var(--color-primary-600);
+    --color-sb-header-button-hover: var(--color-primary-700);
+    --color-sb-header-button-text: #ffffff;
+    --color-sb-header-button-text-hover: #ffffff;
+    --color-sb-header-menu-bg: #ffffff;
+    --color-sb-header-menu-link: var(--color-gray-700);
+    --color-sb-header-menu-link-hover: var(--color-primary-700);
+    --color-sb-header-menu-heading: var(--color-gray-500);
+
+    --color-sb-footer-bg: var(--color-gray-900);
+    --color-sb-footer-text: var(--color-gray-400);
+    --color-sb-footer-heading: #ffffff;
+    --color-sb-footer-link: var(--color-gray-400);
+    --color-sb-footer-link-hover: #ffffff;
+    --color-sb-footer-social: var(--color-gray-400);
+    --color-sb-footer-social-hover: #ffffff;
+
+    /* Shapes (Branding › Corners & shadows and Buttons): rounded-sb-button, rounded-sb-card, shadow-sb-card… */
+    --radius-sb-button: 0.5rem;
+    --radius-sb-card: 0.75rem;
+    --radius-sb-image: 1rem;
+    --radius-sb-input: var(--radius-sb-button);
+    --shadow-sb-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+}
+
+/*
+ * Banner text colours: "hero" is the home page, "inner" every other banner page. The banner component points
+ * --color-sb-banner-* at one pair, so pages use text-sb-banner-heading / text-sb-banner-subtitle in either.
+ * "static" keeps these in the CSS even though no utility uses the hero/inner ones directly.
+ */
+@theme static {
+    --color-sb-hero-heading: #ffffff;
+    --color-sb-hero-subtitle: var(--color-primary-100);
+    --color-sb-inner-heading: #ffffff;
+    --color-sb-inner-subtitle: var(--color-primary-100);
+    --color-sb-banner-heading: #ffffff;
+    --color-sb-banner-subtitle: var(--color-primary-100);
+}
+
+@layer base {
+    /* Body text size and heading fonts (Branding › Typography). Utilities on an element still win. */
+    body {
+        font-size: var(--sb-text-base, 1rem);
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-family: var(--font-sb-heading, inherit);
+    }
+}
+
+/* Alpine's x-cloak needs this rule to hide elements before Alpine hydrates. */
+[x-cloak] {
+    display: none !important;
+}
+
+/*
+ * Buttons. Four named styles (Branding › Buttons) set these variables per .site-button-N; the border is an
+ * inset box-shadow, so solid and outline buttons are the same size. --site-button-shadow adds a drop shadow
+ * (a block button's own Shadow). A dashed, dotted or double border is a real border (PageBlock::buttonLook()).
+ */
+@layer components {
+    .site-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        line-height: 1.25;
+        border-radius: var(--radius-sb-button);
+        background-color: var(--site-button-bg);
+        color: var(--site-button-text);
+        box-shadow: inset 0 0 0 var(--site-button-border-width, 0) var(--site-button-border, transparent), var(--site-button-shadow, 0 0 #0000);
+        text-transform: var(--site-button-transform, none);
+        letter-spacing: var(--site-button-tracking, normal);
+        transition: background-color 150ms, color 150ms, box-shadow 150ms, transform 150ms;
+
+        &:hover, &:focus-visible, &:active {
+            background-color: var(--site-button-bg-hover, var(--site-button-bg));
+            color: var(--site-button-text-hover, var(--site-button-text));
+            box-shadow: inset 0 0 0 var(--site-button-border-width, 0) var(--site-button-border-hover, var(--site-button-border, transparent)), var(--site-button-shadow, 0 0 #0000);
+            transform: translateY(var(--site-button-lift, 0));
+        }
+
+        &:focus-visible {
+            outline: 2px solid currentColor;
+            outline-offset: 2px;
+        }
+    }
+
+    .site-button-1 {
+        --site-button-bg: var(--color-primary-600);
+        --site-button-bg-hover: var(--color-primary-700);
+        --site-button-text: #ffffff;
+    }
+
+    .site-button-2 {
+        --site-button-bg: #ffffff;
+        --site-button-bg-hover: #f3f4f6;
+        --site-button-text: #111827;
+    }
+
+    .site-button-3 {
+        --site-button-bg: transparent;
+        --site-button-bg-hover: color-mix(in oklab, currentColor 10%, transparent);
+        --site-button-text: currentColor;
+        --site-button-border: currentColor;
+        --site-button-border-width: 2px;
+    }
+
+    .site-button-4 {
+        --site-button-bg: #111827;
+        --site-button-bg-hover: #1f2937;
+        --site-button-text: #ffffff;
+    }
+
+    /* The theme's headings, scaled by Branding › Typography › Heading sizes (--sb-heading-scale). */
+    .sb-h1 {
+        font-size: calc(2.25rem * var(--sb-heading-scale, 1));
+        line-height: 1.1;
+        font-weight: var(--heading-weight, 700);
+        letter-spacing: -0.02em;
+
+        @media (min-width: 40rem) {
+            font-size: calc(3rem * var(--sb-heading-scale, 1));
+        }
+
+        @media (min-width: 64rem) {
+            font-size: calc(3.75rem * var(--sb-heading-scale, 1));
+        }
+    }
+
+    .sb-h2 {
+        font-size: calc(1.875rem * var(--sb-heading-scale, 1));
+        line-height: 1.2;
+        font-weight: var(--heading-weight, 700);
+        letter-spacing: -0.01em;
+
+        @media (min-width: 40rem) {
+            font-size: calc(2.25rem * var(--sb-heading-scale, 1));
+        }
+    }
+
+    .sb-h3 {
+        font-size: calc(1.5rem * var(--sb-heading-scale, 1));
+        line-height: 1.3;
+        font-weight: var(--heading-weight, 700);
+    }
+
+    /* Section headings (block headings and the theme's section titles). Decorations come from Branding. */
+    .section-heading {
+        font-weight: var(--heading-weight, 700);
+
+        /* Drawn only when Branding (or the block) chooses a decoration. */
+        &::before, &::after {
+            display: none;
+            content: '';
+            background-color: var(--heading-decoration-color, var(--color-primary-600));
+        }
+    }
+
+    .text-white .section-heading::before, .text-white .section-heading::after {
+        background-color: var(--heading-decoration-color-dark, currentColor);
+    }
+}
+
+/*
+ * Rich text in blocks (Text, Image + text). Colours follow the block's text colour (currentColor), so the same rules
+ * work on light and dark backgrounds. Not Tailwind Typography's "prose": SaaSykit doesn't load that plugin publicly.
+ */
+@layer components {
+    .sb-prose {
+        line-height: 1.7;
+
+        & > * + * {
+            margin-top: 1em;
+        }
+
+        & h2, & h3, & h4 {
+            font-weight: var(--heading-weight, 700);
+            line-height: 1.25;
+            margin-top: 1.6em;
+        }
+
+        & > :first-child {
+            margin-top: 0;
+        }
+
+        & h2 {
+            font-size: calc(1.5rem * var(--sb-heading-scale, 1));
+        }
+
+        & h3 {
+            font-size: calc(1.25rem * var(--sb-heading-scale, 1));
+        }
+
+        & h4 {
+            font-size: 1.125rem;
+        }
+
+        & a {
+            color: var(--color-primary-600);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+        }
+
+        & a:hover {
+            color: var(--color-primary-700);
+        }
+
+        & ul {
+            list-style: disc;
+            padding-left: 1.5em;
+        }
+
+        & ol {
+            list-style: decimal;
+            padding-left: 1.5em;
+        }
+
+        & li + li {
+            margin-top: 0.25em;
+        }
+
+        & blockquote {
+            border-left: 4px solid color-mix(in oklab, currentColor 25%, transparent);
+            padding-left: 1em;
+            font-style: italic;
+        }
+
+        & hr {
+            border-color: color-mix(in oklab, currentColor 20%, transparent);
+        }
+
+        & table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        & th, & td {
+            border: 1px solid color-mix(in oklab, currentColor 20%, transparent);
+            padding: 0.5em 0.75em;
+            text-align: left;
+        }
+
+        & th {
+            font-weight: 600;
+        }
+    }
+
+    .text-white .sb-prose a {
+        color: inherit;
+    }
+}
+
+/*
+ * Text schemes: blocks (and cards with their own background) say whether they show dark text (on a light background)
+ * or light text (on a dark one) with data-text-scheme. The body colour is set on that element (unlayered, so it beats
+ * its text-gray-900 / text-white utility) and inherited; headings take the scheme's heading colour from the nearest
+ * scheme (Branding › Typography › Text colours). That rule is in the base layer, so a heading with its own colour
+ * utility keeps it (lesson 6).
+ */
+[data-text-scheme='dark'] {
+    --sb-scheme-heading: var(--color-sb-scheme-dark-heading);
+    color: var(--color-sb-scheme-dark-body);
+}
+
+[data-text-scheme='light'] {
+    --sb-scheme-heading: var(--color-sb-scheme-light-heading);
+    color: var(--color-sb-scheme-light-body);
+}
+
+@layer base {
+    [data-text-scheme] :is(h1, h2, h3, h4, h5, h6) {
+        color: var(--sb-scheme-heading);
+    }
+}
+
+/*
+ * A block's Style › Heading decoration. "None" and each style are unlayered and two classes deep, so they beat
+ * Branding's one-class rules from the head style; each turns off the other bar Branding may draw.
+ */
+.no-heading-decoration .section-heading::before,
+.no-heading-decoration .section-heading::after,
+.heading-decoration-short-under .section-heading::before,
+.heading-decoration-line-under .section-heading::before,
+.heading-decoration-short-above .section-heading::after {
+    display: none;
+}
+
+.heading-decoration-short-under .section-heading::after {
+    display: block;
+    width: 3rem;
+    height: 4px;
+    border-radius: 9999px;
+    margin: 0.75rem 0 0;
+}
+
+.heading-decoration-line-under .section-heading::after {
+    display: block;
+    width: 100%;
+    height: 2px;
+    border-radius: 0;
+    margin: 0.75rem 0 0;
+}
+
+.heading-decoration-short-above .section-heading::before {
+    display: block;
+    width: 3rem;
+    height: 4px;
+    border-radius: 9999px;
+    margin: 0 0 0.75rem;
+}
+
+.heading-decoration-short-under .text-center .section-heading::after,
+.heading-decoration-short-under .section-heading.text-center::after,
+.heading-decoration-short-above .text-center .section-heading::before,
+.heading-decoration-short-above .section-heading.text-center::before {
+    margin-inline: auto;
+}
+
+/*
+ * Style › Heading size and Text size. Unlayered, so they beat the blocks' own size utilities; the variables inherit,
+ * so a Section's sizes reach its blocks and a block's own choice wins inside it (lesson 7). Block views mark body
+ * text with .block-text, and headings outside the shared heading partial with .block-heading.
+ */
+.has-heading-size :is(.section-heading, .block-heading) {
+    font-size: var(--heading-size);
+}
+
+.has-text-size .block-text {
+    font-size: var(--text-size);
+}
+
+/*
+ * The Logo strip's scrolling loop: the list twice, slid by half its width. Hovering, focus or the pause button stop
+ * it (WCAG 2.2.2), and it stays still, as a wrapped row, for visitors who prefer reduced motion (lesson 15).
+ */
+.logo-loop {
+    mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+.logo-loop-track {
+    animation: sb-logo-loop var(--logo-loop-duration, 30s) linear infinite;
+}
+
+.logo-loop:hover .logo-loop-track,
+.logo-loop:focus-within .logo-loop-track,
+.logo-loop.is-paused .logo-loop-track {
+    animation-play-state: paused;
+}
+
+@keyframes sb-logo-loop {
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+/* Scrollable strips (carousels) without a visible scrollbar; they still scroll by swipe and arrows. */
+.no-scrollbar {
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/*
+ * A Section row lined up at "Same height": the grid makes the columns equal, and these make each block (its section,
+ * container and panel) fill its column, so backgrounds and panels match. Every element between the column and a
+ * block's bottom buttons (.sb-block-buttons) becomes a growing column, except grids (side-by-side layouts inside a
+ * block), and the buttons drop to the bottom, so buttons in a row line up.
+ */
+.sb-row-stretch > * {
+    display: flex;
+    flex-direction: column;
+}
+
+.sb-row-stretch > * > section,
+.sb-row-stretch > * > section > div,
+.sb-row-stretch .sb-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.sb-row-stretch :not(.grid):has(.sb-block-buttons) {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.sb-row-stretch .sb-block-buttons {
+    margin-top: auto;
+    padding-top: 2rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .logo-loop {
+        mask-image: none;
+    }
+
+    .logo-loop-track {
+        animation: none;
+        width: auto;
+        justify-content: center;
+    }
+
+    .logo-loop-track > ul {
+        flex-wrap: wrap;
+        justify-content: center;
+        row-gap: 2rem;
+        padding-right: 0;
+    }
+
+    .logo-loop-track [aria-hidden] {
+        display: none;
+    }
+
+    .site-button {
+        transition: none;
+
+        &:hover, &:focus-visible, &:active {
+            transform: none;
+        }
+    }
+}

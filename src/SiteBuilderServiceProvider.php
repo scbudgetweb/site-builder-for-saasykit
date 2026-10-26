@@ -10,6 +10,7 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\View\FileViewFinder;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
@@ -42,10 +43,10 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->app->singleton(BlockRegistry::class);
         $this->app->singleton(PageRenderer::class);
 
-        // The base theme: its views are found before the app's own, so SaaSykit's are shadowed, never edited.
+        // The base theme: its views are found before SaaSykit's, so theirs are shadowed, never edited.
         $this->callAfterResolving('view', function ($view): void {
             if (config('site-builder.theme.enabled', true)) {
-                $view->getFinder()->prependLocation(self::themePath());
+                self::addThemePath($view->getFinder());
             }
         });
 
@@ -103,6 +104,29 @@ class SiteBuilderServiceProvider extends ServiceProvider
     public static function themePath(): string
     {
         return dirname(__DIR__).'/resources/views/theme';
+    }
+
+    /**
+     * Puts the theme straight after the app's own theme folder (site-builder.theme.app_path) when view.paths has it,
+     * so the app's overrides win, otherwise in front of every path. Either way it comes before SaaSykit's views.
+     */
+    private static function addThemePath(FileViewFinder $finder): void
+    {
+        $appThemePath = config('site-builder.theme.app_path');
+        $paths = $finder->getPaths();
+        // The finder stores real paths, so compare like with like.
+        $position = is_string($appThemePath) && $appThemePath !== ''
+            ? array_search(realpath($appThemePath) ?: $appThemePath, $paths, true)
+            : false;
+
+        if ($position === false) {
+            $finder->prependLocation(self::themePath());
+
+            return;
+        }
+
+        array_splice($paths, $position + 1, 0, [self::themePath()]);
+        $finder->setPaths($paths);
     }
 
     /**

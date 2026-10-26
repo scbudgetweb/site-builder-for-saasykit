@@ -78,12 +78,22 @@ The theme puts its own views in front of SaaSykit's without editing any of SaaSy
 
 Switch the theme off with `SITE_BUILDER_THEME=false`. After a SaaSykit update, compare SaaSykit's versions of these views with the theme's.
 
+Views are found in this order:
+1. the app's own theme folder, `resources/views/theme`, when it's in `config/view.php`'s `paths`;
+2. the package's theme;
+3. SaaSykit's views (`resources/views`).
+
+So to change one theme view, copy it from the package's `resources/views/theme/` into the same place under the app's `resources/views/theme/` and edit it there. For example, `components/layouts/app/header.blade.php` changes only the header, and the rest of the theme still comes from the package. Without that folder in `paths`, the package's theme comes first, as in 1.0.
+
+Your copy doesn't update with the package. After each package update, check the CHANGELOG for theme changes, `diff` your copy with the package's in `vendor/scbudgetweb/site-builder-for-saasykit/resources/views/theme/`, and bring the changes across. The [extending guide](docs/developers/extending.md#overriding-a-theme-view) has more.
+
 ## Configuration
 
 | Key | Default | What it does |
 |---|---|---|
 | `navigation.group` / `icon` / `collapsed` | Website, globe, collapsed | The admin navigation group |
 | `theme.enabled` | `true` (`SITE_BUILDER_THEME`) | The base theme |
+| `theme.app_path` | `resource_path('views/theme')` | The app's own theme folder, whose views win over the theme's when it's in `view.paths` |
 | `permissions.*` | see above | The permission each area needs |
 | `pages.routes` | `true` | Serve pages at `/{slug}` (a fallback route, so a page never hides an app route) |
 | `pages.preview_path` | `site-builder/preview` | Where signed previews live |

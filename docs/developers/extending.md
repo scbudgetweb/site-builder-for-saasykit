@@ -14,7 +14,29 @@ SiteBuilder::blocks([...])
     ->consentChecker(fn (string $category) => ...);
 ```
 
-Custom blocks have their own guide: [Writing a custom block](custom-blocks.md).
+Custom blocks have their own guide: [Writing a custom block](custom-blocks.md). To change a core block rather than add one, see [Extending a core block](custom-blocks.md#6-extending-a-core-block).
+
+## Overriding a theme view
+
+The theme's views are found after the app's own theme folder and before SaaSykit's views, so you can replace any one of them without copying the rest.
+
+1. In `config/view.php`, put the app's theme folder first:
+
+   ```php
+   'paths' => [
+       resource_path('views/theme'),
+       resource_path('views'),
+   ],
+   ```
+
+2. Copy the view from the package's `resources/views/theme/` to the same path under `resources/views/theme/`, for example `components/layouts/partials/head.blade.php`, and edit your copy.
+
+The package's theme is placed straight after that folder (`site-builder.theme.app_path`, which you can change). When the folder isn't in `view.paths`, the theme goes in front of every path, as in 1.0. With `SITE_BUILDER_THEME=false`, the package's theme is left out, and your folder sits in front of SaaSykit's views as normal.
+
+**Watch for drift.** Your copy is frozen at the version you copied. When the package updates a view you've overridden (a new Branding setting in the header, say), your site won't get it until you copy the change across. After each package update:
+- check the CHANGELOG for theme changes;
+- diff each overridden view with the package's: `diff resources/views/theme/<path> vendor/scbudgetweb/site-builder-for-saasykit/resources/views/theme/<path>`;
+- keep overrides few and small. A partial (the header, the head) is easier to keep up to date than a whole layout.
 
 ## Slots: replaceable built-in pages
 

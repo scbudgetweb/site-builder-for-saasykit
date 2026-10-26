@@ -19,6 +19,10 @@ use ScBudgetWeb\SiteBuilder\Support\Colour;
 /**
  * A full-width page banner. Uses the Branding hero or inner-page banner by default, or its own image.
  * As the page's first block it holds the page's h1, and the standard page banner is left out.
+ *
+ * An app can extend it and register the subclass under the same name ("banner") to replace it: add fields with
+ * [...parent::fields(), ...], add view data with [...parent::viewData($data, $page), ...], and show its own content
+ * below or beside the banner's text with extraContentView() and extraContentPosition().
  */
 class BannerBlock extends PageBlock
 {
@@ -44,6 +48,12 @@ class BannerBlock extends PageBlock
         'hero' => 'Same as the home page banner (Branding › Banners › Hero)',
         'inner' => 'Same as inner page banners (Branding › Banners › Inner pages)',
         'image' => 'Custom image',
+    ];
+
+    /** Where a subclass's extra content sits: under the text and buttons, or beside them on wide screens. */
+    public const EXTRA_CONTENT_POSITIONS = [
+        'below' => 'Below the text',
+        'beside' => 'Beside the text',
     ];
 
     /** Height => [label, classes]. */
@@ -92,6 +102,27 @@ class BannerBlock extends PageBlock
     public static function view(): string
     {
         return 'site-builder::blocks.banner';
+    }
+
+    /**
+     * A view to show with the banner's text, for a subclass that adds its own content (a form, a search, a card…).
+     * It's included with the banner view's data, including the subclass's own viewData() keys. Null shows nothing.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected static function extraContentView(array $data): ?string
+    {
+        return null;
+    }
+
+    /**
+     * Where extraContentView() sits: a key of EXTRA_CONTENT_POSITIONS ("below" or "beside").
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected static function extraContentPosition(array $data): string
+    {
+        return 'below';
     }
 
     protected static function fields(): array
@@ -193,6 +224,7 @@ class BannerBlock extends PageBlock
     public static function viewData(array $data, Page $page): array
     {
         $style = static::pick($data['style'] ?? null, self::STYLES, 'hero');
+        $extraContentView = static::extraContentView($data);
         $imageUrl = $style === 'image' ? static::imageUrl($data['image'] ?? null) : null;
 
         return [
@@ -210,6 +242,9 @@ class BannerBlock extends PageBlock
             'isLeftAligned' => ($data['align'] ?? 'center') === 'left',
             'buttons' => static::validButtons($data['buttons'] ?? null),
             'blockName' => static::name(),
+            'extraContentView' => $extraContentView,
+            'isExtraContentBeside' => $extraContentView !== null
+                && static::pick(static::extraContentPosition($data), self::EXTRA_CONTENT_POSITIONS, 'below') === 'beside',
         ];
     }
 }

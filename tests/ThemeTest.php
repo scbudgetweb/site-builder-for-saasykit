@@ -18,7 +18,7 @@ class ThemeTest extends TestCase
         Storage::fake('public');
     }
 
-    public function test_theme_views_are_found_before_the_apps_own(): void
+    public function test_theme_views_are_found_before_saasykits(): void
     {
         $finder = $this->app['view']->getFinder();
 
@@ -32,6 +32,33 @@ class ThemeTest extends TestCase
         $this->refreshApplicationWithConfig(['site-builder.theme.enabled' => false]);
 
         $this->assertNotContains(SiteBuilderServiceProvider::themePath(), $this->app['view']->getFinder()->getPaths());
+    }
+
+    public function test_the_apps_own_theme_views_win_over_the_theme_which_wins_over_saasykits(): void
+    {
+        [$appTheme, $saasykit] = $this->useAppThemeFolder();
+        $finder = $this->app['view']->getFinder();
+
+        $this->assertSame([realpath($appTheme), SiteBuilderServiceProvider::themePath(), realpath($saasykit)], $finder->getPaths());
+        $this->assertStringContainsString("The app's own home page", view('home')->render());
+        // Views the app doesn't override still come from the theme, ahead of SaaSykit's.
+        $this->assertStringStartsWith(SiteBuilderServiceProvider::themePath(), $finder->find('components.layouts.app'));
+    }
+
+    public function test_without_an_app_theme_folder_the_theme_wins_over_saasykits_views(): void
+    {
+        [, $saasykit] = $this->useAppThemeFolder(viewPaths: fn (string $appTheme, string $saasykit): array => [$saasykit]);
+
+        $this->assertSame([SiteBuilderServiceProvider::themePath(), realpath($saasykit)], $this->app['view']->getFinder()->getPaths());
+        $this->assertStringStartsWith(SiteBuilderServiceProvider::themePath(), $this->app['view']->getFinder()->find('home'));
+    }
+
+    public function test_with_the_theme_off_saasykits_views_are_used(): void
+    {
+        [, $saasykit] = $this->useAppThemeFolder(viewPaths: fn (string $appTheme, string $saasykit): array => [$saasykit], themeEnabled: false);
+
+        $this->assertNotContains(SiteBuilderServiceProvider::themePath(), $this->app['view']->getFinder()->getPaths());
+        $this->assertStringContainsString("SaaSykit's home page", view('home')->render());
     }
 
     public function test_the_logo_falls_back_to_the_site_name(): void
@@ -93,6 +120,27 @@ class ThemeTest extends TestCase
         $this->app->make(Branding::class)->save([Branding::CUSTOM_CSS => '</style><script>alert(1)</script>']);
 
         $this->assertStringNotContainsString('<script>', view('site-builder::branding.head')->render());
+    }
+
+    /**
+     * An app whose view.paths are its own theme folder, then SaaSykit's views (as in an app's config/view.php), from
+     * tests/Fixtures/theme.
+     *
+     * @param  (\Closure(string, string): array<int, string>)|null  $viewPaths
+     * @return array{string, string} the app theme folder and the SaaSykit views folder
+     */
+    private function useAppThemeFolder(?\Closure $viewPaths = null, bool $themeEnabled = true): array
+    {
+        $appTheme = __DIR__.'/Fixtures/theme/app-theme';
+        $saasykit = __DIR__.'/Fixtures/theme/saasykit';
+
+        $this->refreshApplicationWithConfig([
+            'site-builder.theme.enabled' => $themeEnabled,
+            'site-builder.theme.app_path' => $appTheme,
+            'view.paths' => $viewPaths ? $viewPaths($appTheme, $saasykit) : [$appTheme, $saasykit],
+        ]);
+
+        return [$appTheme, $saasykit];
     }
 
     /**

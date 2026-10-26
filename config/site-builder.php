@@ -24,13 +24,17 @@ return [
     |--------------------------------------------------------------------------
     |
     | The base theme replaces SaaSykit's marketing site (home page, header,
-    | footer, layouts, blog index) by putting its views in front of the app's.
+    | footer, layouts, blog index) by putting its views in front of SaaSykit's.
     | SaaSykit's own view files are never edited. Turn it off to keep them.
+    |
+    | When view.paths includes the app's own theme folder (app_path), the
+    | theme goes straight after it, so a view there overrides the theme's.
     |
     */
 
     'theme' => [
         'enabled' => env('SITE_BUILDER_THEME', true),
+        'app_path' => resource_path('views/theme'),
     ],
 
     /*

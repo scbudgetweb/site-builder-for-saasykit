@@ -58,7 +58,7 @@ class PageRenderer
                 return false;
             }
 
-            if ($blockClass === SectionBlock::class) {
+            if (is_a($blockClass, SectionBlock::class, true)) {
                 foreach (SectionBlock::rows($block['data']) as $row) {
                     if (! $this->allCacheable($row['blocks'])) {
                         return false;
@@ -98,7 +98,7 @@ class PageRenderer
 
                 $extra = $blockClass::viewData($block['data'], $page);
 
-                if ($blockClass === SectionBlock::class) {
+                if (is_a($blockClass, SectionBlock::class, true)) {
                     $extra['rows'] = array_map(fn (array $row): array => [
                         ...$row,
                         'blocks' => $this->renderBlocks($row['blocks'], $page, $appearance['isDark'] ?? false, $appearance['headingDecoration'] ?? null),

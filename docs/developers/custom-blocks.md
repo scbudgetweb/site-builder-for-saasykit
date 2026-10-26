@@ -147,7 +147,7 @@ Tailwind only builds classes it finds in its sources. Make sure your app's CSS s
 | `defaultWidth()` / `defaultBackground()` | contained / none | Change the starting look |
 | `defaultAnchor()` | `null` | Give the block an anchor (for example `opening-hours`) when the admin leaves Anchor ID empty, so a menu link can point at it |
 | `isVisible($data)` | `true` | Hide the block, with no wrapper or spacing, for example when a live list is empty |
-| `isCacheable($data)` | `true` | Return `false` when the HTML depends on the visitor or changes by itself: live figures, signed-in state, cookie consent, a form's CSRF token. A page is cached only when all its blocks are |
+| `isCacheable($data)` | `true` | Return `false` when the HTML depends on the visitor or changes by itself: live figures, signed-in state, cookie consent, a form's CSRF token, any Livewire component. A page is cached only when all its blocks are |
 | `itemLabel($state)` / `editorTitle($data)` | label plus heading | The card and panel titles |
 
 Helpers for fields:
@@ -160,7 +160,74 @@ Helpers for fields:
 - `imageStyleFieldset()` and `PageBlock::imageStyle()`;
 - `pick()`, which whitelists a saved choice and accepts integer keys (lesson 2).
 
-## 6. Blocks that a replaceable page needs
+## 6. Extending a core block
+
+To change a core block everywhere, extend its class and register the subclass. It has the same `name()`, so it replaces the core block in the picker (in the same place), in Section rows (for blocks that can go in one), in the block library and on pages already using it. Saved data stays valid because the stored type doesn't change.
+
+```php
+use ScBudgetWeb\SiteBuilder\Blocks\Core\BannerBlock as CoreBannerBlock;
+
+class BannerBlock extends CoreBannerBlock
+{
+    protected static function fields(): array
+    {
+        $showsHighlight = fn (Get $get): bool => (bool) $get('show_highlight');
+
+        return [
+            ...parent::fields(),
+            Toggle::make('show_highlight')->label(__('Show a highlight'))->live(),
+            TextInput::make('highlight')->label(__('Highlight'))->maxLength(100)->required($showsHighlight)->visible($showsHighlight),
+            Select::make('highlight_position')
+                ->label(__('Highlight position'))
+                ->options(self::EXTRA_CONTENT_POSITIONS)
+                ->default('below')
+                ->selectablePlaceholder(false)
+                ->visible($showsHighlight),
+        ];
+    }
+
+    public static function viewData(array $data, Page $page): array
+    {
+        return [
+            ...parent::viewData($data, $page),
+            'highlight' => is_string($data['highlight'] ?? null) ? $data['highlight'] : '',
+        ];
+    }
+
+    protected static function extraContentView(array $data): ?string
+    {
+        return ($data['show_highlight'] ?? false) === true ? 'site-builder.blocks.banner-highlight' : null;
+    }
+
+    protected static function extraContentPosition(array $data): string
+    {
+        return static::pick($data['highlight_position'] ?? null, self::EXTRA_CONTENT_POSITIONS, 'below');
+    }
+}
+```
+
+```php
+SiteBuilder::blocks([BannerBlock::class]);
+```
+
+How it fits together:
+- **Fields:** call `parent::fields()` (or `parent::layoutFields()`, `styleFields()`, `advancedFields()`) and add yours. Don't copy the parent's fields; you'd miss the package's later changes.
+- **View data:** start from `parent::viewData()`, so the core view gets everything it needs.
+- **The view:** keep the core view and add to it where the block offers a hook, or override `view()` with one of your own. Your own view stops getting the package's fixes to that block.
+- **Banner and Hero** have `extraContentView($data)`, which names a view to include with the banner's data (yours included), and `extraContentPosition($data)`, `below` the text and buttons or `beside` them on wide screens. `BannerBlock::EXTRA_CONTENT_POSITIONS` has the labels for a Select.
+- **Caching:** the subclass's `isCacheable()` is used, and a cached page's HTML is the same for every visitor. If your extra content contains a Livewire component, or anything with a CSRF token or per-visitor data, return `false` whenever it's shown. A cached Livewire component would serve every visitor the same snapshot and token, and break.
+
+  ```php
+  public static function isCacheable(array $data): bool
+  {
+      return static::extraContentView($data) === null && parent::isCacheable($data);
+  }
+  ```
+- **After a package update,** check the CHANGELOG for changes to the block you've extended.
+
+The package's `tests/ExtendingCoreBlocksTest.php` and `tests/Fixtures/Blocks/HighlightBannerBlock.php` are a worked example.
+
+## 7. Blocks that a replaceable page needs
 
 If one of your built-in pages only works with your block (say a booking page that needs the booking search), say so on its slot:
 
@@ -170,11 +237,11 @@ Slot::make('book', 'Book a hall', fn () => route('book'))->requires('booking_sea
 
 The page editor then warns when a page replacing it doesn't have the block. A block linked from the block library counts. See [Extending the site builder](extending.md#slots-replaceable-built-in-pages).
 
-## 7. Links: visitors or search engines?
+## 8. Links: visitors or search engines?
 
 When a block lists records that have their own detail pages (venues, events, posts), decide where a **visitor** should land. Often that's a list or search view with the record open, which is better for browsing, while the single record page exists for search engines and shared links. Link to the visitor's view from the block, and keep the record page for the sitemap and structured data (lesson 16).
 
-## 8. Testing it
+## 9. Testing it
 
 The package's `tests/ExtensionApiTest.php` shows the checks worth copying:
 - the block is in the picker and in Section rows;

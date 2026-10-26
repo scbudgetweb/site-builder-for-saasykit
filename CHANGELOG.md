@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.1.0 - 2026-10-26
+
+- **An app's own theme views win over the package's theme.** When `config/view.php`'s `paths` includes the app's theme folder (`resources/views/theme`, set by the new `site-builder.theme.app_path`), the package's theme goes straight after it instead of in front of everything. Views are then found in the app's theme folder first, then the package's theme, then SaaSykit's views, so an app can override one theme view (the header, the head) and keep the rest. Apps without that folder in `paths` see no change. The README and the extending guide explain how to override a view and how to keep a copy up to date after package updates.
+- **Extending a core block.** A host block that extends a core block and has the same name replaces it everywhere: the picker (in the same place), Section rows, the block library, and cached pages. A Section replaced by a subclass now keeps rendering its rows (the renderer checked for the exact class).
+- Banner and Hero have two hooks for a subclass to show its own content with the banner's text: `extraContentView(array $data): ?string` names a view (it gets the banner's data, including the subclass's own `viewData()`), and `extraContentPosition(array $data): string` puts it `below` the text and buttons or `beside` them on wide screens (`BannerBlock::EXTRA_CONTENT_POSITIONS`). The banner's HTML is unchanged.
+- Documentation: "Extending a core block" in the custom blocks guide, with a worked example in the tests. It explains that extra content with a Livewire component, a CSRF token or per-visitor data must make `isCacheable()` return `false`.
+
 ## 1.0.1 - 2026-10-26
 
 - Security (low): **Save to library** on a block card now needs the library's *create* permission (`create pages` by default). Before, anyone who could edit a page could create library blocks. **Make an editable copy** now checks the library's *view* permission too. Found in a focused security review.

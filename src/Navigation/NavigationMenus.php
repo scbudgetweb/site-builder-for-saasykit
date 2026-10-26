@@ -2,14 +2,18 @@
 
 namespace ScBudgetWeb\SiteBuilder\Navigation;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
+use Throwable;
 
 /**
  * The header, footer and mobile menus (Admin › Website › Navigation), stored as three settings (navigation.header,
- * navigation.footer, navigation.mobile). With nothing saved, the defaults reproduce the theme's standard links.
+ * navigation.footer, navigation.mobile). With nothing saved, the defaults are the theme's standard links that apply to
+ * the site (Link::isAvailable()). Once saved, menus are the site's own: a package update or a newly registered link
+ * never changes them, and Reset to default saves the standard menus in their place.
  *
  * A saved menu item is ['type' => page|builtin|url|none, 'page_id', 'link', 'url', 'label', 'new_tab', 'children' => [...]]
  * (children and "none" only in the header). A header item can instead open a mega menu: 'menu' => 'mega', 'columns' =>
@@ -74,7 +78,8 @@ class NavigationMenus
         return [
             Link::make('home', 'Home', fn (): string => route('home')),
             Link::make('pricing', 'Pricing', fn (): string => route('home').'#pricing')
-                ->description('the plans on the home page'),
+                ->description('the plans on the home page')
+                ->availableWhen(fn (): bool => app(self::class)->homeHasAnchor('pricing')),
             Link::make('blog', 'Blog', fn (): string => route('blog')),
             Link::make('roadmap', 'Roadmap', fn (): string => route('roadmap'))
                 ->description('only while the roadmap is switched on')
@@ -89,16 +94,48 @@ class NavigationMenus
     }
 
     /**
-     * The built-in links for the admin picker, as key => "Label (note)".
+     * The built-in links that apply to this site, for the admin picker, as key => "Label (note)". A menu item's current
+     * choice is kept even when it no longer applies (or was removed), marked as hidden, so the item still loads and
+     * saves without losing it.
      *
      * @return array<string, string>
      */
-    public function builtinOptions(): array
+    public function builtinOptions(?string $current = null): array
     {
-        return array_map(
+        $options = array_map(
             fn (Link $link): string => $link->descriptionText() ? $link->label().' ('.$link->descriptionText().')' : $link->label(),
-            $this->siteBuilder->registeredLinks(),
+            array_filter($this->siteBuilder->registeredLinks(), fn (Link $link): bool => $link->isAvailable()),
         );
+
+        if (is_string($current) && $current !== '' && ! isset($options[$current])) {
+            $options[$current] = __(':link (not available on this site, so hidden)', [
+                'link' => $this->siteBuilder->link($current)?->label() ?? Str::headline($current),
+            ]);
+        }
+
+        return $options;
+    }
+
+    /**
+     * Whether the home page visitors see has a part with this id, e.g. "pricing" for links to /#pricing: a block with
+     * that anchor on the page replacing the home page, or otherwise an id="…" in the home view's template (the theme's
+     * home and SaaSykit's both have id="pricing").
+     */
+    public function homeHasAnchor(string $anchor): bool
+    {
+        $homePage = $this->pages->forSlot('home');
+
+        if ($homePage !== null) {
+            return $homePage->hasAnchor($anchor);
+        }
+
+        try {
+            $template = File::get(app('view')->getFinder()->find('home'));
+        } catch (Throwable) {
+            return false;
+        }
+
+        return preg_match('/\bid=["\']'.preg_quote($anchor, '/').'["\']/', $template) === 1;
     }
 
     /**
@@ -149,7 +186,7 @@ class NavigationMenus
     {
         $saved = $this->siteBuilder->settings()->get(self::HEADER_KEY);
 
-        return is_array($saved) ? $saved : self::defaultHeader();
+        return is_array($saved) ? $saved : $this->standardHeader();
     }
 
     /**
@@ -162,7 +199,7 @@ class NavigationMenus
         $saved = $this->siteBuilder->settings()->get(self::FOOTER_KEY);
 
         if (! is_array($saved)) {
-            return self::defaultFooter();
+            return $this->standardFooter();
         }
 
         return [
@@ -220,11 +257,67 @@ class NavigationMenus
     }
 
     /**
-     * Removes the saved menus and mobile menu settings, so the defaults apply again.
+     * Replaces the header, footer and mobile menu with the standard ones (the standard links that apply to this site),
+     * saved as the site's own, so later package updates or newly available links don't change them.
      */
     public function reset(): void
     {
-        $this->siteBuilder->settings()->forget([self::HEADER_KEY, self::FOOTER_KEY, self::MOBILE_KEY]);
+        $this->save($this->standardHeader(), $this->standardFooter(), self::defaultMobile());
+    }
+
+    /**
+     * What Reset to default puts in the header and footer, for its confirmation: the link labels, in order.
+     *
+     * @return array{header: array<int, string>, footer: array<int, string>}
+     */
+    public function standardMenuLabels(): array
+    {
+        $labels = fn (array $items): array => array_values(array_filter(array_map(
+            fn (array $item): ?string => is_string($item['link'] ?? null) ? $this->siteBuilder->link($item['link'])?->label() : null,
+            $items,
+        )));
+
+        return [
+            'header' => $labels($this->standardHeader()),
+            'footer' => $labels(array_merge([], ...array_map(fn (array $column): array => $column['links'], $this->standardFooter()['columns']))),
+        ];
+    }
+
+    /**
+     * The standard header: defaultHeader() without the links that don't apply to this site or were removed.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function standardHeader(): array
+    {
+        return $this->withoutUnavailableLinks(self::defaultHeader());
+    }
+
+    /**
+     * The standard footer: defaultFooter() without the links that don't apply to this site or were removed (and any
+     * column left empty).
+     *
+     * @return array{tagline: ?string, copyright: null, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
+     */
+    public function standardFooter(): array
+    {
+        $footer = self::defaultFooter();
+        $footer['columns'] = array_values(array_filter(
+            array_map(fn (array $column): array => [...$column, 'links' => $this->withoutUnavailableLinks($column['links'])], $footer['columns']),
+            fn (array $column): bool => $column['links'] !== [],
+        ));
+
+        return $footer;
+    }
+
+    /**
+     * The standard mobile menu: opens from the top, with the logo and no tagline.
+     *
+     * @return array{open_from: string, show_logo: bool, tagline: string}
+     */
+    public static function defaultMobile(): array
+    {
+        return ['open_from' => 'top', 'show_logo' => true, 'tagline' => ''];
     }
 
     /**
@@ -240,7 +333,7 @@ class NavigationMenus
     }
 
     /**
-     * The theme's standard header links.
+     * The theme's standard header links, before leaving out those that don't apply (see standardHeader()).
      *
      * @return array<int, array<string, mixed>>
      */
@@ -254,7 +347,8 @@ class NavigationMenus
     }
 
     /**
-     * The theme's standard footer: the site description and one column of links.
+     * The theme's standard footer: the site description and one column of links, before leaving out those that don't
+     * apply (see standardFooter()).
      *
      * @return array{tagline: ?string, copyright: null, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
      */
@@ -281,6 +375,18 @@ class NavigationMenus
     public static function defaultCopyright(): string
     {
         return __('© {year} {site_name}. All rights reserved.');
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function withoutUnavailableLinks(array $items): array
+    {
+        return array_values(array_filter(
+            $items,
+            fn (array $item): bool => ($item['type'] ?? null) !== self::TYPE_BUILTIN || ($this->siteBuilder->link($item['link'] ?? null)?->isAvailable() ?? false),
+        ));
     }
 
     /**

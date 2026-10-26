@@ -5,7 +5,9 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
+use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Settings\Settings;
 
 class PageUploadsTest extends PageTestCase
 {
@@ -75,7 +77,15 @@ class PageUploadsTest extends PageTestCase
         foreach (['orphan.jpg', 'in-library.jpg', 'in-revision.jpg'] as $file) {
             Storage::disk('public')->put("site-builder/pages/{$file}", 'image');
         }
-        Storage::disk('public')->put('site-builder/branding/logo.png', 'image');
+        foreach (['logo.png', 'hero.jpg', 'app-image.png', 'unused-logo.png'] as $file) {
+            Storage::disk('public')->put("site-builder/branding/{$file}", 'image');
+        }
+        app(Branding::class)->save([
+            Branding::LOGO_LIGHT => 'site-builder/branding/logo.png',
+            // Kept while saved, even when the banner currently shows a gradient.
+            Branding::bannerKey('hero', 'image') => 'site-builder/branding/hero.jpg',
+        ]);
+        app(Settings::class)->set(['branding.app_signup_image' => 'site-builder/branding/app-image.png']);
 
         $page = $this->page(['blocks' => [self::block('image_text', ['image' => 'site-builder/pages/kitchen.jpg'])], 'share_image' => 'site-builder/pages/share.jpg']);
         app(BlockLibrary::class)->save('Image', 'image_text', ['image' => 'site-builder/pages/in-library.jpg']);
@@ -87,16 +97,24 @@ class PageUploadsTest extends PageTestCase
 
         Carbon::setTestNow(now()->addDays(2));
 
-        $this->artisan('site-builder:clean-uploads', ['--dry-run' => true])->expectsOutputToContain('Unused: site-builder/pages/orphan.jpg')->assertSuccessful();
+        $this->artisan('site-builder:clean-uploads', ['--dry-run' => true])
+            ->expectsOutputToContain('Unused: site-builder/pages/orphan.jpg')
+            ->expectsOutputToContain('Unused: site-builder/branding/unused-logo.png')
+            ->assertSuccessful();
         Storage::disk('public')->assertExists('site-builder/pages/orphan.jpg');
+        Storage::disk('public')->assertExists('site-builder/branding/unused-logo.png');
 
-        $this->artisan('site-builder:clean-uploads')->expectsOutputToContain('Deleted: site-builder/pages/orphan.jpg')->assertSuccessful();
+        $this->artisan('site-builder:clean-uploads')
+            ->expectsOutputToContain('Deleted: site-builder/pages/orphan.jpg')
+            ->expectsOutputToContain('Deleted: site-builder/branding/unused-logo.png')
+            ->assertSuccessful();
+        Storage::disk('public')->assertMissing('site-builder/branding/unused-logo.png');
 
         // hall.jpg and shared.jpg (from setUp) aren't used by anything either.
         foreach (['orphan.jpg', 'hall.jpg', 'shared.jpg'] as $file) {
             Storage::disk('public')->assertMissing("site-builder/pages/{$file}");
         }
-        foreach (['site-builder/pages/kitchen.jpg', 'site-builder/pages/share.jpg', 'site-builder/pages/in-library.jpg', 'site-builder/pages/in-revision.jpg', 'site-builder/branding/logo.png'] as $path) {
+        foreach (['site-builder/pages/kitchen.jpg', 'site-builder/pages/share.jpg', 'site-builder/pages/in-library.jpg', 'site-builder/pages/in-revision.jpg', 'site-builder/branding/logo.png', 'site-builder/branding/hero.jpg', 'site-builder/branding/app-image.png'] as $path) {
             Storage::disk('public')->assertExists($path);
         }
 

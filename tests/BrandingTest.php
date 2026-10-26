@@ -147,6 +147,12 @@ class BrandingTest extends TestCase
         $this->assertStringEndsWith('banner.jpg', $inner['image']);
         $this->assertSame(1.0, $inner['overlay']['opacity']);
         $this->assertSame('center', $inner['imagePosition']);
+
+        // A hand-edited image path outside the Branding folder (or climbing out of it) isn't shown.
+        foreach (['site-builder/pages/hall.jpg', 'site-builder/branding/../../.env', 'elsewhere/banner.jpg'] as $path) {
+            $this->branding->save([Branding::bannerKey('inner', 'image') => $path]);
+            $this->assertNull($this->branding->banner('inner')['image'], $path);
+        }
     }
 
     public function test_unreadable_banner_text_and_image_overlay_warnings(): void

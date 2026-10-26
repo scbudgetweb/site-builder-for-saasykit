@@ -231,10 +231,24 @@ class BrandingStyle
 
     /**
      * The button style ("1"–"4") chosen in a host app's own setting for one of its buttons. Not chosen: style 1.
+     * "auto" picks the light- or dark-background style, like a block button set to Automatic.
      */
-    public function siteButtonSlot(string $key): string
+    public function siteButtonSlot(string $key, bool $isOnDarkBackground = false): string
     {
-        return $this->validSlot($this->settings->string($key), '1');
+        $style = $this->settings->string($key);
+
+        return $style === BrandingField::AUTOMATIC_BUTTON_STYLE ? $this->buttonSlot(null, $isOnDarkBackground) : $this->validSlot($style, '1');
+    }
+
+    /**
+     * The button style ("1"–"4") of a button style field in the app's own Branding section (BrandingField::buttonStyle()),
+     * using the field's default until one is chosen. Automatic suits the background the button sits on.
+     */
+    public function appButtonSlot(string $key, bool $isOnDarkBackground = false): string
+    {
+        $style = $this->settings->appValue($key);
+
+        return $this->buttonSlot(is_string($style) && $style !== BrandingField::AUTOMATIC_BUTTON_STYLE ? $style : null, $isOnDarkBackground);
     }
 
     /**

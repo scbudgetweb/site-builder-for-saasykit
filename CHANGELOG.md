@@ -1,5 +1,23 @@
 # Changelog
 
+## 1.2.0 - 2026-10-26
+
+- **Navigation: saved menus are the site's own.**
+  - Only standard links that apply to the site are offered in the picker and put in the standard menus. `Link::isAvailable()` decides both.
+  - **Pricing** (`/#pricing`) now applies only when the home page visitors see has a pricing section: a block anchored `pricing` on the page replacing the home page, or `id="pricing"` in the home view's template, as in the theme's and SaaSykit's. A site whose home page has no pricing section no longer gets a Pricing link that goes nowhere.
+  - A link that no longer applies, or was removed, stays in a saved menu's data and is just hidden. The picker shows it as *(not available on this site, so hidden)*, so the menu still saves.
+- `SiteBuilder::withoutLinks(array $keys)` removes standard (or any) links entirely, whichever provider boots first.
+- **Reset to default is honest.** Its confirmation lists the links the header and footer will get, describes the mobile menu, and says it can't be undone. It now saves the standard menus as the site's own rather than clearing them, so a later package update or a newly available link doesn't change them.
+- **Branding sections.** `SiteBuilder::brandingSection($key, $title, $fields, $description, $icon)` adds the app's own tab to Website › Branding, after the package's.
+  - `BrandingField` offers text, textarea, toggle, select, colour (CSS variables and the contrast warning), button style (the four styles plus Automatic), image and banner (the same settings as the hero and inner banners).
+  - Values are saved as `branding.app_{key}`, validated in the form, and re-checked every time they're read: `Branding::appValue()`, `Branding::appImageUrl()` and `BrandingStyle::appButtonSlot()`.
+  - App banners render with `<x-site-builder::banner variant="app_{key}">`.
+  - Images go in the Branding upload folder, are deleted when replaced, and are never touched by `site-builder:clean-uploads`.
+  - Keys follow the `brandingColours()` rules, and a key two fields (or a colour) would share throws. `brandingColours()` is unchanged.
+- `BrandingStyle::siteButtonSlot()` takes an optional `$isOnDarkBackground` and understands `auto`. With nothing chosen it still gives style 1.
+- **`site-builder:clean-uploads` also clears the Branding folder** (`site-builder/branding` by default). It deletes images older than a day that no Branding setting uses: images uploaded and never saved, from the package's settings or an app's sections. Logos, icons, the share image and banner images that are saved are kept, even for a banner currently set to a gradient. `--dry-run` lists them too.
+- **Behaviour change: banner images must be Branding uploads.** The hero and inner banners (and app banners) only show a saved image when it's a file in the Branding upload folder. A hand-edited path anywhere else on the disk, or one containing `..`, now shows the banner's colour or gradient instead (lesson 11). Images uploaded on Website › Branding are always in that folder, so sites that only used the Branding page see no change.
+
 ## 1.1.0 - 2026-10-26
 
 - **An app's own theme views win over the package's theme.** When `config/view.php`'s `paths` includes the app's theme folder (`resources/views/theme`, set by the new `site-builder.theme.app_path`), the package's theme goes straight after it instead of in front of everything. Views are then found in the app's theme folder first, then the package's theme, then SaaSykit's views, so an app can override one theme view (the header, the head) and keep the rest. Apps without that folder in `paths` see no change. The README and the extending guide explain how to override a view and how to keep a copy up to date after package updates.

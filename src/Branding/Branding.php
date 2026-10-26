@@ -278,6 +278,77 @@ class Branding
     }
 
     /**
+     * The app's own Branding sections (SiteBuilder::brandingSection()).
+     *
+     * @return array<string, BrandingSection>
+     */
+    public function appSections(): array
+    {
+        return app(SiteBuilder::class)->registeredBrandingSections();
+    }
+
+    /**
+     * Every field in the app's own sections, by key.
+     *
+     * @return array<string, BrandingField>
+     */
+    public function appFields(): array
+    {
+        return array_merge([], ...array_map(fn (BrandingSection $section): array => $section->fields, array_values($this->appSections())));
+    }
+
+    /**
+     * The setting keys the app's own sections save.
+     *
+     * @return array<int, string>
+     */
+    public function appSectionKeys(): array
+    {
+        return array_merge([], ...array_map(fn (BrandingSection $section): array => $section->settingKeys(), array_values($this->appSections())));
+    }
+
+    /**
+     * A setting from the app's own sections, re-checked (BrandingField::clean()): the saved value if it's valid,
+     * otherwise the field's default. Null for an unknown key or a banner (use banner('app_{key}')).
+     */
+    public function appValue(string $key): mixed
+    {
+        $field = $this->appFields()[$key] ?? null;
+
+        if ($field === null || $field->type === BrandingField::BANNER) {
+            return null;
+        }
+
+        return $field->clean($this->get($field->settingKey())) ?? $field->getDefault();
+    }
+
+    /**
+     * The URL of an image from the app's own sections, or null when none is saved (or the path isn't a Branding upload).
+     */
+    public function appImageUrl(string $key): ?string
+    {
+        $field = $this->appFields()[$key] ?? null;
+        $path = $field?->type === BrandingField::IMAGE ? $field->clean($this->get($field->settingKey())) : null;
+
+        return $path !== null ? $this->uploadUrl($path) : null;
+    }
+
+    /**
+     * Every banner: the hero and inner banners, then each banner in the app's own sections ("app_{key}").
+     *
+     * @return array<int, string>
+     */
+    public function banners(): array
+    {
+        $appBanners = array_map(
+            fn (BrandingField $field): string => $field->bannerName(),
+            array_filter($this->appFields(), fn (BrandingField $field): bool => $field->type === BrandingField::BANNER),
+        );
+
+        return [...self::BANNERS, ...array_values($appBanners)];
+    }
+
+    /**
      * Text colour => background colour setting pairs checked for readable contrast: the built-in ones and the app's.
      *
      * @return array<string, string>
@@ -289,6 +360,12 @@ class Branding
         foreach ($this->appColourGroups() as $group) {
             foreach ($group->contrastPairs as $text => $background) {
                 $pairs[ColourGroup::settingKey($text)] = ColourGroup::settingKey($background);
+            }
+        }
+
+        foreach ($this->appFields() as $field) {
+            if ($field->type === BrandingField::COLOUR && $field->getContrastWith() !== null) {
+                $pairs[$field->settingKey()] = ColourGroup::settingKey($field->getContrastWith());
             }
         }
 
@@ -332,7 +409,7 @@ class Branding
      */
     public function save(array $values): void
     {
-        $allowed = array_flip([...self::keys(), ...$this->appColourKeys()]);
+        $allowed = array_flip([...self::keys(), ...$this->appColourKeys(), ...$this->appSectionKeys()]);
 
         $this->settings->set(array_filter(
             $values,
@@ -487,7 +564,15 @@ class Branding
             }
         }
 
-        foreach (self::BANNERS as $banner) {
+        foreach ($this->appFields() as $field) {
+            if ($field->type === BrandingField::COLOUR && ($color = $this->appValue($field->key)) !== null) {
+                foreach ($field->getVariables() as $cssVariable) {
+                    $variables[] = "{$cssVariable}: {$color}";
+                }
+            }
+        }
+
+        foreach ($this->banners() as $banner) {
             foreach (['heading', 'subtitle'] as $text) {
                 if (Colour::isValidHex($color = $this->string(self::bannerKey($banner, "{$text}_color")))) {
                     $variables[] = "--color-sb-{$banner}-{$text}: {$color}";
@@ -549,7 +634,7 @@ class Branding
      */
     public function banner(string $banner, ?string $imageUrl = null, ?array $imageOverlay = null, ?string $imagePosition = null): array
     {
-        $values = $this->bannerValues(in_array($banner, self::BANNERS, true) ? $banner : 'inner');
+        $values = $this->bannerValues(in_array($banner, $this->banners(), true) ? $banner : 'inner');
 
         if ($imageUrl !== null) {
             return [
@@ -563,7 +648,8 @@ class Branding
 
         $color = $this->solidBackgroundColor($values);
 
-        $configImage = ($values['background_type'] ?? null) === self::BANNER_TYPE_IMAGE && is_string($values['image'] ?? null) && $values['image'] !== ''
+        // A banner's image must be a Branding upload, not any file on the disk (lesson 11).
+        $configImage = ($values['background_type'] ?? null) === self::BANNER_TYPE_IMAGE && BrandingField::isBrandingUpload($values['image'] ?? null)
             ? $this->uploadUrl($values['image'])
             : null;
 
@@ -682,6 +768,20 @@ class Branding
         $path = $this->string(self::SHARE_IMAGE);
 
         return $path ? $this->uploadUrl($path) : null;
+    }
+
+    /**
+     * The Branding uploads that settings use (logos, icons, the share image, banner images and app sections' images):
+     * every saved Branding value that's a file in the Branding upload folder. site-builder:clean-uploads keeps these.
+     *
+     * @return array<int, string>
+     */
+    public function usedUploads(): array
+    {
+        return array_values(array_unique(array_filter(
+            $this->settings->startingWith('branding.'),
+            fn (mixed $value): bool => BrandingField::isBrandingUpload($value),
+        )));
     }
 
     public function uploadDisk(): string

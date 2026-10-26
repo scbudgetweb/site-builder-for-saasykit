@@ -126,7 +126,9 @@ class NavigationMenusTest extends PageTestCase
 
         $this->menus()->reset();
 
-        $this->assertSame(NavigationMenus::defaultHeader(), $this->menus()->headerItems());
+        // Saved as the site's own menus, so nothing changes them later.
+        $this->assertTrue(app(Settings::class)->has(NavigationMenus::HEADER_KEY));
+        $this->assertSame(['Pricing', 'Blog'], array_column($this->menus()->header(), 'label'));
         $this->assertTrue($this->menus()->mobile()['show_logo']);
     }
 
@@ -134,7 +136,7 @@ class NavigationMenusTest extends PageTestCase
     {
         app(Settings::class)->set([NavigationMenus::HEADER_KEY => 'nonsense', NavigationMenus::FOOTER_KEY => 'nonsense', NavigationMenus::MOBILE_KEY => 'nonsense']);
 
-        $this->assertSame(NavigationMenus::defaultHeader(), $this->menus()->headerItems());
+        $this->assertSame($this->menus()->standardHeader(), $this->menus()->headerItems());
         $this->assertSame('Blog', $this->menus()->footer()['columns'][0]['links'][0]['label']);
         $this->assertSame('top', $this->menus()->mobile()['open_from']);
     }

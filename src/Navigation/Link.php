@@ -43,7 +43,8 @@ final class Link
     }
 
     /**
-     * When the link shows (e.g. only while the roadmap is switched on). Menus skip it otherwise.
+     * When the link applies (e.g. only while the roadmap is switched on). Otherwise it isn't offered in the admin
+     * picker or the standard menus, and a menu that already has it skips it.
      *
      * @param  Closure(): bool  $condition
      */
@@ -62,6 +63,15 @@ final class Link
     public function descriptionText(): ?string
     {
         return $this->description === null ? null : __($this->description);
+    }
+
+    /**
+     * Whether the link applies to this site now: its condition passes and its route exists. Only available links are
+     * offered in Website › Navigation and put in the standard menus, and only they show in a menu.
+     */
+    public function isAvailable(): bool
+    {
+        return $this->url() !== null;
     }
 
     /**

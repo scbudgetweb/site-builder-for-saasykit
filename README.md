@@ -49,7 +49,7 @@ Branding (site identity), a plain base theme, pages built from blocks, a block l
    // Straight after SaaSykit's sitemap, which rewrites robots.txt.
    Schedule::command('app:generate-sitemap')->everyOddHour()->then(fn () => Artisan::call('site-builder:sitemap'));
 
-   // Page images nothing uses (older than a day).
+   // Page and Branding images nothing uses (older than a day).
    Schedule::command('site-builder:clean-uploads')->daily();
    ```
 
@@ -103,7 +103,7 @@ Your copy doesn't update with the package. After each package update, check the 
 
 ## Extending it
 
-A host app registers its own blocks, replaceable built-in pages, menu links, live stats, Branding colours, legal pages and cookie-consent checker through the `SiteBuilder` facade:
+A host app registers its own blocks, replaceable built-in pages, menu links (or removes standard ones), live stats, Branding colours and sections, legal pages and cookie-consent checker through the `SiteBuilder` facade:
 
 ```php
 use ScBudgetWeb\SiteBuilder\Facades\SiteBuilder;
@@ -111,8 +111,10 @@ use ScBudgetWeb\SiteBuilder\Facades\SiteBuilder;
 SiteBuilder::blocks([OpeningHoursBlock::class])
     ->slots([Slot::make('contact', 'Contact', fn () => route('contact'))->requires('contact_form')])
     ->links([Link::make('find_a_hall', 'Find a hall', fn () => route('halls.index'))])
+    ->withoutLinks(['pricing'])
     ->stats(['halls' => ['Halls listed', fn () => Hall::count()]])
     ->brandingColours('Booking widget', ['booking_bg' => ['Background colour', '--color-booking-bg']])
+    ->brandingSection('signup', 'Sign-up box', [BrandingField::text('signup_title', 'Title')])
     ->legalPages([LegalPage::make('cookie_policy', 'Cookie Policy', fn () => route('cookie-policy'))])
     ->consentChecker(fn (string $category): bool => CookieConsent::allows($category));
 ```

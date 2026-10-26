@@ -124,3 +124,11 @@ The main colour of each dashboard, such as the admin panel and the customer dash
 Your own CSS for the public website, added last so it wins over everything else. Check the site after saving: CSS can break the layout. For safety, `<`, `@import` and files from other websites aren't allowed; `url()` can point to files on this site (starting with `/`) or inline images.
 
 Blocks have a **CSS classes** setting (Advanced tab) for styling one block with your CSS.
+
+## Your app's own tabs
+
+Your app may add tabs of its own after these, for settings of its own features: for example the text, colours, button style and banner of a sign-up box. They work like the rest of Branding:
+- leave a field blank to keep its standard text or look;
+- button styles offer the four styles from the Buttons tab, plus *Automatic*, which suits the background;
+- colours warn when text may be hard to read;
+- banners have the same settings as the hero and inner banners.

@@ -22,6 +22,14 @@ class ManageNavigationPageTest extends PageTestCase
         ];
     }
 
+    protected function defineRoutes($router): void
+    {
+        parent::defineRoutes($router);
+
+        $router->get('/privacy-policy', fn () => 'Privacy')->name('privacy-policy');
+        $router->get('/terms-of-service', fn () => 'Terms')->name('terms-of-service');
+    }
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -85,7 +93,7 @@ class ManageNavigationPageTest extends PageTestCase
             ->call('save')
             ->assertHasFormErrors(['header.bad.url' => 'regex', 'header.nolabel.label' => 'required', 'header.empty.children']);
 
-        $this->assertSame(NavigationMenus::defaultHeader(), app(NavigationMenus::class)->headerItems());
+        $this->assertSame(app(NavigationMenus::class)->standardHeader(), app(NavigationMenus::class)->headerItems());
     }
 
     public function test_draft_pages_are_marked_in_the_page_picker(): void
@@ -104,9 +112,9 @@ class ManageNavigationPageTest extends PageTestCase
         Livewire::test(ManageNavigation::class)
             ->assertSee('Custom')
             ->callAction(TestAction::make('resetToDefault'))
-            ->assertNotified('The standard header and footer links are back.')
+            ->assertNotified('The menus are now the site builder\'s standard ones.')
             ->assertSchemaStateSet(['mobile.open_from' => 'top']);
 
-        $this->assertSame(NavigationMenus::defaultHeader(), app(NavigationMenus::class)->headerItems());
+        $this->assertSame(['Pricing', 'Blog'], array_column(app(NavigationMenus::class)->header(), 'label'));
     }
 }

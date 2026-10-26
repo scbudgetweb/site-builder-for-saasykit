@@ -2,9 +2,11 @@
 
 namespace ScBudgetWeb\SiteBuilder;
 
+use BackedEnum;
 use Closure;
 use InvalidArgumentException;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
+use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
 use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
 use ScBudgetWeb\SiteBuilder\Navigation\Link;
@@ -27,11 +29,17 @@ class SiteBuilder
     /** @var array<string, Link> */
     private array $links = [];
 
+    /** @var array<string, true> */
+    private array $removedLinks = [];
+
     /** @var array<string, LegalPage> */
     private array $legalPages = [];
 
     /** @var array<string, ColourGroup> */
     private array $brandingColours = [];
+
+    /** @var array<string, BrandingSection> */
+    private array $brandingSections = [];
 
     /** @var array<string, array{0: string, 1: Closure(): (int|float)}> */
     private array $stats = [];
@@ -103,16 +111,34 @@ class SiteBuilder
     }
 
     /**
+     * Removes built-in links (the package's standard ones or anyone's) entirely, e.g. SiteBuilder::withoutLinks(['pricing']):
+     * they're left out of the admin picker and the standard menus, whichever provider boots first. A saved menu that
+     * already has one keeps it in its data, and the menu just doesn't show it.
+     *
+     * @param  array<int, string>  $keys
+     */
+    public function withoutLinks(array $keys): static
+    {
+        foreach ($keys as $key) {
+            $this->removedLinks[$key] = true;
+        }
+
+        return $this;
+    }
+
+    /**
+     * The built-in links, without the removed ones (whether or not they're available right now).
+     *
      * @return array<string, Link>
      */
     public function registeredLinks(): array
     {
-        return $this->links;
+        return array_diff_key($this->links, $this->removedLinks);
     }
 
     public function link(?string $key): ?Link
     {
-        return $key === null ? null : ($this->links[$key] ?? null);
+        return $key === null || isset($this->removedLinks[$key]) ? null : ($this->links[$key] ?? null);
     }
 
     /**
@@ -148,9 +174,69 @@ class SiteBuilder
      */
     public function brandingColours(string $title, array $colours, array $contrastPairs = []): static
     {
-        $this->brandingColours[$title] = ColourGroup::make($title, $colours, $contrastPairs);
+        $group = ColourGroup::make($title, $colours, $contrastPairs);
+        $this->assertNoSharedBrandingKeys(
+            array_map(fn (string $key): string => ColourGroup::settingKey($key), array_keys($group->colours)),
+            except: "colours:{$title}",
+        );
+        $this->brandingColours[$title] = $group;
 
         return $this;
+    }
+
+    /**
+     * The app's own settings, as a tab on Website › Branding after the package's, e.g.
+     * SiteBuilder::brandingSection('signup', 'Sign-up box', [BrandingField::text('signup_title', 'Title'), ...]).
+     * Each field is saved as "branding.app_{key}" and read back, re-checked, with Branding::appValue(). Keys use a-z,
+     * 0-9 and _ only, and can't be saved by two fields (or a field and a brandingColours() colour). A section with
+     * the same key as an earlier one replaces it.
+     *
+     * @param  array<int, BrandingField>  $fields
+     */
+    public function brandingSection(string $key, string $title, array $fields, ?string $description = null, string|BackedEnum|null $icon = null): static
+    {
+        $section = BrandingSection::make($key, $title, $fields, $description, $icon);
+        $this->assertNoSharedBrandingKeys($section->settingKeys(), except: "section:{$key}");
+        $this->brandingSections[$key] = $section;
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, BrandingSection>
+     */
+    public function registeredBrandingSections(): array
+    {
+        return $this->brandingSections;
+    }
+
+    /**
+     * @param  array<int, string>  $settingKeys
+     * @param  string  $except  the group or section being replaced, whose own keys don't count
+     */
+    private function assertNoSharedBrandingKeys(array $settingKeys, string $except): void
+    {
+        $taken = [];
+
+        foreach ($this->brandingColours as $title => $group) {
+            if ("colours:{$title}" !== $except) {
+                foreach (array_keys($group->colours) as $colourKey) {
+                    $taken[ColourGroup::settingKey($colourKey)] = true;
+                }
+            }
+        }
+
+        foreach ($this->brandingSections as $sectionKey => $section) {
+            if ("section:{$sectionKey}" !== $except) {
+                $taken += array_fill_keys($section->settingKeys(), true);
+            }
+        }
+
+        foreach ($settingKeys as $settingKey) {
+            if (isset($taken[$settingKey])) {
+                throw new InvalidArgumentException("Branding setting [{$settingKey}] is already used by another Branding section or colour.");
+            }
+        }
     }
 
     /**

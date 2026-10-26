@@ -20,6 +20,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
+use Illuminate\Support\HtmlString;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page as SitePage;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
@@ -92,14 +93,17 @@ class ManageNavigation extends Page
                 ->icon(Heroicon::OutlinedArrowUturnLeft)
                 ->color('gray')
                 ->requiresConfirmation()
-                ->modalHeading(__('Reset the menus?'))
-                ->modalDescription(__('This puts back the standard header and footer links and mobile menu settings. Your changes to the menus will be lost.'))
-                ->modalSubmitActionLabel(__('Reset'))
+                ->modalIcon(Heroicon::OutlinedExclamationTriangle)
+                ->modalIconColor('danger')
+                ->modalHeading(__('Reset the menus to the standard ones?'))
+                ->modalDescription(fn (NavigationMenus $menus): Htmlable => $this->resetDescription($menus))
+                ->modalSubmitActionLabel(__('Replace my menus'))
+                ->color('gray')
                 ->action(function (NavigationMenus $menus): void {
                     $menus->reset();
                     $this->fillForm($menus);
 
-                    Notification::make()->title(__('The standard header and footer links are back.'))->success()->send();
+                    Notification::make()->title(__('The menus are now the site builder\'s standard ones.'))->success()->send();
                 }),
         ];
     }
@@ -145,6 +149,27 @@ class ManageNavigation extends Page
             ->title(__('Navigation saved'))
             ->success()
             ->send();
+    }
+
+    /**
+     * Exactly what Reset to default does: which links each menu gets, and that it can't be undone.
+     */
+    private function resetDescription(NavigationMenus $menus): Htmlable
+    {
+        $labels = $menus->standardMenuLabels();
+        $list = fn (array $items): string => $items === [] ? e(__('no links')) : e(implode(', ', $items));
+
+        return new HtmlString(
+            '<p>'.e(__('This replaces your current header, footer and mobile menu with the site builder\'s standard ones:')).'</p>'
+            .'<ul class="mt-2 list-disc ps-5 text-start">'
+            .'<li><strong>'.e(__('Header')).':</strong> '.$list($labels['header']).'</li>'
+            .'<li><strong>'.e(__('Footer')).':</strong> '.$list($labels['footer']).', '.e(filled($menus->standardFooter()['tagline'])
+                ? __('with the site description and the standard copyright line')
+                : __('with the standard copyright line')).'</li>'
+            .'<li><strong>'.e(__('Mobile menu')).':</strong> '.e(__('opens from the top, with the logo and no tagline')).'</li>'
+            .'</ul>'
+            .'<p class="mt-2">'.e(__('Your own links, dropdowns and mega menus are removed. This can\'t be undone.')).'</p>'
+        );
     }
 
     private function fillForm(NavigationMenus $menus): void
@@ -297,7 +322,8 @@ class ManageNavigation extends Page
                     ->visible(fn (Get $get): bool => $get('type') === NavigationMenus::TYPE_PAGE),
                 Select::make('link')
                     ->label(__('Built-in page'))
-                    ->options(fn (NavigationMenus $menus): array => $menus->builtinOptions())
+                    // Only links that apply to this site, plus this item's current one (marked as hidden) if it no longer does.
+                    ->options(fn (NavigationMenus $menus, ?string $state): array => $menus->builtinOptions($state))
                     ->searchable()
                     ->required()
                     ->visible(fn (Get $get): bool => $get('type') === NavigationMenus::TYPE_BUILTIN),

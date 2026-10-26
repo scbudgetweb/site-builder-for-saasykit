@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
 use ScBudgetWeb\SiteBuilder\Pages\PageRevisions;
@@ -223,6 +224,48 @@ class Page extends Model
     public static function blocksContain(array $blocks, string $type): bool
     {
         return self::listContains(app(BlockLibrary::class)->expand($blocks), $type);
+    }
+
+    /**
+     * Whether a block on the page, at the top level or in a Section's rows, has this anchor (its Advanced › Anchor
+     * ID, or the block's default anchor), so a link to #{anchor} has somewhere to go.
+     */
+    public function hasAnchor(string $anchor): bool
+    {
+        return self::listHasAnchor($this->blockList(), $anchor);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $blocks
+     */
+    private static function listHasAnchor(array $blocks, string $anchor): bool
+    {
+        $registry = app(BlockRegistry::class);
+
+        foreach (self::validBlocks($blocks) as $block) {
+            $blockClass = $registry->find($block['type']);
+
+            if ($blockClass === null || ! $blockClass::hasAppearance()) {
+                continue;
+            }
+
+            $saved = $block['data']['appearance']['anchor'] ?? null;
+            $blockAnchor = is_string($saved) && preg_match('/^[A-Za-z0-9_-]+$/', $saved) ? $saved : $blockClass::defaultAnchor();
+
+            if ($blockAnchor === $anchor) {
+                return true;
+            }
+
+            if ($block['type'] === SectionBlock::NAME) {
+                foreach (SectionBlock::rows($block['data']) as $row) {
+                    if (self::listHasAnchor($row['blocks'], $anchor)) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     /**

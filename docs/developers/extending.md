@@ -82,8 +82,24 @@ SiteBuilder::links([
 
 How links behave:
 - The URL is worked out on every request.
-- A link whose condition fails, or whose URL closure throws (for example a missing route), simply doesn't show.
+- A link **applies** when its condition passes and its URL closure doesn't throw (for example a missing route). Only links that apply are offered in the admin picker and put in the standard menus.
+- A saved menu that has a link which no longer applies keeps it in its data. The menu just doesn't show it, and the picker shows it as *(not available on this site, so hidden)*, so the menu still saves.
 - Never change a key once menus use it.
+
+When the standard links apply:
+- **Pricing** goes to `/#pricing`, so it applies only when the home page visitors see has that section: a block anchored `pricing` on the page replacing the home page (in a Section's rows too), or otherwise `id="pricing"` in the home view's template. The theme's home and SaaSykit's both have one.
+- **Roadmap** applies while `app.roadmap_enabled` is on.
+- The others apply when their route exists.
+
+To take standard links out entirely, whichever provider boots first:
+
+```php
+SiteBuilder::withoutLinks(['pricing', 'roadmap']);
+```
+
+A removed link is left out of the picker and the standard menus, and hidden in any saved menu (its data is kept). To change a standard link instead, register your own with the same key.
+
+**Saved menus are the site's own.** With nothing saved, the menus are the standard ones that apply. Once an admin saves Website › Navigation, a package update or a newly available link never changes them. **Reset to default** lists the standard links, says it can't be undone, and then saves the standard menus as the site's own.
 
 ## Live stats
 
@@ -114,6 +130,45 @@ How these colours work:
 - Each colour is saved as `branding.app_{key}`.
 - When it's set, it's written as `{variable}: #hex` into the site's `:root` style. Give your variables a default in your own CSS, and use them in your views. With Tailwind 4, define them in `@theme` (for example `--color-booking-bg: #ffffff;`) to get `bg-booking-bg`.
 - Keys may only use `a-z`, `0-9` and `_`, and variables must look like `--name`. Anything else throws, so nothing unsafe reaches the page.
+
+## Branding sections
+
+Give your own features settings that admins change on Website › Branding: text, switches, choices, colours, button styles, images and banners. Each section is a tab after the package's.
+
+```php
+use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
+
+SiteBuilder::brandingSection('signup', 'Sign-up box', [
+    BrandingField::text('signup_title', 'Title', maxLength: 80)->default('Stay in touch'),
+    BrandingField::textarea('signup_text', 'Text under the title'),
+    BrandingField::toggle('signup_show_privacy', 'Show the privacy note')->default(true),
+    BrandingField::select('signup_layout', 'Layout', ['stacked' => 'Stacked', 'inline' => 'Side by side'])->default('stacked'),
+    BrandingField::colour('signup_bg', 'Background colour', '--color-signup-bg'),
+    BrandingField::colour('signup_text_color', 'Text colour', '--color-signup-text')->contrastWith('signup_bg'),
+    BrandingField::buttonStyle('signup_button', 'Button style'),
+    BrandingField::image('signup_image', 'Image'),
+    BrandingField::banner('signup_banner', 'Sign-up banner')->helperText('Behind the sign-up box.'),
+], description: 'The sign-up box at the foot of each page.', icon: 'heroicon-o-envelope');
+```
+
+| Field | Saved as | Read it with |
+|---|---|---|
+| `text`, `textarea` | `branding.app_{key}` | `Branding::appValue($key)`: the text, or its default while blank |
+| `toggle` | `branding.app_{key}` (`true` / `false`) | `appValue($key)`: a bool |
+| `select` | `branding.app_{key}` | `appValue($key)`: one of the options |
+| `colour` | `branding.app_{key}` | `appValue($key)`. Its CSS variables are set like `brandingColours()` ones, and `contrastWith()` adds the low-contrast warning |
+| `buttonStyle` | `branding.app_{key}` (`auto`, `1`–`4`) | `BrandingStyle::appButtonSlot($key, $isOnDarkBackground)`: the style for `site-button site-button-{slot}`. Automatic suits the background |
+| `image` | `branding.app_{key}` (a path) | `Branding::appImageUrl($key)` |
+| `banner` | `branding.app_{key}_{field}`, like the hero and inner banners | `<x-site-builder::banner variant="app_{key}">`. Its text colours fall back to the inner banner's |
+
+Each field takes `->helperText()` and `->default()`. Image fields also take `->fileTypes()` (JPG, PNG and WebP by default) and `->maxSize()` (2 MB by default).
+
+How they behave:
+- Every value is checked again each time it's read (lesson 11). Text is trimmed and kept within its length. Choices and button styles must be listed ones, and colours 6-digit hex. Images must be a file in the Branding upload folder. Anything else reads as the default (or `null`).
+- The form validates the same way before saving.
+- Images and banner images go on the package's upload disk in its Branding folder (`site-builder/branding` by default). A replaced or removed image is deleted when Branding is saved. `site-builder:clean-uploads` keeps every image a Branding setting uses, and deletes ones that were uploaded but never saved.
+- Keys follow the `brandingColours()` rules: `a-z`, `0-9` and `_` only. A key two fields would save (including a banner's own settings, or a `brandingColours()` colour) throws. A section with the same key as an earlier one replaces it.
+- `brandingColours()` still works as before. Use it for a few colours on Header & footer, and a section for anything more.
 
 ## Legal pages
 
@@ -159,6 +214,6 @@ Schedule these two commands in the host:
 | Command | When |
 |---|---|
 | `site-builder:sitemap` | Straight after SaaSykit's `app:generate-sitemap`, which rewrites `robots.txt` |
-| `site-builder:clean-uploads` | Once a day. It deletes page images nothing uses that are older than a day; `--dry-run` lists them |
+| `site-builder:clean-uploads` | Once a day. It deletes images nothing uses that are older than a day: page images no page, library block or revision uses, and Branding images no Branding setting uses (the package's or the app's sections'). `--dry-run` lists them |
 
 If your host's cron can skip minutes, avoid schedules pinned to one minute (`dailyAt()`, `hourly()`). Hall Booker uses its own `atMostEvery()` macro for this.

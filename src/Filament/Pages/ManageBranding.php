@@ -11,12 +11,14 @@ use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Section;
@@ -29,6 +31,8 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
+use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
+use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -138,7 +142,7 @@ class ManageBranding extends Page
             $state[Str::after($key, 'branding.')] ??= $defaultVariant;
         }
 
-        foreach (Branding::BANNERS as $banner) {
+        foreach ($branding->banners() as $banner) {
             $state["{$banner}_background_type"] ??= Branding::BANNER_TYPE_GRADIENT;
             $state["{$banner}_gradient_direction"] ??= Colour::DEFAULT_GRADIENT_DIRECTION;
             $state["{$banner}_image_position"] ??= 'center';
@@ -163,6 +167,18 @@ class ManageBranding extends Page
             $state["button_{$slot}_name"] ??= BrandingStyle::defaultButtonName($slot);
             $state["button_{$slot}_uppercase"] = $branding->isOn(BrandingStyle::buttonKey($slot, 'uppercase'));
             $state["button_{$slot}_lift"] = $branding->isOn(BrandingStyle::buttonKey($slot, 'lift'));
+        }
+
+        // The app's own sections open on their checked values; choices on their defaults. Text defaults are placeholders.
+        foreach ($branding->appFields() as $field) {
+            // A banner's settings were filled with the hero and inner banners'.
+            if ($field->type === BrandingField::BANNER) {
+                continue;
+            }
+
+            $state[self::appFieldName($field)] = in_array($field->type, [BrandingField::TOGGLE, BrandingField::SELECT, BrandingField::BUTTON_STYLE], true)
+                ? $branding->appValue($field->key)
+                : $field->clean($branding->get($field->settingKey()));
         }
 
         $this->form->fill($state);
@@ -332,6 +348,8 @@ class ManageBranding extends Page
                                                 }),
                                         ]),
                                 ]),
+                            // The app's own sections (SiteBuilder::brandingSection()), a tab each, after the package's.
+                            ...array_values(array_map(fn (BrandingSection $section): Tab => $this->appSectionTab($section), $branding->appSections())),
                         ]),
                 ])
                     ->livewireSubmitHandler('save')
@@ -352,7 +370,7 @@ class ManageBranding extends Page
 
         $previousUploads = [];
 
-        foreach (self::UPLOAD_FIELDS as $field) {
+        foreach ($this->uploadFields() as $field) {
             $previousUploads[$field] = $branding->string($this->fields()[$field]);
         }
 
@@ -375,7 +393,14 @@ class ManageBranding extends Page
             }
         }
 
-        foreach (Branding::BANNERS as $banner) {
+        // The app's own toggles keep "off" (false), because their default may be "on".
+        foreach ($branding->appFields() as $field) {
+            if ($field->type === BrandingField::TOGGLE && array_key_exists(self::appFieldName($field), $data)) {
+                $values[$field->settingKey()] = (bool) $data[self::appFieldName($field)];
+            }
+        }
+
+        foreach ($branding->banners() as $banner) {
             if (array_key_exists("{$banner}_overlay_enabled", $data)) {
                 $values[Branding::bannerKey($banner, 'overlay_enabled')] = $data["{$banner}_overlay_enabled"] ? true : null;
             }
@@ -404,6 +429,7 @@ class ManageBranding extends Page
         $keys = [
             ...Branding::keys(),
             ...app(Branding::class)->appColourKeys(),
+            ...app(Branding::class)->appSectionKeys(),
             ...array_map(fn (string $panelId): string => Branding::panelColorKey($panelId), $this->panelIds()),
         ];
 
@@ -440,10 +466,10 @@ class ManageBranding extends Page
                 ->send();
         }
 
-        foreach (Branding::BANNERS as $banner) {
+        foreach ($branding->banners() as $banner) {
             if ($branding->bannerImageNeedsOverlay($this->bannerState($banner, $data))) {
                 Notification::make()
-                    ->title(__(':banner banner text may be hard to read', ['banner' => __(self::BANNER_SECTIONS[$banner][0])]))
+                    ->title(__(':banner banner text may be hard to read', ['banner' => $this->bannerTitle($banner)]))
                     ->body(__('Text can be hard to read on a busy image. Turn on the overlay at :opacity% or more.', ['opacity' => Colour::MIN_READABLE_OVERLAY_OPACITY]))
                     ->warning()
                     ->persistent()
@@ -502,6 +528,106 @@ class ManageBranding extends Page
     }
 
     /**
+     * An app's own Branding section (SiteBuilder::brandingSection()) as a tab: its settings, then a section per banner.
+     */
+    private function appSectionTab(BrandingSection $section): Tab
+    {
+        $fields = array_filter($section->fields, fn (BrandingField $field): bool => $field->type !== BrandingField::BANNER);
+        $banners = array_filter($section->fields, fn (BrandingField $field): bool => $field->type === BrandingField::BANNER);
+
+        return Tab::make(__($section->title))
+            ->icon($section->icon ?? 'heroicon-o-puzzle-piece')
+            ->schema([
+                ...($fields === [] ? [] : [
+                    Section::make(__($section->title))
+                        ->description($section->description === null ? null : __($section->description))
+                        ->columns(2)
+                        ->schema(array_values(array_map(fn (BrandingField $field): Component => $this->appFieldComponent($field), $fields))),
+                ]),
+                ...array_values(array_map(fn (BrandingField $field): Section => $this->bannerSection($field->bannerName()), $banners)),
+            ]);
+    }
+
+    /**
+     * One setting in an app's own section, with the same checks as the package's own: lengths, listed choices, hex
+     * colours (with the contrast warning), the Branding button styles and image uploads.
+     */
+    private function appFieldComponent(BrandingField $field): Component
+    {
+        $name = self::appFieldName($field);
+        $label = __($field->label);
+        $default = $field->getDefault();
+        $options = fn (): array => array_map(fn (string $option): string => __($option), $field->getOptions());
+
+        $component = match ($field->type) {
+            BrandingField::TEXT => TextInput::make($name)->label($label)->maxLength($field->getMaxLength())
+                ->placeholder(is_string($default) ? __($default) : null),
+            BrandingField::TEXTAREA => Textarea::make($name)->label($label)->rows(3)->maxLength($field->getMaxLength())
+                ->placeholder(is_string($default) ? __($default) : null)
+                ->columnSpanFull(),
+            BrandingField::TOGGLE => Toggle::make($name)->label($label)->columnSpanFull(),
+            BrandingField::SELECT => Select::make($name)->label($label)->options($options)->in(array_keys($field->getOptions()))
+                ->selectablePlaceholder($default === null),
+            BrandingField::COLOUR => $this->colorField($name, $label)
+                ->live()
+                ->helperText(function (Get $get, ?string $state) use ($name, $field): ?string {
+                    $backgroundField = $this->contrastBackgroundField($name);
+
+                    return $backgroundField !== null && $this->isUnreadable($state, $get($backgroundField))
+                        ? __('Warning: this may be hard to read on its background colour.')
+                        : $field->getHelperText();
+                }),
+            BrandingField::BUTTON_STYLE => Select::make($name)->label($label)
+                ->options(fn (): array => [BrandingField::AUTOMATIC_BUTTON_STYLE => __('Automatic (suits the background)')] + app(BrandingStyle::class)->buttonNames())
+                ->in([BrandingField::AUTOMATIC_BUTTON_STYLE, ...array_map('strval', BrandingStyle::BUTTON_SLOTS)])
+                ->selectablePlaceholder(false),
+            BrandingField::IMAGE => $this->uploadField($name, $label, $field->getFileTypes(), $field->getMaxSize())->image(),
+        };
+
+        // A colour's helper text is set above, with its contrast warning.
+        return $field->type === BrandingField::COLOUR || $field->getHelperText() === null ? $component : $component->helperText($field->getHelperText());
+    }
+
+    private static function appFieldName(BrandingField $field): string
+    {
+        return Str::after($field->settingKey(), 'branding.');
+    }
+
+    /**
+     * The hero and inner banners' section titles, or an app banner's label.
+     */
+    private function bannerTitle(string $banner): string
+    {
+        if (isset(self::BANNER_SECTIONS[$banner])) {
+            return __(self::BANNER_SECTIONS[$banner][0]);
+        }
+
+        $field = collect(app(Branding::class)->appFields())->first(fn (BrandingField $field): bool => $field->type === BrandingField::BANNER && $field->bannerName() === $banner);
+
+        return $field ? __($field->label) : Str::headline($banner);
+    }
+
+    /**
+     * Every upload field: the package's, and the app's images and banner images.
+     *
+     * @return array<int, string>
+     */
+    private function uploadFields(): array
+    {
+        $appUploads = [];
+
+        foreach (app(Branding::class)->appFields() as $field) {
+            match ($field->type) {
+                BrandingField::IMAGE => $appUploads[] = self::appFieldName($field),
+                BrandingField::BANNER => $appUploads[] = "{$field->bannerName()}_image",
+                default => null,
+            };
+        }
+
+        return [...self::UPLOAD_FIELDS, ...$appUploads];
+    }
+
+    /**
      * @param  array<string, string>  $fonts
      */
     private function fontSelect(string $name, string $label, array $fonts): Select
@@ -514,8 +640,11 @@ class ManageBranding extends Page
 
     private function bannerSection(string $banner): Section
     {
-        [$title, $description] = self::BANNER_SECTIONS[$banner];
         $branding = app(Branding::class);
+        $title = $this->bannerTitle($banner);
+        $description = isset(self::BANNER_SECTIONS[$banner])
+            ? __(self::BANNER_SECTIONS[$banner][1])
+            : (collect($branding->appFields())->first(fn (BrandingField $field): bool => $field->type === BrandingField::BANNER && $field->bannerName() === $banner)?->getHelperText() ?? '');
 
         $isImage = fn (Get $get): bool => $get("{$banner}_background_type") === Branding::BANNER_TYPE_IMAGE;
         $isColor = fn (Get $get): bool => $get("{$banner}_background_type") === Branding::BANNER_TYPE_COLOR;
@@ -527,8 +656,8 @@ class ManageBranding extends Page
             ? __('Warning: text can be hard to read on a busy image. Use an overlay of :opacity% or more.', ['opacity' => Colour::MIN_READABLE_OVERLAY_OPACITY])
             : null;
 
-        return Section::make(__($title))
-            ->description(__($description).' '.__('Leave blank to keep the standard look.'))
+        return Section::make($title)
+            ->description(trim($description.' '.__('Leave blank to keep the standard look.')))
             ->columns(2)
             ->collapsible()
             ->schema([
@@ -630,9 +759,9 @@ class ManageBranding extends Page
     {
         $unreadable = [];
 
-        foreach (Branding::BANNERS as $banner) {
+        foreach ($branding->banners() as $banner) {
             foreach ($branding->unreadableBannerText($this->bannerState($banner, $data)) as $text) {
-                $unreadable[] = __(self::BANNER_SECTIONS[$banner][0]).' › '.__($text === 'heading' ? 'Heading colour' : 'Subtitle colour');
+                $unreadable[] = $this->bannerTitle($banner).' › '.__($text === 'heading' ? 'Heading colour' : 'Subtitle colour');
             }
         }
 
@@ -676,6 +805,17 @@ class ManageBranding extends Page
 
                 if ($backgroundField !== null && $this->isUnreadable($data[$name] ?? null, $data[$backgroundField] ?? null)) {
                     $unreadable[] = __($group->title).' › '.__($colour['label']);
+                }
+            }
+        }
+
+        foreach (app(Branding::class)->appSections() as $section) {
+            foreach ($section->fields as $field) {
+                $name = self::appFieldName($field);
+                $backgroundField = $field->type === BrandingField::COLOUR ? $this->contrastBackgroundField($name) : null;
+
+                if ($backgroundField !== null && $this->isUnreadable($data[$name] ?? null, $data[$backgroundField] ?? null)) {
+                    $unreadable[] = __($section->title).' › '.__($field->label);
                 }
             }
         }

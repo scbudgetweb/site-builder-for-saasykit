@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
@@ -191,6 +192,26 @@ class BlockLibraryTest extends PageTestCase
         $this->assertSame(['Join CTA', 'call_to_action', 'Join us'], [$item->name, $item->type, $item->block()['data']['heading']]);
         $this->assertSame([self::linked($item)], array_values($page->fresh()->blocks));
         $this->get('/about-us')->assertSee('Join us');
+    }
+
+    public function test_library_actions_on_block_cards_need_the_library_permissions(): void
+    {
+        $item = $this->item('Linked', 'text', ['content' => '<p>Linked</p>']);
+        $page = $this->page(['blocks' => [self::block('call_to_action', ['heading' => 'Join us']), self::linked($item)]]);
+
+        // An editor who can update pages but not create them, so can't create library blocks either. (The editor
+        // itself needs "view pages", so Make an editable copy, which needs view, stays available.)
+        Gate::define('create pages', fn (): bool => false);
+
+        $component = Livewire::test(EditPage::class, ['record' => $page->getRouteKey()]);
+        [$blockKey, $linkKey] = array_keys($component->get('data.blocks'));
+
+        $component
+            ->assertActionHidden(TestAction::make('saveToLibrary')->schemaComponent('blocks')->arguments(['item' => $blockKey]))
+            ->assertActionVisible(TestAction::make('copySavedBlock')->schemaComponent('blocks')->arguments(['item' => $linkKey]));
+
+        // Filament refuses to run an unauthorised action, so nothing reaches the library.
+        $this->assertSame(['Linked'], SavedBlock::query()->pluck('name')->all());
     }
 
     public function test_save_to_library_without_linking_keeps_the_block_and_works_inside_a_row(): void

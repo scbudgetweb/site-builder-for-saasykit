@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.1 - 2026-10-26
+
+- Security (low): **Save to library** on a block card now needs the library's *create* permission (`create pages` by default). Before, anyone who could edit a page could create library blocks. **Make an editable copy** now checks the library's *view* permission too. Found in a focused security review.
+
 ## 1.0.0 - 2026-10-25
 
 - Renamed to `scbudgetweb/site-builder-for-saasykit` (it was `scbudgetweb/saasykit-site-builder`) before the first release. It's an independent add-on, not made or endorsed by SaaSykit.

@@ -10,10 +10,12 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\CreatePage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
+use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
 /**
@@ -158,6 +160,8 @@ class BlockRegistry
                 ->icon(Heroicon::OutlinedBookmark)
                 ->iconButton()
                 ->color('gray')
+                // Creating a library block needs the library's own create permission, not just the page's update one.
+                ->authorize(fn (): bool => Gate::allows('create', SavedBlock::class))
                 ->modalHeading(__('Save to the block library'))
                 ->modalSubmitActionLabel(__('Save to library'))
                 ->schema([
@@ -202,6 +206,8 @@ class BlockRegistry
                 ->iconButton()
                 ->color('gray')
                 ->requiresConfirmation()
+                // Copying reads the library block's content.
+                ->authorize(fn (): bool => Gate::allows('viewAny', SavedBlock::class))
                 ->modalHeading(__('Make an editable copy?'))
                 ->modalDescription(__('The block is replaced by a copy of the library block, which you can change for this page only. It stops updating from the library.'))
                 ->modalSubmitActionLabel(__('Make a copy'))

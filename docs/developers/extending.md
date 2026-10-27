@@ -101,6 +101,49 @@ A removed link is left out of the picker and the standard menus, and hidden in a
 
 **Saved menus are the site's own.** With nothing saved, the menus are the standard ones that apply. Once an admin saves Website › Navigation, a package update or a newly available link never changes them. **Reset to default** lists the standard links, says it can't be undone, and then saves the standard menus as the site's own.
 
+## Standard menus
+
+With nothing saved in Website › Navigation, and after **Reset to default**, the site uses its standard menus. They're the package's (Blog in the header; Blog, Privacy Policy and Terms of Service in the footer) until your app sets its own:
+
+```php
+use ScBudgetWeb\SiteBuilder\Navigation\Link;
+
+SiteBuilder::links([
+    Link::make('whats_on', 'What\'s on', fn () => route('events.index')),
+    Link::make('cookie_settings', 'Cookie settings', fn () => '#cookie-settings'),
+])->defaultMenus(
+    header: fn () => [
+        ['type' => 'builtin', 'link' => 'whats_on'],
+        ['type' => 'none', 'label' => __('Visit'), 'menu' => 'dropdown', 'children' => [
+            ['type' => 'url', 'url' => '/find-us', 'label' => __('Find us')],
+        ]],
+        ['type' => 'builtin', 'link' => 'blog'],
+    ],
+    footer: fn () => [
+        'tagline' => config('app.description'),
+        'copyright' => null,                     // the standard line
+        'columns' => [
+            ['heading' => __('Legal'), 'links' => [
+                ['type' => 'builtin', 'link' => 'privacy_policy'],
+                ['type' => 'builtin', 'link' => 'cookie_settings'],
+            ]],
+        ],
+    ],
+    // mobile: left out, so it stays the package's (opens from the top, with the logo)
+);
+```
+
+How standard menus work:
+- **Same format as saved menus:** header items, the footer (`tagline`, `copyright`, `columns` of `heading` and `links`) and the mobile menu (`open_from`, `show_logo`, `tagline`). Items can be built-in links, pages (`'type' => 'page', 'page_id'`), web addresses, dropdowns and mega menus.
+- **Closures are read each time** the menus are, so `__()` labels follow the visitor's language. Arrays work too.
+- **A menu left `null` isn't changed:** until your app sets it, it's the package's standard one. A footer without a `tagline` gets the site description, as the package's does.
+- **They're checked like a saved menu:**
+  - only known fields are kept, within the limits;
+  - built-in links that don't apply (or were removed with `withoutLinks()`) are left out, in dropdowns and mega menus too;
+  - a dropdown or column left empty goes.
+  - A closure that throws or doesn't return an array counts as not set, so the package's standard menu is used.
+- **Saved menus win.** Standard menus never change a saved menu. Reset to default lists exactly what your standard menus hold, then saves them as the site's own.
+
 ## Live stats
 
 The Stats block can show live figures. Each source appears as *Live: {label}* in the block's picker, and the value is cached for ten minutes.

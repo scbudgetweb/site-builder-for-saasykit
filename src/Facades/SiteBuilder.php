@@ -19,6 +19,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static \ScBudgetWeb\SiteBuilder\SiteBuilder links(array<int, \ScBudgetWeb\SiteBuilder\Navigation\Link> $links)
  * @method static \ScBudgetWeb\SiteBuilder\SiteBuilder withoutLinks(array<int, string> $keys)
  * @method static array<string, \ScBudgetWeb\SiteBuilder\Navigation\Link> registeredLinks()
+ * @method static \ScBudgetWeb\SiteBuilder\SiteBuilder defaultMenus(array<int, array<string, mixed>>|\Closure|null $header = null, array<string, mixed>|\Closure|null $footer = null, array<string, mixed>|\Closure|null $mobile = null)
+ * @method static array<int|string, mixed>|null defaultMenu(string $menu)
  * @method static \ScBudgetWeb\SiteBuilder\Navigation\Link|null link(?string $key)
  * @method static \ScBudgetWeb\SiteBuilder\SiteBuilder legalPages(array<int, \ScBudgetWeb\SiteBuilder\Legal\LegalPage> $pages)
  * @method static array<string, \ScBudgetWeb\SiteBuilder\Legal\LegalPage> registeredLegalPages()

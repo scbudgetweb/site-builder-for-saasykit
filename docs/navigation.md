@@ -57,4 +57,6 @@ Social media icons in the footer come from the app's general settings, and the f
 
 **Reset to default**, at the top of the page, replaces your header, footer and mobile menu with the standard ones. Before anything changes, it lists the links each menu will get (only those that apply to your site) and asks you to confirm, because your own links are removed and it can't be undone.
 
+The standard menus may come from your app rather than the site builder, for example with links to your app's own pages or a Cookie settings link. Until you save the Navigation page, the site shows them too.
+
 Your saved menus are yours: updates to the site builder never change them, and links you haven't added never appear in them.

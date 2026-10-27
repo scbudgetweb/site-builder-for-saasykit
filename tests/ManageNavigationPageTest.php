@@ -112,7 +112,7 @@ class ManageNavigationPageTest extends PageTestCase
         Livewire::test(ManageNavigation::class)
             ->assertSee('Custom')
             ->callAction(TestAction::make('resetToDefault'))
-            ->assertNotified('The menus are now the site builder\'s standard ones.')
+            ->assertNotified('The menus are now this site\'s standard ones.')
             ->assertSchemaStateSet(['mobile.open_from' => 'top']);
 
         $this->assertSame(['Pricing', 'Blog'], array_column(app(NavigationMenus::class)->header(), 'label'));

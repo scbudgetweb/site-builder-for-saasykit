@@ -32,6 +32,9 @@ class SiteBuilder
     /** @var array<string, true> */
     private array $removedLinks = [];
 
+    /** @var array{header?: array<int, array<string, mixed>>|Closure, footer?: array<string, mixed>|Closure, mobile?: array<string, mixed>|Closure} */
+    private array $defaultMenus = [];
+
     /** @var array<string, LegalPage> */
     private array $legalPages = [];
 
@@ -139,6 +142,48 @@ class SiteBuilder
     public function link(?string $key): ?Link
     {
         return $key === null || isset($this->removedLinks[$key]) ? null : ($this->links[$key] ?? null);
+    }
+
+    /**
+     * The site's standard menus, used while nothing is saved in Website › Navigation and by its Reset to default. Each is
+     * in the saved format (see NavigationMenus), or a closure returning it, so labels are translated when it's read. A
+     * null menu isn't changed by this call: until an app sets it, it's the package's standard one. Defaults are checked
+     * like a saved menu (known fields, limits, links that apply), and saved menus are never changed by them.
+     *
+     * @param  array<int, array<string, mixed>>|(Closure(): array<int, array<string, mixed>>)|null  $header  header items
+     * @param  array<string, mixed>|(Closure(): array<string, mixed>)|null  $footer  ['tagline', 'copyright', 'columns' => [['heading', 'links']]]
+     * @param  array<string, mixed>|(Closure(): array<string, mixed>)|null  $mobile  ['open_from', 'show_logo', 'tagline']
+     */
+    public function defaultMenus(array|Closure|null $header = null, array|Closure|null $footer = null, array|Closure|null $mobile = null): static
+    {
+        foreach (['header' => $header, 'footer' => $footer, 'mobile' => $mobile] as $menu => $default) {
+            if ($default !== null) {
+                $this->defaultMenus[$menu] = $default;
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * An app's standard menu ("header", "footer" or "mobile"), or null for the package's. A closure that throws or
+     * returns something that isn't an array counts as not set, so a bad default can't break the page.
+     *
+     * @return array<int|string, mixed>|null
+     */
+    public function defaultMenu(string $menu): ?array
+    {
+        $default = $this->defaultMenus[$menu] ?? null;
+
+        try {
+            $default = $default instanceof Closure ? $default() : $default;
+        } catch (Throwable $exception) {
+            report($exception);
+
+            return null;
+        }
+
+        return is_array($default) ? $default : null;
     }
 
     /**

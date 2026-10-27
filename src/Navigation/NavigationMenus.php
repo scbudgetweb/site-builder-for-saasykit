@@ -217,13 +217,8 @@ class NavigationMenus
     public function mobile(): array
     {
         $saved = $this->siteBuilder->settings()->get(self::MOBILE_KEY);
-        $saved = is_array($saved) ? $saved : [];
 
-        return [
-            'open_from' => array_key_exists($saved['open_from'] ?? '', self::MOBILE_OPEN_FROM) ? $saved['open_from'] : 'top',
-            'show_logo' => (bool) ($saved['show_logo'] ?? true),
-            'tagline' => is_string($saved['tagline'] ?? null) ? trim($saved['tagline']) : '',
-        ];
+        return is_array($saved) ? $this->cleanMobile($saved) : $this->standardMobile();
     }
 
     /**
@@ -234,25 +229,9 @@ class NavigationMenus
     public function save(array $headerItems, array $footer, array $mobile): void
     {
         $this->siteBuilder->settings()->set([
-            self::HEADER_KEY => array_slice($this->cleanItems($headerItems, allowChildren: true), 0, self::MAX_HEADER_ITEMS),
-            self::FOOTER_KEY => [
-                'tagline' => trim((string) ($footer['tagline'] ?? '')),
-                'copyright' => trim((string) ($footer['copyright'] ?? '')) ?: null,
-                'columns' => collect(is_array($footer['columns'] ?? null) ? $footer['columns'] : [])
-                    ->filter(fn (mixed $column): bool => is_array($column))
-                    ->map(fn (array $column): array => [
-                        'heading' => trim((string) ($column['heading'] ?? '')),
-                        'links' => array_slice($this->cleanItems(is_array($column['links'] ?? null) ? $column['links'] : [], allowChildren: false), 0, self::MAX_FOOTER_LINKS),
-                    ])
-                    ->take(self::MAX_FOOTER_COLUMNS)
-                    ->values()
-                    ->all(),
-            ],
-            self::MOBILE_KEY => [
-                'open_from' => array_key_exists($mobile['open_from'] ?? '', self::MOBILE_OPEN_FROM) ? $mobile['open_from'] : 'top',
-                'show_logo' => (bool) ($mobile['show_logo'] ?? true),
-                'tagline' => trim((string) ($mobile['tagline'] ?? '')),
-            ],
+            self::HEADER_KEY => $this->cleanHeader($headerItems),
+            self::FOOTER_KEY => $this->cleanFooter($footer),
+            self::MOBILE_KEY => $this->cleanMobile($mobile),
         ]);
     }
 
@@ -262,52 +241,69 @@ class NavigationMenus
      */
     public function reset(): void
     {
-        $this->save($this->standardHeader(), $this->standardFooter(), self::defaultMobile());
+        $this->save($this->standardHeader(), $this->standardFooter(), $this->standardMobile());
     }
 
     /**
-     * What Reset to default puts in the header and footer, for its confirmation: the link labels, in order.
+     * What Reset to default puts in the header and footer, for its confirmation: each link's label as it will show,
+     * in order, with a dropdown's or mega menu's links in brackets, e.g. "Jobs (Find jobs, Post a job)".
      *
      * @return array{header: array<int, string>, footer: array<int, string>}
      */
     public function standardMenuLabels(): array
     {
-        $labels = fn (array $items): array => array_values(array_filter(array_map(
-            fn (array $item): ?string => is_string($item['link'] ?? null) ? $this->siteBuilder->link($item['link'])?->label() : null,
-            $items,
-        )));
+        $describe = fn (array $item): string => ($inner = [
+            ...array_column($item['children'], 'label'),
+            ...array_merge([], ...array_map(fn (array $column): array => array_column($column['links'], 'label'), $item['mega']['columns'] ?? [])),
+        ]) === [] ? $item['label'] : $item['label'].' ('.implode(', ', $inner).')';
 
         return [
-            'header' => $labels($this->standardHeader()),
-            'footer' => $labels(array_merge([], ...array_map(fn (array $column): array => $column['links'], $this->standardFooter()['columns']))),
+            'header' => array_map($describe, $this->resolveItems($this->standardHeader(), allowChildren: true)),
+            'footer' => array_column(array_merge([], ...array_map(
+                fn (array $column): array => $this->resolveItems($column['links'], allowChildren: false),
+                $this->standardFooter()['columns'],
+            )), 'label'),
         ];
     }
 
     /**
-     * The standard header: defaultHeader() without the links that don't apply to this site or were removed.
+     * The standard header: the app's (SiteBuilder::defaultMenus()) or the package's (defaultHeader()), checked like a
+     * saved menu and without the links that don't apply to this site or were removed.
      *
      * @return array<int, array<string, mixed>>
      */
     public function standardHeader(): array
     {
-        return $this->withoutUnavailableLinks(self::defaultHeader());
+        return $this->withoutUnavailableLinks($this->cleanHeader($this->siteBuilder->defaultMenu('header') ?? self::defaultHeader()));
     }
 
     /**
-     * The standard footer: defaultFooter() without the links that don't apply to this site or were removed (and any
-     * column left empty).
+     * The standard footer: the app's or the package's (defaultFooter()), checked like a saved one, without the links
+     * that don't apply to this site or were removed, and without any column left empty. With no tagline given, it's
+     * the site description, as in the package's.
      *
-     * @return array{tagline: ?string, copyright: null, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
+     * @return array{tagline: string, copyright: ?string, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
      */
     public function standardFooter(): array
     {
-        $footer = self::defaultFooter();
+        $default = $this->siteBuilder->defaultMenu('footer') ?? self::defaultFooter();
+        $footer = $this->cleanFooter(['tagline' => self::defaultFooter()['tagline'], ...$default]);
         $footer['columns'] = array_values(array_filter(
             array_map(fn (array $column): array => [...$column, 'links' => $this->withoutUnavailableLinks($column['links'])], $footer['columns']),
             fn (array $column): bool => $column['links'] !== [],
         ));
 
         return $footer;
+    }
+
+    /**
+     * The standard mobile menu: the app's or the package's (defaultMobile()), checked like a saved one.
+     *
+     * @return array{open_from: string, show_logo: bool, tagline: string}
+     */
+    public function standardMobile(): array
+    {
+        return $this->cleanMobile([...self::defaultMobile(), ...($this->siteBuilder->defaultMenu('mobile') ?? [])]);
     }
 
     /**
@@ -378,15 +374,86 @@ class NavigationMenus
     }
 
     /**
+     * Leaves out built-in links that don't apply to this site or were removed, in dropdowns and mega menu columns too,
+     * then any dropdown-only item ("none") or mega menu column left with nothing in it.
+     *
      * @param  array<int, array<string, mixed>>  $items
      * @return array<int, array<string, mixed>>
      */
     private function withoutUnavailableLinks(array $items): array
     {
-        return array_values(array_filter(
-            $items,
-            fn (array $item): bool => ($item['type'] ?? null) !== self::TYPE_BUILTIN || ($this->siteBuilder->link($item['link'] ?? null)?->isAvailable() ?? false),
-        ));
+        $applies = fn (array $item): bool => ($item['type'] ?? null) !== self::TYPE_BUILTIN || ($this->siteBuilder->link($item['link'] ?? null)?->isAvailable() ?? false);
+        $kept = [];
+
+        foreach (array_filter($items, $applies) as $item) {
+            if (isset($item['children'])) {
+                $item['children'] = $this->withoutUnavailableLinks($item['children']);
+            }
+
+            if (isset($item['columns'])) {
+                $item['columns'] = array_values(array_filter(
+                    array_map(fn (array $column): array => [...$column, 'links' => $this->withoutUnavailableLinks($column['links'])], $item['columns']),
+                    fn (array $column): bool => $column['links'] !== [],
+                ));
+            }
+
+            if (($item['type'] ?? null) === self::TYPE_NONE && ($item['children'] ?? []) === [] && ($item['columns'] ?? []) === []) {
+                continue;
+            }
+
+            $kept[] = $item;
+        }
+
+        return $kept;
+    }
+
+    /**
+     * Header items as they're saved: known fields only, within the limits.
+     *
+     * @param  array<int|string, mixed>  $items
+     * @return array<int, array<string, mixed>>
+     */
+    private function cleanHeader(array $items): array
+    {
+        return array_slice($this->cleanItems($items, allowChildren: true), 0, self::MAX_HEADER_ITEMS);
+    }
+
+    /**
+     * The footer as it's saved: its tagline, copyright line and link columns, within the limits.
+     *
+     * @param  array<string, mixed>  $footer
+     * @return array{tagline: string, copyright: ?string, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
+     */
+    private function cleanFooter(array $footer): array
+    {
+        return [
+            'tagline' => is_string($footer['tagline'] ?? null) ? trim($footer['tagline']) : '',
+            'copyright' => is_string($footer['copyright'] ?? null) && trim($footer['copyright']) !== '' ? trim($footer['copyright']) : null,
+            'columns' => collect(is_array($footer['columns'] ?? null) ? $footer['columns'] : [])
+                ->filter(fn (mixed $column): bool => is_array($column))
+                ->map(fn (array $column): array => [
+                    'heading' => trim((string) (is_string($column['heading'] ?? null) ? $column['heading'] : '')),
+                    'links' => array_slice($this->cleanItems(is_array($column['links'] ?? null) ? $column['links'] : [], allowChildren: false), 0, self::MAX_FOOTER_LINKS),
+                ])
+                ->take(self::MAX_FOOTER_COLUMNS)
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
+     * The mobile menu's settings as they're saved (standard: opens from the top, with the logo).
+     *
+     * @param  array<string, mixed>  $mobile
+     * @return array{open_from: string, show_logo: bool, tagline: string}
+     */
+    private function cleanMobile(array $mobile): array
+    {
+        return [
+            'open_from' => is_string($mobile['open_from'] ?? null) && array_key_exists($mobile['open_from'], self::MOBILE_OPEN_FROM) ? $mobile['open_from'] : 'top',
+            'show_logo' => (bool) ($mobile['show_logo'] ?? true),
+            'tagline' => is_string($mobile['tagline'] ?? null) ? trim($mobile['tagline']) : '',
+        ];
     }
 
     /**

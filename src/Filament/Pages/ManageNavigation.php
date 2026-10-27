@@ -103,7 +103,7 @@ class ManageNavigation extends Page
                     $menus->reset();
                     $this->fillForm($menus);
 
-                    Notification::make()->title(__('The menus are now the site builder\'s standard ones.'))->success()->send();
+                    Notification::make()->title(__('The menus are now this site\'s standard ones.'))->success()->send();
                 }),
         ];
     }
@@ -152,21 +152,32 @@ class ManageNavigation extends Page
     }
 
     /**
-     * Exactly what Reset to default does: which links each menu gets, and that it can't be undone.
+     * Exactly what Reset to default does: what each standard menu holds (the app's, or the package's), and that it
+     * can't be undone.
      */
     private function resetDescription(NavigationMenus $menus): Htmlable
     {
         $labels = $menus->standardMenuLabels();
+        $footer = $menus->standardFooter();
+        $mobile = $menus->standardMobile();
         $list = fn (array $items): string => $items === [] ? e(__('no links')) : e(implode(', ', $items));
 
+        $footerExtras = __('with :tagline and :copyright', [
+            'tagline' => $footer['tagline'] !== '' ? __('the tagline ":tagline"', ['tagline' => $footer['tagline']]) : __('no tagline'),
+            'copyright' => $footer['copyright'] !== null ? __('the copyright line ":line"', ['line' => $footer['copyright']]) : __('the standard copyright line'),
+        ]);
+        $mobileText = __('opens from :side, :logo, and :tagline', [
+            'side' => $mobile['open_from'] === 'right' ? __('the right') : __('the top'),
+            'logo' => $mobile['show_logo'] ? __('with the logo') : __('without the logo'),
+            'tagline' => $mobile['tagline'] !== '' ? __('the tagline ":tagline"', ['tagline' => $mobile['tagline']]) : __('no tagline'),
+        ]);
+
         return new HtmlString(
-            '<p>'.e(__('This replaces your current header, footer and mobile menu with the site builder\'s standard ones:')).'</p>'
+            '<p>'.e(__('This replaces your current header, footer and mobile menu with this site\'s standard ones:')).'</p>'
             .'<ul class="mt-2 list-disc ps-5 text-start">'
             .'<li><strong>'.e(__('Header')).':</strong> '.$list($labels['header']).'</li>'
-            .'<li><strong>'.e(__('Footer')).':</strong> '.$list($labels['footer']).', '.e(filled($menus->standardFooter()['tagline'])
-                ? __('with the site description and the standard copyright line')
-                : __('with the standard copyright line')).'</li>'
-            .'<li><strong>'.e(__('Mobile menu')).':</strong> '.e(__('opens from the top, with the logo and no tagline')).'</li>'
+            .'<li><strong>'.e(__('Footer')).':</strong> '.$list($labels['footer']).', '.e($footerExtras).'</li>'
+            .'<li><strong>'.e(__('Mobile menu')).':</strong> '.e($mobileText).'</li>'
             .'</ul>'
             .'<p class="mt-2">'.e(__('Your own links, dropdowns and mega menus are removed. This can\'t be undone.')).'</p>'
         );

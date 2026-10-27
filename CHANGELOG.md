@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0 - 2026-10-27
+
+- **Apps can set the standard menus.** `SiteBuilder::defaultMenus(array|Closure|null $header = null, array|Closure|null $footer = null, array|Closure|null $mobile = null)` sets the header, footer and mobile menu the site uses while nothing is saved in Website › Navigation, and that Reset to default saves.
+  - They use the saved menu format, with built-in links, pages, web addresses, dropdowns and mega menus.
+  - Closures are read each time, so labels can be translated.
+  - A menu left `null` stays the package's standard one.
+  - Defaults are checked like a saved menu: known fields, limits, and only links that apply (in dropdowns and mega menus too). A broken default falls back to the package's.
+  - Saved menus are never changed by them.
+- Reset to default's confirmation now describes the site's own standard menus: each header link (with its dropdown or mega menu links), the footer links, tagline and copyright line, and the mobile menu's settings. It still says it can't be undone.
+- New: `NavigationMenus::standardMobile()`. The menus' cleaning is shared by saving and the standard menus.
+
 ## 1.2.1 - 2026-10-27
 
 - Fixed: a Banner subclass's extra content set to `below` (`BannerBlock::extraContentView()`) now spans the banner's full content width, after the text column, instead of sitting inside the text's narrower `max-w-4xl` column, where wide content such as a search form was squashed. It still follows the banner's text alignment and has `data-banner-extra="below"`. To keep it narrow, constrain it in your own view. `beside` is unchanged.

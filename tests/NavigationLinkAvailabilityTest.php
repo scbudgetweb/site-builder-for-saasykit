@@ -53,10 +53,10 @@ class NavigationLinkAvailabilityTest extends PageTestCase
 
         $this->assertTrue($action->isConfirmationRequired());
         foreach ([
-            'This replaces your current header, footer and mobile menu with the site builder&#039;s standard ones',
+            'This replaces your current header, footer and mobile menu with this site&#039;s standard ones',
             'Header:</strong> Pricing, Blog',
-            'Footer:</strong> Blog, Privacy Policy, Terms of Service, with the site description and the standard copyright line',
-            'opens from the top, with the logo and no tagline',
+            'Footer:</strong> Blog, Privacy Policy, Terms of Service, with the tagline &quot;Book your local hall.&quot; and the standard copyright line',
+            'opens from the top, with the logo, and no tagline',
             'This can&#039;t be undone.',
         ] as $text) {
             $this->assertStringContainsString($text, $description);
@@ -65,7 +65,7 @@ class NavigationLinkAvailabilityTest extends PageTestCase
         // Nothing changes until it's confirmed.
         $this->assertSame(['Custom'], array_column($this->menus()->header(), 'label'));
 
-        $component->callMountedAction()->assertNotified('The menus are now the site builder\'s standard ones.');
+        $component->callMountedAction()->assertNotified('The menus are now this site\'s standard ones.');
 
         $this->assertSame(['Pricing', 'Blog'], array_column($this->menus()->header(), 'label'));
         $this->assertSame(['Blog', 'Privacy Policy', 'Terms of Service'], array_column($this->menus()->footer()['columns'][0]['links'], 'label'));

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 - 2026-10-27
+
+- Fixed: a Banner subclass's extra content set to `below` (`BannerBlock::extraContentView()`) now spans the banner's full content width, after the text column, instead of sitting inside the text's narrower `max-w-4xl` column, where wide content such as a search form was squashed. It still follows the banner's text alignment and has `data-banner-extra="below"`. To keep it narrow, constrain it in your own view. `beside` is unchanged.
+- Fixed: with no page image and no Branding share image, the theme's social cards pointed at `images/twitter-card.png` and `images/facebook-card.png`, which SaaSykit doesn't ship (404s). They now output no image tags and a `summary` Twitter card. With an image, nothing changes.
+
 ## 1.2.0 - 2026-10-26
 
 - **Navigation: saved menus are the site's own.**

@@ -2,6 +2,9 @@
 
 namespace ScBudgetWeb\SiteBuilder\Tests;
 
+use DOMDocument;
+use DOMElement;
+use DOMXPath;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Livewire\Livewire;
@@ -81,6 +84,31 @@ class ExtendingCoreBlocksTest extends PageTestCase
         $response->assertSeeInOrder(['<h1', 'Welcome', 'All about us', 'data-banner-extra="below"', 'Open today'], false);
         $response->assertSeeInOrder(['lg:grid-cols-2', 'Second banner', 'data-banner-extra="beside"', 'Book now'], false);
         $response->assertSee('Plain banner')->assertDontSee('Not shown');
+    }
+
+    public function test_extra_content_below_uses_the_banners_full_content_width_and_alignment(): void
+    {
+        $this->page(['blocks' => [
+            self::block('banner', ['heading' => 'Welcome', 'show_highlight' => true, 'highlight' => 'Open today']),
+            self::block('banner', ['heading' => 'Left banner', 'align' => 'left', 'show_highlight' => true, 'highlight' => 'Book now']),
+        ]]);
+
+        $document = new DOMDocument;
+        @$document->loadHTML($this->get('/about-us')->assertSuccessful()->getContent());
+        $below = (new DOMXPath($document))->query('//*[@data-banner-extra="below"]');
+
+        $this->assertSame(2, $below->length);
+
+        foreach ($below as $index => $extra) {
+            $container = $extra->parentNode;
+            $this->assertStringContainsString('max-w-7xl', $container->getAttribute('class'));
+            // Not inside the text column (max-w-4xl).
+            for ($node = $extra; $node instanceof DOMElement; $node = $node->parentNode) {
+                $this->assertStringNotContainsString('max-w-4xl', $node->getAttribute('class'));
+            }
+            // It follows the banner's alignment: centred, unless the banner is left-aligned.
+            $this->assertSame($index === 0, str_contains($container->getAttribute('class'), 'text-center'));
+        }
     }
 
     public function test_the_replacement_is_used_for_library_blocks_and_cached_pages(): void

@@ -1,4 +1,4 @@
-{{-- The Banner and Hero blocks (Hero is a Banner with taller, larger defaults): a full-width Branding banner (hero or inner) or its own image. As the first block it holds the h1. A subclass's extra content (BannerBlock::extraContentView()) sits below the text, or beside it on wide screens. --}}
+{{-- The Banner and Hero blocks (Hero is a Banner with taller, larger defaults): a full-width Branding banner (hero or inner) or its own image. As the first block it holds the h1. A subclass's extra content (BannerBlock::extraContentView()) sits below the text across the banner's full content width, or beside it on wide screens. --}}
 <x-site-builder::banner :variant="$variant" :image-url="$imageUrl" :image-overlay="$imageOverlay" :image-position="$imagePosition"
                         :class="$cssClass" data-block="{{ $blockName }}">
     <div @class([
@@ -16,6 +16,12 @@
             </div>
         @else
             @include('site-builder::blocks.partials.banner-text')
+
+            @if (($extraContentView ?? null) !== null)
+                <div class="mt-8" data-banner-extra="below">
+                    @include($extraContentView)
+                </div>
+            @endif
         @endif
     </div>
 </x-site-builder::banner>

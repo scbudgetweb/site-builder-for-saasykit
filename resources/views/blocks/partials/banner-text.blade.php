@@ -1,4 +1,4 @@
-{{-- The banner's text and buttons, and a subclass's extra content when it goes below them. --}}
+{{-- The banner's text and buttons. --}}
 <div @class(['max-w-4xl', 'mx-auto' => ! $isLeftAligned])>
     @if (filled($block['eyebrow'] ?? null))
         <p class="mb-4 text-sm font-semibold uppercase tracking-widest text-sb-banner-subtitle sm:text-base">{{ $block['eyebrow'] }}</p>
@@ -17,12 +17,6 @@
     @if ($buttons !== [])
         <div class="mt-8">
             @include('site-builder::blocks.partials.buttons', ['buttons' => $buttons, 'isDark' => true, 'align' => $isLeftAligned ? 'left' : 'center'])
-        </div>
-    @endif
-
-    @if (($extraContentView ?? null) !== null && ! ($isExtraContentBeside ?? false))
-        <div class="mt-8" data-banner-extra="below">
-            @include($extraContentView)
         </div>
     @endif
 </div>

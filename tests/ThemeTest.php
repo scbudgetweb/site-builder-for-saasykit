@@ -115,6 +115,28 @@ class ThemeTest extends TestCase
         File::deleteDirectory(public_path('vendor/site-builder'));
     }
 
+    public function test_social_cards_have_no_image_tags_without_an_image(): void
+    {
+        Blade::anonymousComponentPath(__DIR__.'/Fixtures/open-graphy', 'open-graphy');
+
+        $html = view('components.layouts.partials.social-cards', ['title' => 'About us'])->render();
+
+        $this->assertStringContainsString('<meta name="twitter:card" content="summary" />', $html);
+        $this->assertStringNotContainsString('twitter:image', $html);
+        $this->assertStringNotContainsString('og:image', $html);
+        $this->assertStringNotContainsString('-card.png', $html);
+
+        $this->app->make(Branding::class)->save([Branding::SHARE_IMAGE => 'site-builder/branding/share.png']);
+        $html = view('components.layouts.partials.social-cards', ['title' => 'About us'])->render();
+
+        $this->assertStringContainsString('<meta name="twitter:card" content="summary_large_image" />', $html);
+        $this->assertStringContainsString('site-builder/branding/share.png', $html);
+
+        // A page's own image wins.
+        $html = view('components.layouts.partials.social-cards', ['title' => 'About us', 'socialCard' => 'https://example.com/page.jpg'])->render();
+        $this->assertStringContainsString('<meta property="og:image" content="https://example.com/page.jpg" />', $html);
+    }
+
     public function test_unsafe_custom_css_is_not_output(): void
     {
         $this->app->make(Branding::class)->save([Branding::CUSTOM_CSS => '</style><script>alert(1)</script>']);

@@ -4,6 +4,8 @@ Branding (site identity), a plain base theme, pages built from blocks, a block l
 
 > An independent add-on for SaaSykit. It isn't made or endorsed by SaaSykit. You need your own SaaSykit licence.
 
+<a href="https://buymeacoffee.com/shaunn" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
+
 ## Requirements
 
 - PHP 8.3+
@@ -142,3 +144,9 @@ MIT. See `LICENSE`.
 Icons: [Boxicons](https://boxicons.com) 2.1.4 by Atisa, MIT licence (`resources/icons/boxicons/LICENSE`). They're bundled, so no page loads icons from another server.
 
 Fonts: the bundled fonts are under their own open licences, kept alongside each font in `resources/fonts`.
+
+## Support
+
+If the site builder saves you time, you can buy me a coffee:
+
+<a href="https://buymeacoffee.com/shaunn" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>

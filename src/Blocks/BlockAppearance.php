@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
+use Closure;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
@@ -139,6 +140,9 @@ class BlockAppearance
     /** Space-separated class names (for Branding › Custom CSS). */
     public const CSS_CLASS_PATTERN = '/^-?[A-Za-z_][A-Za-z0-9_-]*( +-?[A-Za-z_][A-Za-z0-9_-]*)*$/';
 
+    /** The utility classes that would pin a block over the rest of the page (and the site's header). */
+    private const FIXED_POSITION_CLASS_PATTERN = '/(^| )(fixed|sticky)( |$)/';
+
     private const BACKGROUND_CLASSES = [
         'none' => '',
         'light' => 'bg-gray-50',
@@ -193,7 +197,6 @@ class BlockAppearance
     public static function styleGroup(string $defaultBackground = 'none', array $headingSettings = ['align', 'decoration', 'size'], bool $hasBodyText = true): Group
     {
         $background = fn (Get $get): ?string => $get('background');
-        $isGradientOverlay = fn (Get $get): bool => $background($get) === 'image' && $get('overlay_type') === 'gradient';
         [$headingSize, $textSize] = self::sizeFields();
 
         return Group::make()
@@ -242,45 +245,7 @@ class BlockAppearance
                             ->required()
                             ->visible(fn (Get $get): bool => $background($get) === 'image')
                             ->columnSpanFull(),
-                        Select::make('overlay_type')
-                            ->label(__('Overlay'))
-                            ->options(self::translated(self::OVERLAY_TYPES))
-                            ->default('solid')
-                            ->selectablePlaceholder(false)
-                            ->live()
-                            ->visible(fn (Get $get): bool => $background($get) === 'image'),
-                        Select::make('overlay_direction')
-                            ->label(__('Overlay direction'))
-                            ->options(array_map(fn (array $option): string => __($option[0]), self::OVERLAY_DIRECTIONS))
-                            ->default('to_bottom')
-                            ->selectablePlaceholder(false)
-                            ->visible($isGradientOverlay),
-                        ColorPicker::make('overlay_color')
-                            ->label(fn (Get $get): string => $isGradientOverlay($get) ? __('Overlay start colour') : __('Overlay colour'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
-                            ->visible(fn (Get $get): bool => $background($get) === 'image'),
-                        Slider::make('overlay_opacity')
-                            ->label(fn (Get $get): string => $isGradientOverlay($get) ? __('Overlay start strength (%)') : __('Overlay opacity (%)'))
-                            ->range(minValue: 0, maxValue: 100)
-                            ->step(5)
-                            ->decimalPlaces(0)
-                            ->tooltips()
-                            ->default(Colour::DEFAULT_OVERLAY_OPACITY)
-                            ->visible(fn (Get $get): bool => $background($get) === 'image'),
-                        ColorPicker::make('overlay_end_color')
-                            ->label(__('Overlay end colour'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
-                            ->visible($isGradientOverlay),
-                        Slider::make('overlay_end_opacity')
-                            ->label(__('Overlay end strength (%)'))
-                            ->range(minValue: 0, maxValue: 100)
-                            ->step(5)
-                            ->decimalPlaces(0)
-                            ->tooltips()
-                            ->default(0)
-                            ->visible($isGradientOverlay),
+                        ...self::overlayFields(fn (Get $get): bool => $background($get) === 'image'),
                     ]),
                 // On the panel when the background is one, otherwise on the whole block.
                 BorderShadow::fieldset(automaticLabel: __('Automatic (site style on a panel, none otherwise)')),
@@ -438,7 +403,11 @@ class BlockAppearance
             ->helperText(__('Optional. Names to style in Branding › Custom CSS, separated by spaces, e.g. "promo dark-cards".'))
             ->maxLength(100)
             ->regex(self::CSS_CLASS_PATTERN)
-            ->validationMessages(['regex' => __('Use letters, numbers, - and _ only, with spaces between names.')]);
+            ->notRegex(self::FIXED_POSITION_CLASS_PATTERN)
+            ->validationMessages([
+                'regex' => __('Use letters, numbers, - and _ only, with spaces between names.'),
+                'not_regex' => __('"fixed" and "sticky" aren\'t allowed: they could pin the block over the rest of the page.'),
+            ]);
     }
 
     /**
@@ -446,7 +415,12 @@ class BlockAppearance
      */
     public static function cssClasses(mixed $value): string
     {
-        return is_string($value) && strlen($value) <= 100 && preg_match(self::CSS_CLASS_PATTERN, trim($value)) ? trim(preg_replace('/ +/', ' ', $value)) : '';
+        if (! is_string($value) || strlen($value) > 100 || ! preg_match(self::CSS_CLASS_PATTERN, trim($value))) {
+            return '';
+        }
+
+        // "fixed" and "sticky" (saved before they were refused) are left out, so a block can't cover the page.
+        return implode(' ', array_diff(preg_split('/ +/', trim($value)) ?: [], ['fixed', 'sticky']));
     }
 
     /**
@@ -557,30 +531,117 @@ class BlockAppearance
     }
 
     /**
-     * The image overlay's inline style, or null when it's fully transparent. A solid overlay is one colour
-     * at the chosen opacity; a gradient fades from the start colour and strength to the end ones.
+     * The image overlay settings read by imageOverlay(): one colour, or a gradient between two colours and strengths.
+     * $prefix goes before each field's name (Branding's banners use e.g. "hero_"), $isShown says when they show (an
+     * image background), and $live makes the strengths live, for a page that warns about readability as they change.
+     *
+     * @param  Closure(Get): bool  $isShown
+     * @return array<int, Select|ColorPicker|Slider>
+     */
+    public static function overlayFields(Closure $isShown, string $prefix = '', bool $live = false, ?string $opacityHelperText = null): array
+    {
+        $isGradient = fn (Get $get): bool => $isShown($get) && $get("{$prefix}overlay_type") === 'gradient';
+
+        return [
+            Select::make("{$prefix}overlay_type")
+                ->label(__('Overlay'))
+                ->options(self::translated(self::OVERLAY_TYPES))
+                ->default('solid')
+                ->selectablePlaceholder(false)
+                ->live()
+                ->visible($isShown),
+            Select::make("{$prefix}overlay_direction")
+                ->label(__('Overlay direction'))
+                ->options(array_map(fn (array $option): string => __($option[0]), self::OVERLAY_DIRECTIONS))
+                ->default('to_bottom')
+                ->selectablePlaceholder(false)
+                ->visible($isGradient),
+            ColorPicker::make("{$prefix}overlay_color")
+                ->label(fn (Get $get): string => $isGradient($get) ? __('Overlay start colour') : __('Overlay colour'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
+                ->visible($isShown),
+            Slider::make("{$prefix}overlay_opacity")
+                ->label(fn (Get $get): string => $isGradient($get) ? __('Overlay start strength (%)') : __('Overlay opacity (%)'))
+                ->helperText($opacityHelperText)
+                ->range(minValue: 0, maxValue: 100)
+                ->step(5)
+                ->decimalPlaces(0)
+                ->tooltips()
+                ->default(Colour::DEFAULT_OVERLAY_OPACITY)
+                ->live(condition: $live)
+                ->visible($isShown),
+            ColorPicker::make("{$prefix}overlay_end_color")
+                ->label(__('Overlay end colour'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
+                ->visible($isGradient),
+            Slider::make("{$prefix}overlay_end_opacity")
+                ->label(__('Overlay end strength (%)'))
+                ->range(minValue: 0, maxValue: 100)
+                ->step(5)
+                ->decimalPlaces(0)
+                ->tooltips()
+                ->default(0)
+                ->live(condition: $live)
+                ->visible($isGradient),
+        ];
+    }
+
+    /**
+     * An image overlay from its settings, every value checked again: overlay_type ("solid" or "gradient"),
+     * overlay_color and overlay_opacity, and for a gradient overlay_direction, overlay_end_color and
+     * overlay_end_opacity. A solid overlay is one colour at the chosen opacity ("gradient" is null); a gradient fades
+     * from the start colour and strength to the end ones, and "opacity" is its stronger end. Used by the Style tab, the
+     * Banner and Hero blocks, and Branding's banners.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array{color: string, opacity: float, gradient: ?string}
+     */
+    public static function imageOverlay(array $values): array
+    {
+        $startColor = Colour::isValidHex($values['overlay_color'] ?? null) ? $values['overlay_color'] : Colour::DEFAULT_OVERLAY_COLOR;
+        $startOpacity = self::percentage($values['overlay_opacity'] ?? null, Colour::DEFAULT_OVERLAY_OPACITY);
+
+        if (($values['overlay_type'] ?? 'solid') !== 'gradient') {
+            return ['color' => $startColor, 'opacity' => $startOpacity / 100.0, 'gradient' => null];
+        }
+
+        $endColor = Colour::isValidHex($values['overlay_end_color'] ?? null) ? $values['overlay_end_color'] : Colour::DEFAULT_OVERLAY_COLOR;
+        $endOpacity = self::percentage($values['overlay_end_opacity'] ?? null, 0);
+        $direction = self::OVERLAY_DIRECTIONS[self::pick($values['overlay_direction'] ?? null, self::OVERLAY_DIRECTIONS, 'to_bottom')][1];
+
+        return [
+            'color' => $startColor,
+            'opacity' => max($startOpacity, $endOpacity) / 100.0,
+            'gradient' => "linear-gradient({$direction}, ".self::rgba($startColor, $startOpacity).', '.self::rgba($endColor, $endOpacity).')',
+        ];
+    }
+
+    /**
+     * An overlay's inline style (from imageOverlay()), or null when it's fully transparent.
+     *
+     * @param  array{color: string, opacity: float, gradient: ?string}|null  $overlay
+     */
+    public static function overlayCss(?array $overlay): ?string
+    {
+        if ($overlay === null || $overlay['opacity'] <= 0) {
+            return null;
+        }
+
+        return $overlay['gradient'] !== null
+            ? "background-image: {$overlay['gradient']};"
+            : "background-color: {$overlay['color']}; opacity: {$overlay['opacity']};";
+    }
+
+    /**
+     * The Style tab's image overlay as an inline style, or null when it's fully transparent.
      *
      * @param  array<string, mixed>  $appearance
      */
     private static function overlayStyle(array $appearance): ?string
     {
-        $startColor = Colour::isValidHex($appearance['overlay_color'] ?? null) ? $appearance['overlay_color'] : Colour::DEFAULT_OVERLAY_COLOR;
-        $startOpacity = self::percentage($appearance['overlay_opacity'] ?? null, Colour::DEFAULT_OVERLAY_OPACITY);
-
-        if (($appearance['overlay_type'] ?? 'solid') !== 'gradient') {
-            return $startOpacity > 0 ? "background-color: {$startColor}; opacity: ".($startOpacity / 100.0).';' : null;
-        }
-
-        $endColor = Colour::isValidHex($appearance['overlay_end_color'] ?? null) ? $appearance['overlay_end_color'] : Colour::DEFAULT_OVERLAY_COLOR;
-        $endOpacity = self::percentage($appearance['overlay_end_opacity'] ?? null, 0);
-
-        if ($startOpacity === 0 && $endOpacity === 0) {
-            return null;
-        }
-
-        $direction = self::OVERLAY_DIRECTIONS[self::pick($appearance['overlay_direction'] ?? null, self::OVERLAY_DIRECTIONS, 'to_bottom')][1];
-
-        return "background-image: linear-gradient({$direction}, ".self::rgba($startColor, $startOpacity).', '.self::rgba($endColor, $endOpacity).');';
+        return self::overlayCss(self::imageOverlay($appearance));
     }
 
     /**

@@ -12,7 +12,7 @@
         'linkedin' => [__('LinkedIn'), config('app.social_links.linkedin') ?: config('app.social_links.linkedin-openid')],
         'github' => [__('GitHub'), config('app.social_links.github')],
         'discord' => [__('Discord'), config('app.social_links.discord')],
-    ], fn (array $link): bool => filled($link[1]));
+    ], fn (array $link): bool => \ScBudgetWeb\SiteBuilder\Blocks\Core\SocialFollowBlock::isWebAddress($link[1]));
 
     $footer = app(\ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus::class)->footer();
     $columnCount = count($footer['columns']);
@@ -70,7 +70,8 @@
         </div>
 
         <div class="mt-10 border-t border-current/15 pt-6 text-xs">
-            {{ $footer['copyright'] }}
+            {{-- Escaped text, with any simple links checked (NavigationMenus::linkedText()). --}}
+            {{ $footer['copyrightHtml'] }}
         </div>
     </div>
 </footer>

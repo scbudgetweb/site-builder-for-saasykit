@@ -4,8 +4,10 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
 use ScBudgetWeb\SiteBuilder\Blocks\BorderShadow;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\TextBlock;
+use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -62,6 +64,19 @@ class PageRenderingTest extends PageTestCase
             ->assertSee('<strong>bold</strong>', false)
             ->assertDontSee('<script>', false)
             ->assertDontSee('onclick', false);
+    }
+
+    public function test_page_content_cant_pin_itself_over_the_page(): void
+    {
+        // Rich text never carries inline styles of its own (the editor rebuilds them, and only text-align survives).
+        $this->assertSame('<p style="text-align: center;">Hi</p>', PageBlock::html('<p style="text-align:center; position:fixed; inset:0">Hi</p>'));
+        $this->assertSame('<p>Covered</p>', PageBlock::html(['type' => 'doc', 'content' => [
+            ['type' => 'paragraph', 'attrs' => ['textAlign' => 'left; position: fixed; inset: 0'], 'content' => [['type' => 'text', 'text' => 'Covered']]],
+        ]]));
+
+        // Custom classes can't pin a block either, even ones saved before "fixed" and "sticky" were refused.
+        $this->assertSame('promo dark-cards', BlockAppearance::cssClasses('promo fixed dark-cards sticky'));
+        $this->assertSame('fixed-width', BlockAppearance::cssClasses('fixed-width'));
     }
 
     public function test_hand_edited_values_cant_reach_the_page(): void
@@ -178,7 +193,35 @@ class PageRenderingTest extends PageTestCase
             ->assertSee('site-builder/pages/banner.jpg', false)
             ->assertSee('#112233', false)
             ->assertSee('py-24', false)
-            ->assertSee('my-banner', false);
+            ->assertSee('my-banner', false)
+            // A one-colour overlay is drawn exactly as before gradients were added.
+            ->assertSee('<div class="absolute inset-0" style="background-color: #112233; opacity: 0.6;"></div>', false);
+    }
+
+    public function test_a_banner_or_hero_image_can_have_a_gradient_overlay(): void
+    {
+        foreach (['banner', 'hero'] as $type) {
+            $this->page(['slug' => "with-{$type}", 'blocks' => [self::block($type, [
+                'heading' => 'Hello',
+                'style' => 'image',
+                'image' => 'site-builder/pages/banner.jpg',
+                'overlay_type' => 'gradient',
+                'overlay_direction' => 'to_top',
+                'overlay_color' => '#0a3d2e',
+                'overlay_opacity' => 80,
+                'overlay_end_color' => '#000000',
+                'overlay_end_opacity' => 10,
+            ])]]);
+
+            $this->get("/with-{$type}")
+                ->assertSee('<div class="absolute inset-0" style="background-image: linear-gradient(0deg, rgba(10, 61, 46, 0.8), rgba(0, 0, 0, 0.1));"></div>', false);
+        }
+
+        // Hand-edited values fall back to safe ones.
+        $this->assertSame(
+            ['color' => '#000000', 'opacity' => 0.5, 'gradient' => 'linear-gradient(180deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0))'],
+            BlockAppearance::imageOverlay(['overlay_type' => 'gradient', 'overlay_direction' => '45deg); background: url(x', 'overlay_color' => 'red', 'overlay_end_opacity' => 'lots']),
+        );
     }
 
     public function test_unknown_and_malformed_blocks_are_skipped(): void

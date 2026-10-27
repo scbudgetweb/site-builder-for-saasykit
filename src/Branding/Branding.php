@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Branding;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
@@ -111,6 +112,15 @@ class Branding
 
     public const FOOTER_SOCIAL_HOVER_COLOR = 'branding.footer_social_hover_color';
 
+    /** SaaSykit's announcement bar (Admin › Announcements), on the website and in the dashboard. */
+    public const ANNOUNCEMENT_BG_COLOR = 'branding.announcement_bg_color';
+
+    public const ANNOUNCEMENT_TEXT_COLOR = 'branding.announcement_text_color';
+
+    public const ANNOUNCEMENT_LINK_COLOR = 'branding.announcement_link_color';
+
+    public const ANNOUNCEMENT_LINK_HOVER_COLOR = 'branding.announcement_link_hover_color';
+
     /** Admin-written CSS for the public site, checked by Support\CustomCss. */
     public const CUSTOM_CSS = 'branding.custom_css';
 
@@ -143,6 +153,10 @@ class Branding
         self::FOOTER_LINK_HOVER_COLOR => ['--color-sb-footer-link-hover'],
         self::FOOTER_SOCIAL_COLOR => ['--color-sb-footer-social'],
         self::FOOTER_SOCIAL_HOVER_COLOR => ['--color-sb-footer-social-hover'],
+        self::ANNOUNCEMENT_BG_COLOR => ['--color-sb-announcement-bg'],
+        self::ANNOUNCEMENT_TEXT_COLOR => ['--color-sb-announcement-text'],
+        self::ANNOUNCEMENT_LINK_COLOR => ['--color-sb-announcement-link'],
+        self::ANNOUNCEMENT_LINK_HOVER_COLOR => ['--color-sb-announcement-link-hover'],
     ];
 
     /**
@@ -164,6 +178,9 @@ class Branding
         self::FOOTER_LINK_HOVER_COLOR => self::FOOTER_BG_COLOR,
         self::FOOTER_SOCIAL_COLOR => self::FOOTER_BG_COLOR,
         self::FOOTER_SOCIAL_HOVER_COLOR => self::FOOTER_BG_COLOR,
+        self::ANNOUNCEMENT_TEXT_COLOR => self::ANNOUNCEMENT_BG_COLOR,
+        self::ANNOUNCEMENT_LINK_COLOR => self::ANNOUNCEMENT_BG_COLOR,
+        self::ANNOUNCEMENT_LINK_HOVER_COLOR => self::ANNOUNCEMENT_BG_COLOR,
     ];
 
     /** Body text size: value (px) => label. 16 is the standard size. */
@@ -195,8 +212,12 @@ class Branding
         'image',
         'image_position',
         'overlay_enabled',
+        'overlay_type',
+        'overlay_direction',
         'overlay_color',
         'overlay_opacity',
+        'overlay_end_color',
+        'overlay_end_opacity',
         'heading_color',
         'subtitle_color',
     ];
@@ -452,7 +473,10 @@ class Branding
 
     public function fontFamily(string $slug): string
     {
-        return $this->availableFonts()[$slug] ?? Str::of($slug)->replace(['_', '-'], ' ')->title()->toString();
+        // Callers only pass available fonts' slugs; anything else is reduced to letters, digits and spaces, because the
+        // name goes into CSS.
+        return $this->availableFonts()[$slug]
+            ?? Str::of($slug)->replace(['_', '-'], ' ')->replaceMatches('/[^A-Za-z0-9 ]/', '')->title()->trim()->toString();
     }
 
     public function fontStylesheetUrl(string $slug): string
@@ -629,8 +653,8 @@ class Branding
      * What a banner should render. A given image (e.g. a Banner block's own image) wins over the config.
      * Every value is validated again here, so a bad database value can't inject CSS.
      *
-     * @param  array{color: string, opacity: float}|null  $imageOverlay
-     * @return array{image: ?string, imagePosition: string, overlay: ?array{color: string, opacity: float}, gradient: ?string, color: ?string}
+     * @param  array{color: string, opacity: float, gradient?: ?string}|null  $imageOverlay  as from BlockAppearance::imageOverlay()
+     * @return array{image: ?string, imagePosition: string, overlay: ?array{color: string, opacity: float, gradient: ?string}, gradient: ?string, color: ?string}
      */
     public function banner(string $banner, ?string $imageUrl = null, ?array $imageOverlay = null, ?string $imagePosition = null): array
     {
@@ -640,7 +664,9 @@ class Branding
             return [
                 'image' => $imageUrl,
                 'imagePosition' => array_key_exists((string) $imagePosition, Colour::IMAGE_POSITIONS) ? $imagePosition : 'center',
-                'overlay' => $imageOverlay ?? ['color' => '#030712', 'opacity' => 0.6],
+                'overlay' => $imageOverlay !== null
+                    ? ['color' => $imageOverlay['color'], 'opacity' => $imageOverlay['opacity'], 'gradient' => $imageOverlay['gradient'] ?? null]
+                    : ['color' => '#030712', 'opacity' => 0.6, 'gradient' => null],
                 'gradient' => null,
                 'color' => null,
             ];
@@ -657,10 +683,7 @@ class Branding
             'image' => $configImage,
             'imagePosition' => array_key_exists((string) ($values['image_position'] ?? ''), Colour::IMAGE_POSITIONS) ? $values['image_position'] : 'center',
             'overlay' => $configImage !== null && in_array($values['overlay_enabled'] ?? null, [true, 1, '1'], true)
-                ? [
-                    'color' => Colour::isValidHex($values['overlay_color'] ?? null) ? $values['overlay_color'] : Colour::DEFAULT_OVERLAY_COLOR,
-                    'opacity' => Colour::overlayOpacity($values['overlay_opacity'] ?? null) / 100.0,
-                ]
+                ? BlockAppearance::imageOverlay($values)
                 : null,
             'gradient' => $configImage === null && $color === null ? Colour::gradientCss($values) : null,
             'color' => $configImage === null ? $color : null,
@@ -710,8 +733,28 @@ class Branding
             return false;
         }
 
+        // A gradient counts by its stronger end: it's usually darkest behind the text and fades away from it.
         return ! filter_var($values['overlay_enabled'] ?? false, FILTER_VALIDATE_BOOLEAN)
-            || Colour::overlayOpacity($values['overlay_opacity'] ?? null) < Colour::MIN_READABLE_OVERLAY_OPACITY;
+            || round(BlockAppearance::imageOverlay($values)['opacity'] * 100) < Colour::MIN_READABLE_OVERLAY_OPACITY;
+    }
+
+    /**
+     * The announcement bar's colours, each a validated hex colour or null for SaaSykit's standard look. The theme's
+     * announcement view uses them as inline styles, so they also work in the dashboard, whose stylesheet doesn't
+     * include the site's colour utilities.
+     *
+     * @return array{background: ?string, text: ?string, link: ?string, linkHover: ?string}
+     */
+    public function announcementColours(): array
+    {
+        $colour = fn (string $key): ?string => Colour::isValidHex($this->get($key)) ? $this->get($key) : null;
+
+        return [
+            'background' => $colour(self::ANNOUNCEMENT_BG_COLOR),
+            'text' => $colour(self::ANNOUNCEMENT_TEXT_COLOR),
+            'link' => $colour(self::ANNOUNCEMENT_LINK_COLOR),
+            'linkHover' => $colour(self::ANNOUNCEMENT_LINK_HOVER_COLOR),
+        ];
     }
 
     // Logos and icons --------------------------------------------------------------------------------

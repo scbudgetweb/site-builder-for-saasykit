@@ -5,13 +5,14 @@ namespace ScBudgetWeb\SiteBuilder\Settings;
 use Illuminate\Contracts\Cache\Repository as Cache;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
 use ScBudgetWeb\SiteBuilder\Models\Setting;
+use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 
 /**
  * The package's key/value settings, e.g. "branding.site_color" or "navigation.header".
  *
- * All rows are cached as one array, so a page reads the cache once however many settings it uses.
- * Values can be strings, numbers, booleans or arrays. Callers must tolerate a missing key: a forever
- * cache can survive a deploy that adds new settings (lesson 9).
+ * All rows are cached as one array, so a page reads the cache once however many settings it uses, under a version
+ * that changes after each save (VersionedCache). Values can be strings, numbers, booleans or arrays. Callers must
+ * tolerate a missing key: a cached copy can survive a deploy that adds new settings (lesson 9).
  */
 class Settings
 {
@@ -70,7 +71,7 @@ class Settings
      */
     public function clearCache(): void
     {
-        $this->cache->forget($this->cacheKey());
+        VersionedCache::newVersion($this->cache, $this->cacheKey().'.version');
 
         RenderCache::flush();
     }
@@ -80,8 +81,10 @@ class Settings
      */
     public function all(): array
     {
-        $values = $this->cache->rememberForever(
+        $values = VersionedCache::remember(
+            $this->cache,
             $this->cacheKey(),
+            $this->cacheKey().'.version',
             fn (): array => Setting::query()->pluck('value', 'key')->all(),
         );
 

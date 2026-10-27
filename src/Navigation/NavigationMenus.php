@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Navigation;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -65,6 +66,9 @@ class NavigationMenus
 
     /** The same rule as block buttons. */
     public const URL_PATTERN = '/^(https?:\/\/|\/|#|mailto:|tel:)/i';
+
+    /** A link in the copyright line: <a …>text</a>. */
+    private const LINK_TAG_PATTERN = '#<a((?:\s[^>]*)?)>(.*?)</a\s*>#is';
 
     public function __construct(private SiteBuilder $siteBuilder, private PageService $pages) {}
 
@@ -151,7 +155,9 @@ class NavigationMenus
     /**
      * The footer's tagline, link columns and copyright line, ready to render.
      *
-     * @return array{tagline: string, copyright: string, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
+     * "copyright" is plain text (each link replaced by its text); "copyrightHtml" keeps the links (linkedText()).
+     *
+     * @return array{tagline: string, copyright: string, copyrightHtml: HtmlString, columns: array<int, array{heading: string, links: array<int, array<string, mixed>>}>}
      */
     public function footer(): array
     {
@@ -169,12 +175,82 @@ class NavigationMenus
             ->all();
 
         $copyright = filled($footer['copyright']) ? $footer['copyright'] : self::defaultCopyright();
+        $copyright = strtr($copyright, ['{year}' => date('Y'), '{site_name}' => (string) config('app.name')]);
 
         return [
             'tagline' => trim((string) $footer['tagline']),
-            'copyright' => strtr($copyright, ['{year}' => date('Y'), '{site_name}' => (string) config('app.name')]),
+            'copyright' => self::plainText($copyright),
+            // Links take the footer's link colours from Branding, and stay underlined so they stand out from the text.
+            'copyrightHtml' => self::linkedText($copyright, 'underline text-sb-footer-link transition-colors hover:text-sb-footer-link-hover focus-visible:text-sb-footer-link-hover'),
             'columns' => $columns,
         ];
+    }
+
+    /**
+     * Text that may hold simple links, e.g. 'Web design by <a href="https://example.com">Example</a>', as HTML. A link's
+     * address is checked like a menu link's (URL_PATTERN), and a link to another site opens in a new tab. Everything
+     * else, including any other HTML, a link's own attributes and HTML inside its text, is shown as plain text. A link
+     * whose address isn't allowed shows just its text. $linkClass styles the links.
+     */
+    public static function linkedText(string $text, string $linkClass = 'underline hover:no-underline'): HtmlString
+    {
+        // Text, then each link's attributes and text, in turn.
+        $parts = preg_split(self::LINK_TAG_PATTERN, $text, -1, PREG_SPLIT_DELIM_CAPTURE);
+
+        if ($parts === false) {
+            return new HtmlString(e($text, false));
+        }
+
+        $html = '';
+
+        foreach (array_chunk($parts, 3) as $chunk) {
+            $html .= e($chunk[0], false);
+
+            if (isset($chunk[1], $chunk[2])) {
+                $address = self::linkAddress($chunk[1]);
+                $label = e($chunk[2], false);
+
+                $html .= $address === null || preg_match(self::URL_PATTERN, $address) !== 1
+                    ? $label
+                    : '<a href="'.e($address).'" class="'.e($linkClass).'"'
+                        .(preg_match('#^https?://#i', $address) === 1 ? ' target="_blank" rel="noopener"' : '')
+                        .'>'.$label.'</a>';
+            }
+        }
+
+        return new HtmlString($html);
+    }
+
+    /**
+     * The same text with each link replaced by its text, for places that can't show links.
+     */
+    public static function plainText(string $text): string
+    {
+        return preg_replace(self::LINK_TAG_PATTERN, '$2', $text) ?? $text;
+    }
+
+    /**
+     * The address of every link in the text, as typed (null for a link without one), to check before saving.
+     *
+     * @return array<int, ?string>
+     */
+    public static function linkAddresses(string $text): array
+    {
+        preg_match_all(self::LINK_TAG_PATTERN, $text, $matches);
+
+        return array_map(fn (string $attributes): ?string => self::linkAddress($attributes), $matches[1] ?? []);
+    }
+
+    /**
+     * The href of a link's attributes, decoded, or null when there isn't one.
+     */
+    private static function linkAddress(string $attributes): ?string
+    {
+        if (preg_match('/(?:^|\s)href\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s"\'>]+))/i', $attributes, $match) !== 1) {
+            return null;
+        }
+
+        return trim(html_entity_decode($match[1] !== '' ? $match[1] : (($match[2] ?? '') !== '' ? $match[2] : ($match[3] ?? '')), ENT_QUOTES | ENT_HTML5));
     }
 
     /**

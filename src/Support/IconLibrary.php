@@ -186,8 +186,13 @@ class IconLibrary
      */
     public static function optionHtml(?string $value): ?string
     {
-        if (blank($value) || ! self::isValid($value)) {
+        if (blank($value)) {
             return null;
+        }
+
+        // The picker shows labels as HTML, so a value that isn't a library icon (a hand-edited row) is shown escaped.
+        if (! self::isValid($value)) {
+            return e(__('Unknown icon (:value)', ['value' => mb_strimwidth($value, 0, 40, '…')]));
         }
 
         return '<span style="display:inline-flex;align-items:center;gap:0.5rem">'
@@ -236,7 +241,7 @@ class IconLibrary
 
     private static function path(string $value): ?string
     {
-        if (preg_match('#^bx:(regular|solid|logos)/(bx[sl]?-[a-z0-9-]+)$#', $value, $match) !== 1) {
+        if (preg_match('#^bx:(regular|solid|logos)/(bx[sl]?-[a-z0-9-]+)\z#', $value, $match) !== 1) {
             return null;
         }
 

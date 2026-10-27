@@ -13,7 +13,7 @@ Every link in the header, a dropdown, a mega menu or the footer points at one of
 
 | Link to | What it does |
 |---|---|
-| **A page you built** | One of your [pages](pages.md). If you change the page's address, or it replaces a built-in page, the link follows it. While the page is a draft or in the bin, the link is hidden. Drafts are marked *(draft, hidden until published)* in the list |
+| **A page you built** | One of your [pages](pages.md). If you change the page's address, or it replaces a built-in page, the link follows it. While the page is a draft or in the bin, the link is hidden. Drafts are marked *(draft, hidden until published)* in the list, for people who can see the pages list (otherwise only published pages are listed) |
 | **A built-in page** | A page the site already has, such as Home, Blog, Log in, Create account, Dashboard, Privacy Policy or Terms of Service. Only pages that apply to your site are listed: Pricing only when the home page has a pricing section, and Roadmap only while the roadmap is switched on. Your app may add more, or leave some out. A link that stops applying stays in your menu but is hidden, and shows as *(not available on this site, so hidden)* |
 | **A web address** | Any address starting with `https://`, `/` (a page on this site), `#` (a part of the page), `mailto:` or `tel:` |
 | **Nothing** | Header links only: the link just opens its dropdown or mega menu |
@@ -49,9 +49,9 @@ On phones and tablets, the ☰ button opens a menu that covers the screen and sc
 |---|---|
 | **Tagline** | A line under the footer logo. Leave it empty to hide it |
 | **Link columns** | Up to **4 columns** beside the logo, each with an optional heading and up to 10 links |
-| **Copyright line** | The line at the very bottom. `{year}` becomes the current year and `{site_name}` the site name. Leave it empty for the standard line |
+| **Copyright line** | The line at the very bottom. `{year}` becomes the current year and `{site_name}` the site name. It can hold links, written like `<a href="https://example.com">Example</a>`, with an address starting with `https://`, `/`, `#`, `mailto:` or `tel:`. Links are underlined, in the footer's link colours from [Branding](branding.md), and links to other sites open in a new tab. Any other HTML shows as plain text. Leave it empty for the standard line |
 
-Social media icons in the footer come from the app's general settings, and the footer's colours from [Branding](branding.md).
+Social media icons in the footer come from the app's general settings (only web addresses starting with `https://` or `http://` are linked), and the footer's colours from [Branding](branding.md).
 
 ## Reset to default
 

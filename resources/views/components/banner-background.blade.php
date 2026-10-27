@@ -3,7 +3,7 @@
     'variant' => 'inner',
     // A block's own image; wins over the config.
     'imageUrl' => null,
-    // With imageUrl: ['color' => hex, 'opacity' => 0-1].
+    // With imageUrl: ['color' => hex, 'opacity' => 0-1, 'gradient' => CSS or null], as from BlockAppearance::imageOverlay().
     'imageOverlay' => null,
     // With imageUrl: center / top / bottom.
     'imagePosition' => null,
@@ -30,7 +30,12 @@
              style="object-position: {{ $banner['imagePosition'] }};">
 
         @if ($banner['overlay'] && $banner['overlay']['opacity'] > 0)
-            <div class="absolute inset-0" style="background-color: {{ $banner['overlay']['color'] }}; opacity: {{ $banner['overlay']['opacity'] }};"></div>
+            {{-- One colour, or a gradient built only from validated colours and whitelisted angles. --}}
+            @if (($banner['overlay']['gradient'] ?? null) !== null)
+                <div class="absolute inset-0" style="background-image: {{ $banner['overlay']['gradient'] }};"></div>
+            @else
+                <div class="absolute inset-0" style="background-color: {{ $banner['overlay']['color'] }}; opacity: {{ $banner['overlay']['opacity'] }};"></div>
+            @endif
         @endif
     @endif
 </div>

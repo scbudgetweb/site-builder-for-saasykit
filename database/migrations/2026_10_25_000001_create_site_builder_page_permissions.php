@@ -29,8 +29,13 @@ return new class extends Migration
 
             $roleModel::query()
                 ->where('name', 'admin')
-                // SaaSykit Tenancy also has a tenant "admin" role, which must not get site-wide permissions.
+                // SaaSykit Tenancy also has a tenant "admin" role (and tenants' own roles), which must not get
+                // site-wide permissions.
                 ->when(Schema::hasColumn($roleTable, 'is_tenant_role'), fn ($query) => $query->where('is_tenant_role', false))
+                ->when(Schema::hasColumn($roleTable, 'tenant_id'), fn ($query) => $query->whereNull('tenant_id'))
+                // The same guard as the permissions, so the grant can't fail or land on another guard's "admin".
+                ->when($permissions !== [] && Schema::hasColumn($roleTable, 'guard_name'), fn ($query) => $query->where('guard_name', $permissions[0]->guard_name))
+                ->orderBy('id')
                 ->first()
                 ?->givePermissionTo($permissions);
         }
@@ -38,12 +43,18 @@ return new class extends Migration
         $this->forgetCachedPermissions();
     }
 
+    /**
+     * Removes only the permissions this package creates under their standard names. An app that maps the page
+     * abilities to its own permissions (e.g. "update settings") keeps them.
+     */
     public function down(): void
     {
         $permissionModel = config('permission.models.permission');
 
         if (is_string($permissionModel) && class_exists($permissionModel)) {
-            $permissionModel::query()->whereIn('name', PagePolicy::permissions())->delete();
+            $permissionModel::query()
+                ->whereIn('name', array_intersect(PagePolicy::permissions(), ['view pages', 'create pages', 'update pages', 'delete pages']))
+                ->delete();
             $this->forgetCachedPermissions();
         }
     }

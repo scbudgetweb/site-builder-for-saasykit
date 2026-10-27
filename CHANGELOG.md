@@ -1,5 +1,56 @@
 # Changelog
 
+## 1.4.0 - 2026-10-27
+
+- **Gradient overlays on banners.** The Banner and Hero blocks' image overlay, and Branding's hero, inner and app banners, can now be *One colour* (as before) or a *Gradient*, like a block's image background on the Style tab. A gradient fades from a start colour and strength to an end colour and strength, in one of four directions. Existing banners are unchanged (the HTML of a one-colour overlay is the same).
+  - New: `BlockAppearance::imageOverlay()` reads the overlay settings, `BlockAppearance::overlayFields()` builds them, and `BlockAppearance::overlayCss()` gives the inline style.
+  - The overlay arrays from `Branding::banner()` and the banner components gain a `gradient` key (null for one colour). An `imageOverlay` without it still works.
+  - Branding's readability warning counts a gradient by its stronger end.
+- **Announcement bar colours.** Branding › Header & footer has an *Announcement bar* section: background, text and close button, link and link hover colour, with the same low-contrast warning as the header and footer.
+  - It colours SaaSykit's announcements (Admin › Announcements) on the website and in the dashboard. The theme now shadows SaaSykit's `livewire/announcement/view.blade.php`, with the same markup and behaviour.
+  - The colours are inline styles from validated hex values, because the dashboard's stylesheet doesn't include the site builder's utilities. Left blank, SaaSykit's own classes are used, so nothing changes.
+  - New: `Branding::announcementColours()` and `Branding::ANNOUNCEMENT_*_COLOR`, also set as `--color-sb-announcement-*` variables on the website.
+  - When merging SaaSykit updates, compare its announcement view with the theme's copy.
+- **Links in the footer's copyright line.** Website › Navigation › Footer › Copyright line can hold links written as `<a href="https://example.com">Example</a>`. The address is checked like a menu link's, both on saving and on output. Links are underlined, in the footer's link colours (Branding › Header & footer › Links), and a link to another site opens in a new tab with `rel="noopener"`. Any other HTML, and a link's other attributes, show as plain text.
+  - `NavigationMenus::footer()` gains `copyrightHtml`, an escaped `HtmlString` with the links. `NavigationMenus::linkedText($text, $linkClass)` does the same for any text.
+  - `copyright` is now plain text, with each link replaced by its text, so an app view that prints it stays safe. Print `copyrightHtml` to show the links.
+  - The line can be up to 300 characters (it was 200).
+- **Custom CSS mistakes are listed.** CSS that's safe but has mistakes is still saved, with a warning naming each mistake's line, also shown under the editor. The mistakes are:
+  - a property CSS doesn't have (e.g. `colour`);
+  - an extra or missing bracket;
+  - a string or comment that's never closed;
+  - a declaration outside any rule.
+
+  The property names come from known-css-properties 0.37.0 (MIT), in `resources/data/css-properties.php`. The Custom CSS section's description now matches the rules. New: `CustomCss::warnings()`.
+- **Security hardening** (from a source review of the whole package):
+  - **Custom CSS:**
+    - It's checked the way a browser reads it. A `url()` hidden between a `"/*"` and a `"*/"` inside strings, a `url(` that's never closed, a later candidate in `image-set()`, and `src()` can no longer load files from another site.
+    - CSS that can't be checked is rejected (it no longer passes if a regex fails).
+    - The check takes time in step with the CSS.
+    - `url(#fragment)` is allowed.
+  - **SVG logos and favicons** must be plain drawings (`Support\SafeSvg`). Scripts, event handlers, `foreignObject`, links to other files, DOCTYPEs and unsafe styles are refused on upload, because uploads are served from the site's own address. Files already uploaded aren't changed.
+  - **Social links** in the theme footer and the Social follow block are only linked when they start with `https://` or `http://` (`SocialFollowBlock::isWebAddress()`).
+  - **Block CSS classes** can't include `fixed` or `sticky`. The editor refuses them, and ones saved before are left out when the page renders.
+  - **Branding's permission check** fails closed when `site-builder.permissions.branding` isn't a permission name, like the other pages.
+  - **Icon picker:** a stored icon value that isn't a library icon is shown escaped (*Unknown icon (…)*), never as HTML. The icon rule refuses non-text values.
+  - **Pages in the bin** can still be edited, but their status and the built-in page they replace are locked until they're restored.
+  - **Duplicate** always picks an address no page (including one in the bin) or other part of the site uses.
+  - **Navigation:** the page picker lists draft titles only to people who can see the pages list.
+  - **Redirects and previews:**
+    - A wrongly cased address, or a page that replaces a built-in page, redirects to a path on this site rather than an absolute URL built from the request's Host header.
+    - Preview responses send `Cache-Control: private, no-store`.
+  - **Caches:**
+    - The published-page map, the menu page links and the settings are cached under a version that changes once a save is committed, so a request that overlaps a save can't put old data back (`Support\VersionedCache`). Old cache entries are simply never read again.
+    - The render cache's version also changes after the commit.
+    - A page's cache key is read before its library blocks are expanded.
+    - Live stats use `Cache::flexible`: after ten minutes the last figure is shown while one request works out the new one.
+  - **Uploads:** the in-use check for page uploads encodes paths the way they're stored, so a file with an accented name is found where it's used.
+  - **Fonts:** an unknown font slug can't put anything but letters, digits and spaces into CSS.
+  - **The page permissions migration:**
+    - It only grants the site-wide `admin` role, never a tenant's, matching `tenant_id`, the permissions' guard and the lowest id.
+    - Rolling back removes only the package's standard permission names, so an app's own permission mapped to a page ability is kept.
+  - **The package's tests** always use in-memory SQLite (`force="true"`), even when the shell exports `DB_*`. To use MySQL, copy `phpunit.xml.dist` to `phpunit.xml`, which is now git-ignored.
+
 ## 1.3.0 - 2026-10-27
 
 - **Apps can set the standard menus.** `SiteBuilder::defaultMenus(array|Closure|null $header = null, array|Closure|null $footer = null, array|Closure|null $mobile = null)` sets the header, footer and mobile menu the site uses while nothing is saved in Website › Navigation, and that Reset to default saves.

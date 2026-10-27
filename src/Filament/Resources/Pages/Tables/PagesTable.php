@@ -19,6 +19,7 @@ use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
 
 class PagesTable
@@ -73,7 +74,7 @@ class PagesTable
                     ->action(function (Page $record): void {
                         $copy = $record->replicate(['published_at']);
                         $copy->title = __(':title (copy)', ['title' => $record->title]);
-                        $copy->slug = Str::limit($record->slug, 85, '').'-copy-'.Str::lower(Str::random(4));
+                        $copy->slug = self::freeCopySlug($record->slug);
                         $copy->status = PageStatus::Draft;
                         $copy->replaces = null;
                         $copy->save();
@@ -96,5 +97,19 @@ class PagesTable
                         ->modalDescription(__('These pages and their images are removed for good and can\'t be restored.')),
                 ]),
             ]);
+    }
+
+    /**
+     * "<slug>-copy-xxxx", with a suffix that no page (including one in the bin) or other part of the site uses yet.
+     */
+    private static function freeCopySlug(string $slug): string
+    {
+        $reserved = app(PageService::class)->reservedSlugs();
+
+        do {
+            $copy = Str::limit($slug, 85, '').'-copy-'.Str::lower(Str::random(4));
+        } while (in_array($copy, $reserved, true) || Page::withTrashed()->where('slug', $copy)->exists());
+
+        return $copy;
     }
 }

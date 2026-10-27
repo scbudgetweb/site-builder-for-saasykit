@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Facade;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
+use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\SiteBuilderServiceProvider;
 
 class ThemeTest extends TestCase
@@ -176,5 +177,39 @@ class ThemeTest extends TestCase
         $this->app->forgetInstance('view');
         $this->app->forgetInstance('view.finder');
         Facade::clearResolvedInstance('view');
+    }
+
+    public function test_the_announcement_bar_takes_brandings_colours_and_keeps_saasykits_look_without_them(): void
+    {
+        $announcement = (object) ['id' => 7, 'content' => '<p>Hall closed Monday. <a href="/news">Details</a></p>', 'is_dismissible' => true];
+        $render = fn (): string => view('livewire.announcement.view', ['announcement' => $announcement])->render();
+
+        $this->assertStringStartsWith(SiteBuilderServiceProvider::themePath(), $this->app['view']->getFinder()->find('livewire.announcement.view'));
+
+        $standard = $render();
+        $this->assertStringContainsString('bg-secondary-300', $standard);
+        $this->assertStringContainsString('text-secondary-900', $standard);
+        $this->assertStringContainsString('text-primary-900', $standard);
+        $this->assertStringContainsString('wire:click="dismiss(7)"', $standard);
+        $this->assertStringNotContainsString('<style>', $standard);
+
+        app(Branding::class)->save([
+            Branding::ANNOUNCEMENT_BG_COLOR => '#0a3d2e',
+            Branding::ANNOUNCEMENT_TEXT_COLOR => '#ffffff',
+            Branding::ANNOUNCEMENT_LINK_COLOR => '#fff5cc',
+            Branding::ANNOUNCEMENT_LINK_HOVER_COLOR => '#ffd166',
+        ]);
+
+        $branded = $render();
+        $this->assertStringContainsString('style="background-color: #0a3d2e; color: #ffffff;"', $branded);
+        $this->assertStringContainsString('.sb-announcement a:not(.announcement-close-button) { color: #fff5cc; }', $branded);
+        $this->assertStringContainsString(':hover, .sb-announcement a:not(.announcement-close-button):focus-visible { color: #ffd166; }', $branded);
+        $this->assertStringNotContainsString('bg-secondary-300', $branded);
+        $this->assertStringNotContainsString('text-primary-900', $branded);
+
+        // A value changed in the database that isn't a colour is ignored.
+        app(Settings::class)->set([Branding::ANNOUNCEMENT_BG_COLOR => 'red; } body { display: none']);
+        $this->assertStringNotContainsString('display: none', $render());
+        $this->assertStringContainsString('bg-secondary-300', $render());
     }
 }

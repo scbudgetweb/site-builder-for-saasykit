@@ -119,19 +119,23 @@ class StatsBlock extends PageBlock
     }
 
     /**
-     * Live figures are cached briefly: they're decoration, not something that must be exact to the second. A figure
-     * that fails is reported and left out, rather than breaking the page.
+     * Live figures are cached briefly: they're decoration, not something that must be exact to the second. After ten
+     * minutes the last figure is still shown while one request works out the new one after its response (so a busy
+     * page doesn't run the app's count once per visitor). A figure that fails is reported and left out, rather than
+     * breaking the page.
      */
     private static function liveCount(string $key, \Closure $count): int|float|null
     {
-        try {
-            $value = Cache::remember("site-builder.stats.{$key}", now()->addMinutes(10), fn () => $count());
+        $value = Cache::flexible("site-builder.stats.{$key}", [600, 900], function () use ($count): mixed {
+            try {
+                return $count();
+            } catch (\Throwable $exception) {
+                report($exception);
 
-            return is_numeric($value) ? $value + 0 : null;
-        } catch (\Throwable $exception) {
-            report($exception);
+                return null;
+            }
+        });
 
-            return null;
-        }
+        return is_numeric($value) ? $value + 0 : null;
     }
 }

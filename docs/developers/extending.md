@@ -38,6 +38,8 @@ The package's theme is placed straight after that folder (`site-builder.theme.ap
 - diff each overridden view with the package's: `diff resources/views/theme/<path> vendor/scbudgetweb/site-builder-for-saasykit/resources/views/theme/<path>`;
 - keep overrides few and small. A partial (the header, the head) is easier to keep up to date than a whole layout.
 
+**Footer copyright line in your own views.** `NavigationMenus::footer()` gives the copyright line twice: `copyright` is plain text (a link shows as its text), and `copyrightHtml` is an `HtmlString` with the admin's links, already escaped and checked. Print `{{ $footer['copyrightHtml'] }}` to show the links. `NavigationMenus::linkedText()` does the same for any text of your own.
+
 ## Slots: replaceable built-in pages
 
 A slot is one of the app's own pages that an admin can replace with a page they built (Pages › Settings › *Replaces built-in page*). The theme registers `home`.
@@ -202,7 +204,7 @@ SiteBuilder::brandingSection('signup', 'Sign-up box', [
 | `colour` | `branding.app_{key}` | `appValue($key)`. Its CSS variables are set like `brandingColours()` ones, and `contrastWith()` adds the low-contrast warning |
 | `buttonStyle` | `branding.app_{key}` (`auto`, `1`–`4`) | `BrandingStyle::appButtonSlot($key, $isOnDarkBackground)`: the style for `site-button site-button-{slot}`. Automatic suits the background |
 | `image` | `branding.app_{key}` (a path) | `Branding::appImageUrl($key)` |
-| `banner` | `branding.app_{key}_{field}`, like the hero and inner banners | `<x-site-builder::banner variant="app_{key}">`. Its text colours fall back to the inner banner's |
+| `banner` | `branding.app_{key}_{field}`, like the hero and inner banners (including a one-colour or gradient image overlay) | `<x-site-builder::banner variant="app_{key}">`. Its text colours fall back to the inner banner's |
 
 Each field takes `->helperText()` and `->default()`. Image fields also take `->fileTypes()` (JPG, PNG and WebP by default) and `->maxSize()` (2 MB by default).
 

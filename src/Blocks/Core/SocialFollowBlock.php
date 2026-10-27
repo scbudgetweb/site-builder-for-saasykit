@@ -81,12 +81,21 @@ class SocialFollowBlock extends PageBlock
                 ? (config('app.social_links.linkedin-openid') ?: config('app.social_links.linkedin'))
                 : config("app.social_links.{$network}");
 
-            if (filled($url)) {
+            if (self::isWebAddress($url)) {
                 $links[$network] = ['url' => $url, 'label' => $label];
             }
         }
 
         return $links;
+    }
+
+    /**
+     * Whether a saved social link is an http(s) web address. Anything else (e.g. javascript:) isn't linked, like every
+     * other link the site builder outputs.
+     */
+    public static function isWebAddress(mixed $url): bool
+    {
+        return is_string($url) && preg_match('#^https?://[^/\\\\]#i', trim($url)) === 1;
     }
 
     public static function viewData(array $data, Page $page): array

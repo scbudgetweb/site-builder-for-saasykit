@@ -152,6 +152,63 @@ class ManageBrandingPageTest extends TestCase
             ->assertFormFieldExists('panel_color_dashboard');
     }
 
+    public function test_custom_css_with_mistakes_is_saved_with_a_warning(): void
+    {
+        $this->actingAs($this->user('admin@example.com'));
+        $css = ".testing a {\n  colour: #fff;}\n}";
+
+        Livewire::test(ManageBranding::class)
+            ->fillForm(['custom_css' => $css])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified('Custom CSS saved, but check it')
+            ->assertSee('Line 2: &quot;colour&quot; isn&#039;t a CSS property', false);
+
+        $this->assertSame($css, app(Branding::class)->get('branding.custom_css'));
+    }
+
+    public function test_the_announcement_bar_colours_are_saved_and_checked_for_contrast(): void
+    {
+        $this->actingAs($this->user('admin@example.com'));
+
+        Livewire::test(ManageBranding::class)
+            ->assertSee('Announcement bar')
+            ->fillForm(['announcement_bg_color' => '#ffffff', 'announcement_text_color' => '#fefefe', 'announcement_link_color' => '#0a3d2e'])
+            ->call('save')
+            ->assertHasNoFormErrors()
+            ->assertNotified('Some colours may be hard to read');
+
+        $this->assertSame(
+            ['background' => '#ffffff', 'text' => '#fefefe', 'link' => '#0a3d2e', 'linkHover' => null],
+            app(Branding::class)->announcementColours(),
+        );
+    }
+
+    public function test_a_banner_image_can_have_a_gradient_overlay(): void
+    {
+        $this->actingAs($this->user('admin@example.com'));
+
+        Livewire::test(ManageBranding::class)
+            ->assertSchemaStateSet(['hero_overlay_type' => 'solid', 'hero_overlay_direction' => 'to_bottom', 'hero_overlay_end_opacity' => 0])
+            // As in the browser: choose an image background first, so the image field is showing when the file arrives.
+            ->fillForm(['hero_background_type' => Branding::BANNER_TYPE_IMAGE, 'hero_overlay_enabled' => true, 'hero_overlay_type' => 'gradient'])
+            ->fillForm([
+                'hero_image' => UploadedFile::fake()->image('banner.jpg', 1920, 600),
+                'hero_overlay_direction' => 'to_top',
+                'hero_overlay_color' => '#0a3d2e',
+                'hero_overlay_opacity' => 80,
+                'hero_overlay_end_color' => '#000000',
+                'hero_overlay_end_opacity' => 0,
+            ])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertSame(
+            'linear-gradient(0deg, rgba(10, 61, 46, 0.8), rgba(0, 0, 0, 0))',
+            app(Branding::class)->banner('hero')['overlay']['gradient'],
+        );
+    }
+
     private function user(string $email): User
     {
         $user = new User;

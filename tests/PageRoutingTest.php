@@ -44,12 +44,19 @@ class PageRoutingTest extends PageTestCase
         $this->get('/About-Us')->assertRedirect('http://localhost/about-us')->assertStatus(301);
     }
 
+    public function test_redirects_go_to_a_path_on_this_site_whatever_host_the_request_names(): void
+    {
+        $this->page();
+
+        $this->get('/About-Us', ['Host' => 'evil.example'])->assertStatus(301)->assertHeader('Location', '/about-us');
+    }
+
     public function test_a_page_replacing_a_built_in_page_redirects_there(): void
     {
         $page = $this->page(['replaces' => 'home']);
 
         $this->assertSame('http://localhost', $page->url());
-        $this->get('/about-us')->assertRedirect('http://localhost')->assertStatus(301);
+        $this->get('/about-us')->assertRedirect('http://localhost')->assertStatus(301)->assertHeader('Location', '/');
         $this->assertSame($page->id, app(PageService::class)->forSlot('home')?->id);
     }
 
@@ -75,7 +82,8 @@ class PageRoutingTest extends PageTestCase
         $this->get($page->previewUrl())
             ->assertOk()
             ->assertSee('Preview of a draft page')
-            ->assertSee('noindex, nofollow', false);
+            ->assertSee('noindex, nofollow', false)
+            ->assertHeader('Cache-Control', 'no-store, private');
 
         $this->get(route('site-builder.pages.preview', ['page' => $page->id]))->assertForbidden();
         $this->get(URL::temporarySignedRoute('site-builder.pages.preview', now()->subMinute(), ['page' => $page->id]))->assertForbidden();
@@ -123,7 +131,7 @@ class PageRoutingTest extends PageTestCase
     public function test_a_corrupt_lookup_cache_reads_as_no_pages(): void
     {
         $this->page();
-        cache()->forever('site-builder.published-pages', 'not an array');
+        cache()->forever('site-builder.published-pages.'.(cache()->get('site-builder.pages-version') ?? '0'), 'not an array');
 
         $this->get('/about-us')->assertNotFound();
         $this->assertNull(app(PageService::class)->forSlot('home'));

@@ -78,13 +78,19 @@ class PageForm
                                 ->default(PageStatus::Draft->value)
                                 ->selectablePlaceholder(false)
                                 ->required()
-                                ->helperText(__('Only published pages are visible on the site. Use Preview to check a draft.')),
+                                // A page in the bin keeps its status until it's restored (restoring needs the delete permission).
+                                ->disabled(fn (?Page $record): bool => (bool) $record?->trashed())
+                                ->helperText(fn (?Page $record): string => $record?->trashed()
+                                    ? __('This page is in the bin. Restore it to change its status.')
+                                    : __('Only published pages are visible on the site. Use Preview to check a draft.')),
                             Select::make('replaces')
                                 ->label(__('Replaces built-in page'))
                                 ->options(fn (): array => self::slotOptions())
                                 ->placeholder(__('No, it\'s a page of its own'))
                                 ->unique(ignoreRecord: true)
                                 ->validationMessages(['unique' => __('Another page already replaces this page.')])
+                                // A binned page can't take a built-in page's place: it would block live pages from it.
+                                ->disabled(fn (?Page $record): bool => (bool) $record?->trashed())
                                 ->live()
                                 ->helperText(fn (Get $get): string => self::replacesHelperText($get))
                                 ->visible(fn (): bool => self::slotOptions() !== []),

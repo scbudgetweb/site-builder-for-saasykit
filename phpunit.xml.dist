@@ -15,7 +15,10 @@
         </include>
     </source>
     <php>
-        <!-- SQLite in memory by default; set DB_CONNECTION=mysql (and DB_*) to run against MySQL. -->
-        <env name="DB_CONNECTION" value="testing"/>
+        <!--
+            Always SQLite in memory, even when the shell exports DB_* (the tests refresh the database, so they must
+            never reach a real one). To run against MySQL, copy this file to phpunit.xml (git-ignored) and change it.
+        -->
+        <env name="DB_CONNECTION" value="testing" force="true"/>
     </php>
 </phpunit>

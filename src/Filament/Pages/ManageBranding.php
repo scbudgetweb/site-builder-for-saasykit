@@ -10,7 +10,6 @@ use Filament\Forms\Components\CodeEditor\Enums\Language;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -29,7 +28,9 @@ use Filament\Schemas\Concerns\RestrictsFileUploadsToSchemaComponents;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
@@ -38,6 +39,7 @@ use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\CustomCss;
+use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
 
 /**
  * Admin › Website › Branding: the site's identity (logos, icons, colours, fonts, text sizes, buttons, shapes,
@@ -83,6 +85,10 @@ class ManageBranding extends Page
         'footer_link_hover_color' => ['Footer', 'Link hover colour'],
         'footer_social_color' => ['Footer', 'Social icon colour'],
         'footer_social_hover_color' => ['Footer', 'Social icon hover colour'],
+        'announcement_bg_color' => ['Announcement bar', 'Background colour'],
+        'announcement_text_color' => ['Announcement bar', 'Text & close button colour'],
+        'announcement_link_color' => ['Announcement bar', 'Link colour'],
+        'announcement_link_hover_color' => ['Announcement bar', 'Link hover colour'],
     ];
 
     /**
@@ -125,7 +131,9 @@ class ManageBranding extends Page
 
     public static function canAccess(): bool
     {
-        return (bool) auth()->user()?->can(config('site-builder.permissions.branding', 'update settings'));
+        $permission = config('site-builder.permissions.branding', 'update settings');
+
+        return is_string($permission) && (bool) auth()->user()?->can($permission);
     }
 
     public function mount(Branding $branding): void
@@ -148,6 +156,11 @@ class ManageBranding extends Page
             $state["{$banner}_image_position"] ??= 'center';
             $state["{$banner}_overlay_enabled"] = $branding->isOn(Branding::bannerKey($banner, 'overlay_enabled'));
             $state["{$banner}_overlay_opacity"] = Colour::overlayOpacity($state["{$banner}_overlay_opacity"] ?? null);
+            $state["{$banner}_overlay_type"] ??= 'solid';
+            $state["{$banner}_overlay_direction"] ??= 'to_bottom';
+            $state["{$banner}_overlay_end_opacity"] = is_numeric($state["{$banner}_overlay_end_opacity"] ?? null)
+                ? max(0, min(100, (int) $state["{$banner}_overlay_end_opacity"]))
+                : 0;
         }
 
         // Choices open on the standard look, and the button styles with their standard names.
@@ -315,6 +328,12 @@ class ManageBranding extends Page
                                             $this->colorPairs(__('Links'), ['footer_link_color', 'footer_link_hover_color']),
                                             $this->colorPairs(__('Social icons'), ['footer_social_color', 'footer_social_hover_color']),
                                         ]),
+                                    Section::make(__('Announcement bar'))
+                                        ->description(__('Colours for announcements (Admin › Announcements), on the website and in the dashboard. Leave blank to keep the standard look.'))
+                                        ->schema([
+                                            $this->colorPairs(__('Background & text'), ['announcement_bg_color', 'announcement_text_color']),
+                                            $this->colorPairs(__('Links'), ['announcement_link_color', 'announcement_link_hover_color']),
+                                        ]),
                                     // The app's own element colours (SiteBuilder::brandingColours()), a section per group.
                                     ...array_values(array_map(fn (ColourGroup $group): Section => $this->appColourSection($group), $branding->appColourGroups())),
                                 ]),
@@ -336,11 +355,15 @@ class ManageBranding extends Page
                                 ->icon('heroicon-o-code-bracket')
                                 ->schema([
                                     Section::make(__('Custom CSS'))
-                                        ->description(__('Your own CSS for the public website, added last so it overrides everything else. Check the site after saving: CSS can break the layout. For safety, "<", @import and files from other websites aren\'t allowed; url() can point to files on this site (starting with /) or inline images.'))
+                                        ->description(__('Your own CSS for the public website, added last so it overrides everything else. Check the site after saving: CSS can break the layout. For safety, "<", @import and files from other websites aren\'t allowed; url(), image-set() and src() can point to files on this site (starting with /), inline images or #references. Mistakes such as a misspelt property or an extra "}" are listed below after saving.'))
                                         ->schema([
                                             CodeEditor::make('custom_css')
                                                 ->hiddenLabel()
                                                 ->language(Language::Css)
+                                                // Mistakes that don't make it unsafe are saved, but listed here.
+                                                ->helperText(fn (?string $state): ?HtmlString => ($warnings = CustomCss::warnings($state)) === []
+                                                    ? null
+                                                    : new HtmlString(implode('<br>', array_map(fn (string $warning): string => e($warning), [__('Check your CSS:'), ...$warnings]))))
                                                 ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
                                                     if (($problem = CustomCss::problem(is_string($value) ? $value : null)) !== null) {
                                                         $fail($problem);
@@ -411,6 +434,15 @@ class ManageBranding extends Page
         $this->deleteReplacedUploads($branding, $previousUploads, $data);
 
         $this->warnAboutUnreadableColours($branding, $data);
+
+        if (($cssWarnings = CustomCss::warnings(is_string($data['custom_css'] ?? null) ? $data['custom_css'] : null)) !== []) {
+            Notification::make()
+                ->title(__('Custom CSS saved, but check it'))
+                ->body(new HtmlString(implode('<br>', array_map(fn (string $warning): string => e($warning), $cssWarnings))))
+                ->warning()
+                ->persistent()
+                ->send();
+        }
 
         Notification::make()
             ->title(__('Branding saved'))
@@ -653,7 +685,7 @@ class ManageBranding extends Page
             ? __('Warning: this may be hard to read on the banner background.')
             : null;
         $overlayWarning = fn (Get $get): ?string => $branding->bannerImageNeedsOverlay($this->bannerState($banner, $get))
-            ? __('Warning: text can be hard to read on a busy image. Use an overlay of :opacity% or more.', ['opacity' => Colour::MIN_READABLE_OVERLAY_OPACITY])
+            ? __('Warning: text can be hard to read on a busy image. Use an overlay of :opacity% or more (for a gradient, at its stronger end).', ['opacity' => Colour::MIN_READABLE_OVERLAY_OPACITY])
             : null;
 
         return Section::make($title)
@@ -713,17 +745,8 @@ class ManageBranding extends Page
                     ->helperText($overlayWarning)
                     ->visible($isImage)
                     ->columnSpanFull(),
-                $this->colorField("{$banner}_overlay_color", __('Overlay colour'))
-                    ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
-                    ->visible(fn (Get $get): bool => $isImage($get) && $get("{$banner}_overlay_enabled")),
-                Slider::make("{$banner}_overlay_opacity")
-                    ->label(__('Overlay opacity (%)'))
-                    ->range(minValue: 0, maxValue: 100)
-                    ->step(5)
-                    ->decimalPlaces(0)
-                    ->tooltips()
-                    ->live()
-                    ->visible(fn (Get $get): bool => $isImage($get) && $get("{$banner}_overlay_enabled")),
+                // One colour or a gradient, like a block's image background (the warning above follows the strengths).
+                ...BlockAppearance::overlayFields(fn (Get $get): bool => $isImage($get) && (bool) $get("{$banner}_overlay_enabled"), "{$banner}_", live: true),
 
                 $this->colorField("{$banner}_heading_color", __('Heading colour'))
                     ->live()
@@ -989,6 +1012,8 @@ class ManageBranding extends Page
             ->visibility('public')
             ->acceptedFileTypes($fileTypes)
             ->maxSize($maxSizeInKilobytes)
+            // An SVG is served from the site's own address, so only plain drawings are accepted (no scripts or links).
+            ->rule(new SafeSvg)
             // Filament only trusts existing paths from an Eloquent record; there is none here, so trust exactly the currently saved file.
             ->preventFilePathTampering(
                 allowFilePathUsing: fn (string $file): bool => $file === app(Branding::class)->string($this->fields()[$name]),

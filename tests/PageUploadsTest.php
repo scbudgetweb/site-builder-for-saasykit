@@ -39,6 +39,13 @@ class PageUploadsTest extends PageTestCase
         Storage::disk('public')->assertExists('site-builder/pages/kitchen.jpg');
     }
 
+    public function test_an_image_with_an_accented_name_is_found_where_it_is_used(): void
+    {
+        $this->page(['blocks' => [self::block('image_text', ['image' => 'site-builder/pages/café.jpg'])]]);
+
+        $this->assertTrue(app(PageService::class)->isUploadInUse('site-builder/pages/café.jpg'));
+    }
+
     public function test_an_image_another_page_uses_is_kept_even_when_that_page_is_in_the_bin(): void
     {
         $page = $this->page(['blocks' => [self::block('image_text', ['image' => 'site-builder/pages/shared.jpg'])]]);

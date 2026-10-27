@@ -2,8 +2,8 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
-use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 
 /**
  * Cached block HTML for pages whose blocks are all cacheable (PageBlock::isCacheable()): no live figures, nothing
@@ -35,11 +35,12 @@ class RenderCache
     }
 
     /**
-     * Makes every cached page stale (old entries are never read again and expire on their own).
+     * Makes every cached page stale (old entries are never read again and expire on their own), once the current
+     * database transaction (if any) commits, so no render can read the new version and still see the old rows.
      */
     public static function flush(): void
     {
-        cache()->forever(self::VERSION_KEY, Str::random(12));
+        VersionedCache::newVersion(cache()->store(), self::VERSION_KEY);
     }
 
     private static function version(): string

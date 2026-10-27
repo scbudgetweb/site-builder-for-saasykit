@@ -68,7 +68,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 |---|---|
 | **Section (rows of blocks)** | One styled area holding **rows** of blocks, each row stacked or in columns. See [Sections and rows](#sections-and-rows) |
 | **Hero** | The big opening banner of a landing page, taller than a Banner, with a larger heading |
-| **Banner** | A full-width banner with an optional small label, a heading, a subtitle and up to two buttons. Its background can match the site's banners or use your own image with an overlay |
+| **Banner** | A full-width banner with an optional small label, a heading, a subtitle and up to two buttons. Its background can match the site's banners or use your own image with an overlay of one colour or a gradient |
 | **Text** | Formatted text: headings, lists, links, quotes and tables, with up to two buttons above or below it |
 | **Image + text** | A heading, text and buttons with an image on the left or right (side by side on larger screens), or above or below them. The image is optional |
 | **Image** | One image with a caption, an optional link, and up to two buttons |
@@ -91,7 +91,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | **Gallery** | A grid of images that open larger when clicked |
 | **Video** | A YouTube, Vimeo or Adilo video. See [Videos and privacy](#videos-and-privacy) |
 | **Logo strip** | Partner or sponsor logos: a still row, a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
-| **Social follow** | Icons linking to your social profiles, from the app's general settings |
+| **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |
 | **Divider / spacer** | A line (with an optional label) or empty space between blocks |
 
 Your app may add blocks of its own. They appear at the end of the block picker.
@@ -156,7 +156,7 @@ On a block, the border and shadow go round its panel when it has one, and round 
 | Setting | What it does |
 |---|---|
 | **Anchor ID** | A name for linking straight to the block, for example `pricing` for `/about-us#pricing` |
-| **CSS classes** | Extra classes for a developer's custom CSS (Branding › Custom CSS) |
+| **CSS classes** | Extra classes for a developer's custom CSS (Branding › Custom CSS). `fixed` and `sticky` aren't allowed, so a block can't pin itself over the page |
 
 ## Buttons
 
@@ -182,4 +182,4 @@ An image you remove from a page is deleted from storage once nothing uses it any
 
 **Duplicate** (in the list of pages) makes a draft copy, titled *… (copy)*, with its own address. It never replaces a built-in page until you choose one.
 
-**Delete** moves a page to the bin. It stops showing on the site, and any built-in page it replaced shows again. Use the list's **Deleted records** filter to find it, then **Restore** it or **Delete permanently**. Deleting permanently also removes its revisions and any images nothing else uses, and can't be undone.
+**Delete** moves a page to the bin. It stops showing on the site, and any built-in page it replaced shows again. A page in the bin can still be edited, but its status and the built-in page it replaces can't be changed until it's restored. Use the list's **Deleted records** filter to find it, then **Restore** it or **Delete permanently**. Deleting permanently also removes its revisions and any images nothing else uses, and can't be undone.

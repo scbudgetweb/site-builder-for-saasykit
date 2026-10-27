@@ -13,7 +13,7 @@ Every setting is optional. Leave one blank to keep the standard look.
 | **Typography** | Fonts, text and heading sizes, section headings and text colours |
 | **Buttons** | Button corners, the four button styles and the *Automatic* buttons |
 | **Corners & shadows** | Card, image and form field corners, and card shadows |
-| **Header & footer** | The header and footer colours, and any colours your app adds |
+| **Header & footer** | The header, footer and announcement bar colours, and any colours your app adds |
 | **Banners** | The home page banner (Hero) and the banner on other pages |
 | **Dashboards** | The main colour of each dashboard |
 | **Custom CSS** | Your own CSS for the public website |
@@ -32,7 +32,7 @@ One **Save changes** button saves every tab. The tab you're on is kept when the 
 | **Apple touch icon** | The icon when someone adds the site to an iPhone or iPad home screen | PNG, 180 × 180 pixels, with no transparency |
 | **Share image** | Shown when a page is shared on social media, unless the page has its own | JPG or PNG, 1200 × 630 pixels, up to 2 MB |
 
-A **wide logo around 200 × 50 pixels** works best, on a transparent background. SVG stays sharp at every size.
+A **wide logo around 200 × 50 pixels** works best, on a transparent background. SVG stays sharp at every size. An SVG must be a plain drawing: one with scripts, links to other files or other active content is refused, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design tools have an option for this), or use a PNG or WebP.
 
 **Which logo to show where** chooses one of the two logos for the **header**, the **footer**, **sign-in screens and emails**, and the **dashboards**. For example, a dark header can show the white logo while the dashboards keep the dark one. **Show the logo in the dashboards** puts your logo at the top of the dashboard menus; when it's off they show the site name.
 
@@ -98,6 +98,8 @@ The header and footer **colours**. Their links are set in [Navigation](navigatio
 
 **Footer:** background, text and headings, links and their hover colour, and social icons and their hover colour. Social icons only show for networks with a link in the app's general settings.
 
+**Announcement bar:** the bar that shows announcements from Admin › Announcements, on the website and in the dashboard. Background, text (also the close button), and the colour of links in the announcement and their hover colour. Left blank, it keeps SaaSykit's standard look, in shades of the site's secondary colour.
+
 Your app may add sections of its own here, for example the colours of a booking box.
 
 ## Banners
@@ -111,7 +113,7 @@ Most public pages open with a full-width banner holding the page title:
 
 Both have the same settings. Left blank, a banner is a gradient in shades of the site colour with a white heading.
 
-**Background:** *Gradient* (start, end and optional middle colour, and the direction), *Colour* (one solid colour) or *Image* (JPG, PNG or WebP, up to 2 MB; around 1920 × 600 pixels works best). For an image, choose which part stays in view when it's cropped on narrow screens, and **Add a colour overlay**, with its colour and **Overlay opacity**, so the text stands out. A warning appears if text may be hard to read on a busy image. Settings for the other background types are kept, so you can switch back.
+**Background:** *Gradient* (start, end and optional middle colour, and the direction), *Colour* (one solid colour) or *Image* (JPG, PNG or WebP, up to 2 MB; around 1920 × 600 pixels works best). For an image, choose which part stays in view when it's cropped on narrow screens, and **Add a colour overlay** so the text stands out. The overlay is *One colour* (its colour and **Overlay opacity**) or a *Gradient* that fades from a start colour and strength to an end colour and strength, top to bottom, bottom to top, left to right or right to left. A gradient lets part of the picture show clearly while the text sits on the darker end. A warning appears if text may be hard to read on a busy image: an overlay should be 40% or more (for a gradient, at its stronger end). Settings for the other background types are kept, so you can switch back.
 
 **Text:** the heading colour and the subtitle colour.
 
@@ -121,9 +123,11 @@ The main colour of each dashboard, such as the admin panel and the customer dash
 
 ## Custom CSS
 
-Your own CSS for the public website, added last so it wins over everything else. Check the site after saving: CSS can break the layout. For safety, `<`, `@import` and files from other websites aren't allowed; `url()` can point to files on this site (starting with `/`) or inline images.
+Your own CSS for the public website, added last so it wins over everything else. Check the site after saving: CSS can break the layout. For safety, `<`, `@import` and files from other websites aren't allowed: `url()`, `image-set()` and `src()` can point to files on this site (starting with `/`), inline images or a `#` reference. The CSS is checked the way a browser reads it, so a comment or an unclosed `url(` can't hide a file from another site. CSS that can't be checked isn't saved.
 
-Blocks have a **CSS classes** setting (Advanced tab) for styling one block with your CSS.
+Mistakes that don't make the CSS unsafe are saved but listed, each with its line: a property CSS doesn't have (for example `colour` instead of `color`), an extra or missing `{ }` or `( )`, a string or comment that's never closed, and a declaration outside any `{ }`. An extra `}` matters most: the browser can skip the rules after it. Custom properties (`--name`) and vendor-prefixed ones (`-webkit-…`) are always accepted.
+
+Blocks have a **CSS classes** setting (Advanced tab) for styling one block with your CSS. `fixed` and `sticky` aren't allowed there: they could pin a block over the rest of the page.
 
 ## Your app's own tabs
 

@@ -334,7 +334,7 @@ abstract class PageBlock
             ->placeholder(__('No icon'))
             ->helperText(__('Type to search over 1,600 icons, e.g. "calendar", "map" or "trophy". Add "filled" or "logo" for those styles.'))
             ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
-                if (! IconLibrary::isValid(is_string($value) ? $value : null)) {
+                if (($value !== null && ! is_string($value)) || ! IconLibrary::isValid($value)) {
                     $fail(__('Choose an icon from the list.'));
                 }
             });

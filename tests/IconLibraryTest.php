@@ -22,6 +22,15 @@ class IconLibraryTest extends TestCase
         $this->assertTrue(IconLibrary::isValid(null));
         $this->assertTrue(IconLibrary::isValid('bx:solid/bxs-star'));
         $this->assertFalse(IconLibrary::isValid('bx:regular/../secrets'));
+        $this->assertFalse(IconLibrary::isValid("bx:regular/bx-calendar\n"));
+    }
+
+    public function test_the_picker_shows_a_value_that_isnt_an_icon_escaped(): void
+    {
+        // The picker writes labels as HTML, so a hand-edited value must never reach it as markup.
+        $this->assertSame('Unknown icon (&lt;img src=x onerror=alert(1)&gt;)', IconLibrary::optionHtml('<img src=x onerror=alert(1)>'));
+        $this->assertNull(IconLibrary::optionHtml(null));
+        $this->assertStringContainsString('<svg', (string) IconLibrary::optionHtml('bx:regular/bx-calendar'));
     }
 
     public function test_search_understands_everyday_words(): void

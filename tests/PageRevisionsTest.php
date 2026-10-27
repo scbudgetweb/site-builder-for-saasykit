@@ -149,7 +149,8 @@ class PageRevisionsTest extends PageTestCase
             ->assertSee('Old words')
             ->assertDontSee('New words')
             ->assertSee('earlier version of this page')
-            ->assertSee('noindex', false);
+            ->assertSee('noindex', false)
+            ->assertHeader('Cache-Control', 'no-store, private');
 
         $this->assertSame('<p>New words</p>', $page->fresh()->blocks[0]['data']['content']);
 

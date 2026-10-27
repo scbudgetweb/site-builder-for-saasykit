@@ -4,7 +4,9 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
+use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
@@ -39,6 +41,28 @@ class RenderCacheTest extends PageTestCase
 
         $page->update(['blocks' => [self::block('text', ['content' => '<p>Rewritten</p>'])]]);
         $this->assertStringContainsString('Rewritten', $this->render($page));
+    }
+
+    public function test_a_library_save_during_a_render_never_leaves_old_html_under_the_new_version(): void
+    {
+        $item = app(BlockLibrary::class)->save('Call', 'call_to_action', ['heading' => 'Old heading']);
+        $page = $this->page(['blocks' => [self::block('saved', ['saved_block_id' => $item->id])]]);
+
+        // Another request saves the library item just after this render has read it.
+        $hasSaved = false;
+        SavedBlock::retrieved(function (SavedBlock $retrieved) use (&$hasSaved): void {
+            if ($hasSaved) {
+                return;
+            }
+
+            $hasSaved = true;
+            SavedBlock::query()->whereKey($retrieved->getKey())->toBase()
+                ->update(['blocks' => json_encode([self::block('call_to_action', ['heading' => 'New heading'])])]);
+            RenderCache::flush();
+        });
+
+        $this->assertStringContainsString('Old heading', $this->render($page));
+        $this->assertStringContainsString('New heading', $this->render($page->fresh()));
     }
 
     public function test_pages_with_live_figures_or_videos_anywhere_are_never_cached(): void

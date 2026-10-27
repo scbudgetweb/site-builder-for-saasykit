@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\SocialFollowBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\StatsBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\VideoBlock;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -132,6 +133,23 @@ class CoreBlocksTest extends PageTestCase
             ->assertDontSee('Gone');
     }
 
+    public function test_a_live_figure_is_worked_out_once_and_the_last_one_shown_while_it_refreshes(): void
+    {
+        $counted = 0;
+        app(SiteBuilder::class)->stats(['halls' => ['Halls listed', function () use (&$counted): int {
+            return 40 + ++$counted;
+        }]]);
+        $this->page(['blocks' => [self::block('stats', ['animate' => false, 'items' => [['source' => 'live:halls', 'label' => 'Halls']]])]]);
+
+        $this->get('/about-us')->assertSee('41');
+        $this->get('/about-us')->assertSee('41');
+        $this->assertSame(1, $counted);
+
+        // Once it's due a refresh, the last figure is still shown; the new one is worked out after the response.
+        $this->travel(11)->minutes();
+        $this->get('/about-us')->assertSee('41');
+    }
+
     public function test_image_cards_become_a_carousel_with_more_cards_than_columns(): void
     {
         $cards = array_fill(0, 4, ['media' => 'none', 'title' => 'Room']);
@@ -151,6 +169,27 @@ class CoreBlocksTest extends PageTestCase
             ->assertSee('logo-loop-track', false)
             ->assertSee('aria-hidden="true" inert', false)
             ->assertSee(__('Pause logos'));
+    }
+
+    public function test_social_links_that_arent_web_addresses_arent_linked(): void
+    {
+        config(['app.social_links' => [
+            'facebook' => 'javascript:alert(1)',
+            'instagram' => '//instagram.com/hall',
+            'youtube' => 'https://youtube.com/@villagehall',
+        ]]);
+        $this->page(['blocks' => [self::block('social_follow', ['heading' => 'Follow us'])]]);
+
+        $this->get('/about-us')
+            ->assertSee('https://youtube.com/@villagehall', false)
+            ->assertDontSee('javascript:alert(1)', false)
+            ->assertDontSee('//instagram.com/hall', false);
+
+        // The theme footer uses the same check.
+        $this->assertTrue(SocialFollowBlock::isWebAddress('http://facebook.com/hall'));
+        $this->assertFalse(SocialFollowBlock::isWebAddress(' JavaScript:alert(1)'));
+        $this->assertFalse(SocialFollowBlock::isWebAddress('https:///evil'));
+        $this->assertFalse(SocialFollowBlock::isWebAddress(['https://x.com']));
     }
 
     public function test_social_follow_shows_nothing_without_social_links(): void

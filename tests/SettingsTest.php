@@ -81,9 +81,40 @@ class SettingsTest extends TestCase
 
     public function test_a_corrupt_cache_entry_reads_as_no_settings(): void
     {
-        cache()->forever(config('site-builder.cache_key'), 'not an array');
+        $key = config('site-builder.cache_key');
+        cache()->forever($key.'.'.(cache()->get($key.'.version') ?? '0'), 'not an array');
 
         $this->assertSame([], $this->settings->all());
         $this->assertNull($this->settings->get('branding.site_color'));
+    }
+
+    public function test_a_copy_stored_by_a_request_that_overlapped_a_save_is_never_read(): void
+    {
+        $key = config('site-builder.cache_key');
+        $this->settings->set(['branding.site_color' => '#111111']);
+        $this->settings->all();
+        $versionBeforeTheSave = cache()->get($key.'.version');
+
+        $this->settings->set(['branding.site_color' => '#222222']);
+
+        // A slower request that read the database before the save now stores what it read.
+        cache()->put($key.'.'.$versionBeforeTheSave, ['branding.site_color' => '#111111'], 60);
+
+        $this->assertSame('#222222', $this->settings->get('branding.site_color'));
+    }
+
+    public function test_the_cache_moves_on_only_once_the_save_is_committed(): void
+    {
+        $key = config('site-builder.cache_key');
+        $this->settings->all();
+        $before = cache()->get($key.'.version');
+
+        DB::transaction(function () use ($key, $before): void {
+            $this->settings->set(['branding.site_color' => '#333333']);
+            $this->assertSame($before, cache()->get($key.'.version'));
+        });
+
+        $this->assertNotSame($before, cache()->get($key.'.version'));
+        $this->assertSame('#333333', $this->settings->get('branding.site_color'));
     }
 }

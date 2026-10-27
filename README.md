@@ -133,7 +133,7 @@ composer install
 composer test
 ```
 
-The tests use an in-memory SQLite database. To run them against MySQL, set `DB_CONNECTION=mysql` and the usual `DB_*` variables.
+The tests always use an in-memory SQLite database, even if your shell sets `DB_*` variables, because they reset the database as they run. To run them against MySQL, copy `phpunit.xml.dist` to `phpunit.xml` (it's git-ignored) and change `DB_CONNECTION` there.
 
 ## Licence
 

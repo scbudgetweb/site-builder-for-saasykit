@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Tests;
 
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
@@ -107,6 +108,9 @@ class BrandingTest extends TestCase
         $this->branding->save([Branding::SITE_FONT => 'comic_sans', Branding::SITE_HEADING_FONT => 'wingdings']);
         $this->assertSame('poppins', $this->branding->siteFont());
         $this->assertNull($this->branding->siteHeadingFont());
+
+        // A name that isn't an available font can't carry CSS.
+        $this->assertSame('Bad Fontstylestylebody', $this->branding->fontFamily("bad-font'</style><style>body"));
     }
 
     public function test_logos_icons_and_which_logo_shows_where(): void
@@ -146,7 +150,23 @@ class BrandingTest extends TestCase
         $inner = $this->branding->banner('inner');
         $this->assertStringEndsWith('banner.jpg', $inner['image']);
         $this->assertSame(1.0, $inner['overlay']['opacity']);
+        $this->assertNull($inner['overlay']['gradient']);
         $this->assertSame('center', $inner['imagePosition']);
+
+        // A gradient overlay, from the same settings as a block's image background.
+        $this->branding->save([
+            Branding::bannerKey('inner', 'overlay_type') => 'gradient',
+            Branding::bannerKey('inner', 'overlay_direction') => 'to_right',
+            Branding::bannerKey('inner', 'overlay_color') => '#000000',
+            Branding::bannerKey('inner', 'overlay_opacity') => 70,
+            Branding::bannerKey('inner', 'overlay_end_color') => '#ffffff',
+            Branding::bannerKey('inner', 'overlay_end_opacity') => 0,
+        ]);
+        $this->assertSame('linear-gradient(90deg, rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0))', $this->branding->banner('inner')['overlay']['gradient']);
+        $this->assertStringContainsString(
+            'style="background-image: linear-gradient(90deg, rgba(0, 0, 0, 0.7), rgba(255, 255, 255, 0));"',
+            Blade::render('<x-site-builder::banner-background variant="inner" />'),
+        );
 
         // A hand-edited image path outside the Branding folder (or climbing out of it) isn't shown.
         foreach (['site-builder/pages/hall.jpg', 'site-builder/branding/../../.env', 'elsewhere/banner.jpg'] as $path) {
@@ -164,6 +184,11 @@ class BrandingTest extends TestCase
 
         $this->assertTrue($this->branding->bannerImageNeedsOverlay(['background_type' => 'image', 'image' => 'x.jpg', 'overlay_enabled' => false]));
         $this->assertFalse($this->branding->bannerImageNeedsOverlay(['background_type' => 'image', 'image' => 'x.jpg', 'overlay_enabled' => true, 'overlay_opacity' => 50]));
+
+        // A gradient counts by its stronger end.
+        $gradient = ['background_type' => 'image', 'image' => 'x.jpg', 'overlay_enabled' => true, 'overlay_type' => 'gradient', 'overlay_opacity' => 0];
+        $this->assertFalse($this->branding->bannerImageNeedsOverlay([...$gradient, 'overlay_end_opacity' => 40]));
+        $this->assertTrue($this->branding->bannerImageNeedsOverlay([...$gradient, 'overlay_end_opacity' => 35]));
     }
 
     public function test_panel_colours_are_per_panel_and_unknown_keys_are_not_saved(): void

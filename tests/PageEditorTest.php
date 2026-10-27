@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Filament\Schemas\Components\Tabs;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
@@ -126,6 +127,44 @@ class PageEditorTest extends PageTestCase
             ->assertNotified('This page is missing a block');
 
         $this->assertSame('contact', $page->fresh()->replaces);
+    }
+
+    public function test_a_page_in_the_bin_keeps_its_status_and_cant_take_a_built_in_pages_place(): void
+    {
+        $page = $this->page(['status' => PageStatus::Draft]);
+        $page->delete();
+
+        Livewire::test(EditPage::class, ['record' => $page->getRouteKey()])
+            ->assertFormFieldIsDisabled('status')
+            ->assertFormFieldIsDisabled('replaces')
+            ->fillForm(['title' => 'Renamed in the bin', 'status' => PageStatus::Published->value, 'replaces' => 'home'])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $page = Page::withTrashed()->find($page->getKey());
+        $this->assertSame('Renamed in the bin', $page->title);
+        $this->assertSame(PageStatus::Draft, $page->status);
+        $this->assertNull($page->replaces);
+    }
+
+    public function test_duplicating_a_page_picks_a_url_no_other_page_uses(): void
+    {
+        $page = $this->page();
+        $this->page(['title' => 'Old copy', 'slug' => 'about-us-copy-abcd'])->delete();
+
+        // Only the four-character copy suffix is faked; other random strings (cache versions) stay random.
+        $suffixes = ['abcd', 'efgh'];
+        Str::createRandomStringsUsing(function (int $length) use (&$suffixes): string {
+            return $length === 4 && $suffixes !== [] ? array_shift($suffixes) : substr(bin2hex(random_bytes($length)), 0, $length);
+        });
+
+        try {
+            Livewire::test(ListPages::class)->callAction(TestAction::make('duplicate')->table($page));
+        } finally {
+            Str::createRandomStringsNormally();
+        }
+
+        $this->assertTrue(Page::query()->where('slug', 'about-us-copy-efgh')->where('status', PageStatus::Draft)->exists());
     }
 
     public function test_only_one_page_can_replace_a_built_in_page(): void
@@ -251,6 +290,19 @@ class PageEditorTest extends PageTestCase
         $this->assertSame('gradient', $appearance['background']);
         $this->assertSame('#1e3a8a', $appearance['gradient_end']);
         $this->assertSame('panel', $appearance['background_area']);
+    }
+
+    public function test_custom_classes_cant_pin_a_block_over_the_page(): void
+    {
+        $page = $this->page(['blocks' => ['cta' => self::block('call_to_action', ['heading' => 'Book'])]]);
+
+        $component = Livewire::test(EditPage::class, ['record' => $page->getRouteKey()]);
+
+        $component
+            ->mountAction(TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => array_key_first($component->get('data.blocks'))]))
+            ->set('mountedActions.0.data.appearance.css_class', 'promo fixed')
+            ->call('saveFromEditor')
+            ->assertHasErrors(['mountedActions.0.data.appearance.css_class' => 'not_regex']);
     }
 
     public function test_duplicating_makes_a_draft_copy_that_replaces_nothing(): void

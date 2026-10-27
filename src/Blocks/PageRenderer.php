@@ -26,13 +26,16 @@ class PageRenderer
      */
     public function render(Page $page): HtmlString
     {
+        // The key (with the shared version) is read before the library blocks are expanded, so a library or settings
+        // save that lands mid-render leaves this HTML under the old version, never under the new one.
+        $key = RenderCache::key($page);
         $blocks = $page->blockList();
 
         if (! $this->canCache($page, $blocks)) {
             return new HtmlString(implode('', $this->renderBlocks($blocks, $page)));
         }
 
-        return new HtmlString(cache()->remember(RenderCache::key($page), now()->addDay(), fn (): string => implode('', $this->renderBlocks($blocks, $page))));
+        return new HtmlString(cache()->remember($key, now()->addDay(), fn (): string => implode('', $this->renderBlocks($blocks, $page))));
     }
 
     /**

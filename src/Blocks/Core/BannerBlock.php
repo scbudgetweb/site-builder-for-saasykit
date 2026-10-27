@@ -2,9 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks\Core;
 
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Fieldset;
@@ -164,20 +162,7 @@ class BannerBlock extends PageBlock
                         ->required($isImage)
                         ->visible($isImage)
                         ->columnSpanFull(),
-                    ColorPicker::make('overlay_color')
-                        ->label(__('Overlay colour'))
-                        ->regex('/^#[0-9a-fA-F]{6}$/')
-                        ->placeholder(Colour::DEFAULT_OVERLAY_COLOR)
-                        ->visible($isImage),
-                    Slider::make('overlay_opacity')
-                        ->label(__('Overlay opacity (%)'))
-                        ->helperText(__('Text is easier to read on a busy image with an overlay of 40% or more.'))
-                        ->range(minValue: 0, maxValue: 100)
-                        ->step(5)
-                        ->decimalPlaces(0)
-                        ->tooltips()
-                        ->default(Colour::DEFAULT_OVERLAY_OPACITY)
-                        ->visible($isImage),
+                    ...BlockAppearance::overlayFields($isImage, opacityHelperText: __('Text is easier to read on a busy image with an overlay of 40% or more.')),
                 ]),
             Fieldset::make(__('Text'))
                 ->columns(2)
@@ -230,10 +215,7 @@ class BannerBlock extends PageBlock
         return [
             'variant' => $style === 'inner' ? 'inner' : 'hero',
             'imageUrl' => $imageUrl,
-            'imageOverlay' => $imageUrl ? [
-                'color' => Colour::isValidHex($data['overlay_color'] ?? null) ? $data['overlay_color'] : Colour::DEFAULT_OVERLAY_COLOR,
-                'opacity' => Colour::overlayOpacity($data['overlay_opacity'] ?? null) / 100.0,
-            ] : null,
+            'imageOverlay' => $imageUrl ? BlockAppearance::imageOverlay($data) : null,
             'imagePosition' => static::pick($data['image_position'] ?? null, Colour::IMAGE_POSITIONS, 'center'),
             'headingClass' => self::HEADING_SIZES[static::pick($data['heading_size'] ?? null, self::HEADING_SIZES, static::defaultHeadingSize())][1],
             'subtitleClass' => self::SUBTITLE_SIZES[static::pick($data['subtitle_size'] ?? null, self::SUBTITLE_SIZES, static::defaultSubtitleSize())][1],

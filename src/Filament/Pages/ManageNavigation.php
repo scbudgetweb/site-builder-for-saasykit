@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Filament\Pages;
 
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -291,8 +292,17 @@ class ManageNavigation extends Page
             TextInput::make('footer.copyright')
                 ->label(__('Copyright line'))
                 ->placeholder(NavigationMenus::defaultCopyright())
-                ->helperText(__('{year} becomes the current year and {site_name} the site name. Leave empty for the standard line.'))
-                ->maxLength(200),
+                ->helperText(__('{year} becomes the current year and {site_name} the site name. Add a link like <a href="https://example.com">Example</a>; links to other sites open in a new tab. Leave empty for the standard line.'))
+                ->maxLength(300)
+                ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
+                    foreach (NavigationMenus::linkAddresses(is_string($value) ? $value : '') as $address) {
+                        if ($address === null || preg_match(NavigationMenus::URL_PATTERN, $address) !== 1) {
+                            $fail(__('Each link needs an address starting with https://, / (a page on this site), #, mailto: or tel:, e.g. <a href="https://example.com">Example</a>.'));
+
+                            return;
+                        }
+                    }
+                }),
         ];
     }
 
@@ -457,7 +467,9 @@ class ManageNavigation extends Page
      */
     private function pages(): array
     {
+        // Drafts can be linked before they're published, but only people who can see the page list see their titles.
         return $this->pages ??= SitePage::query()
+            ->when(! (bool) auth()->user()?->can('viewAny', SitePage::class), fn ($query) => $query->published())
             ->orderBy('title')
             ->get(['id', 'title', 'status'])
             ->mapWithKeys(fn (SitePage $page): array => [$page->id => ['title' => $page->title, 'isPublished' => $page->isPublished()]])

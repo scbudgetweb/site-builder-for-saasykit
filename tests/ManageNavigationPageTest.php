@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
@@ -80,6 +81,23 @@ class ManageNavigationPageTest extends PageTestCase
         $this->assertSame('Find us', $menus->footer()['columns'][0]['links'][0]['label']);
     }
 
+    public function test_links_in_the_copyright_line_are_checked_before_saving(): void
+    {
+        foreach (['Made by <a href="javascript:alert(1)">us</a>', 'Made by <a>us</a>'] as $line) {
+            Livewire::test(ManageNavigation::class)
+                ->fillForm(['footer' => ['copyright' => $line]])
+                ->call('save')
+                ->assertHasFormErrors(['footer.copyright']);
+        }
+
+        Livewire::test(ManageNavigation::class)
+            ->fillForm(['footer' => ['copyright' => '© {year} {site_name}. Web design by <a href="https://agency.example">Agency</a>']])
+            ->call('save')
+            ->assertHasNoFormErrors();
+
+        $this->assertStringContainsString('<a href="https://agency.example"', app(NavigationMenus::class)->footer()['copyrightHtml']->toHtml());
+    }
+
     public function test_links_are_checked_before_saving(): void
     {
         Livewire::test(ManageNavigation::class)
@@ -103,6 +121,20 @@ class ManageNavigationPageTest extends PageTestCase
         Livewire::test(ManageNavigation::class)
             ->fillForm(['header' => ['one' => ['type' => 'page', 'page_id' => null, 'menu' => 'dropdown']]])
             ->assertFormFieldExists('header.one.page_id', fn ($field): bool => in_array('Coming soon (draft, hidden until published)', $field->getOptions(), true));
+    }
+
+    public function test_draft_titles_are_only_listed_for_people_who_can_see_the_page_list(): void
+    {
+        $this->page(['title' => 'Coming soon', 'slug' => 'soon', 'status' => PageStatus::Draft]);
+        $this->page(['title' => 'Our hall', 'slug' => 'our-hall', 'status' => PageStatus::Published]);
+
+        // Can edit the menus (update pages) but not see the page list (view pages).
+        Gate::define('view pages', fn (): bool => false);
+
+        Livewire::test(ManageNavigation::class)
+            ->fillForm(['header' => ['one' => ['type' => 'page', 'page_id' => null, 'menu' => 'dropdown']]])
+            ->assertFormFieldExists('header.one.page_id', fn ($field): bool => in_array('Our hall', $field->getOptions(), true)
+                && ! in_array('Coming soon (draft, hidden until published)', $field->getOptions(), true));
     }
 
     public function test_reset_to_default_brings_back_the_standard_links(): void

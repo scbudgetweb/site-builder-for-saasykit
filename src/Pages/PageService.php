@@ -11,6 +11,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
+use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 use Throwable;
 
 /**
@@ -25,6 +26,9 @@ class PageService
     private const CACHE_KEY = 'site-builder.published-pages';
 
     private const LINKS_CACHE_KEY = 'site-builder.page-links';
+
+    /** Changes after every page save, delete or restore, so the published map and links above are read afresh. */
+    private const VERSION_KEY = 'site-builder.pages-version';
 
     public function __construct(private Router $router, private SiteBuilder $siteBuilder) {}
 
@@ -52,8 +56,7 @@ class PageService
 
     public function clearCache(): void
     {
-        cache()->forget(self::CACHE_KEY);
-        cache()->forget(self::LINKS_CACHE_KEY);
+        VersionedCache::newVersion(cache()->store(), self::VERSION_KEY);
     }
 
     /**
@@ -64,7 +67,7 @@ class PageService
      */
     public function publishedPageLinks(): array
     {
-        $pages = cache()->rememberForever(self::LINKS_CACHE_KEY, fn (): array => Page::query()
+        $pages = VersionedCache::remember(cache()->store(), self::LINKS_CACHE_KEY, self::VERSION_KEY, fn (): array => Page::query()
             ->published()
             ->get(['id', 'title', 'slug', 'replaces'])
             ->mapWithKeys(fn (Page $page): array => [$page->id => [
@@ -165,7 +168,8 @@ class PageService
      */
     public function isUploadInUse(string $path, ?Page $exceptPage = null, ?SavedBlock $exceptSavedBlock = null): bool
     {
-        $pattern = '%'.json_encode($path, JSON_UNESCAPED_SLASHES).'%';
+        // Encoded the way the models store their JSON (Page::asJson()), so the path is found as it was saved.
+        $pattern = '%'.json_encode($path, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'%';
 
         return Page::withTrashed()
             ->when($exceptPage, fn ($query) => $query->whereKeyNot($exceptPage->getKey()))
@@ -187,7 +191,7 @@ class PageService
      */
     private function publishedMap(): array
     {
-        $map = cache()->rememberForever(self::CACHE_KEY, function (): array {
+        $map = VersionedCache::remember(cache()->store(), self::CACHE_KEY, self::VERSION_KEY, function (): array {
             $pages = Page::query()->published()->get(['id', 'slug', 'replaces']);
 
             return [

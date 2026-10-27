@@ -181,6 +181,34 @@ class NavigationMenusTest extends PageTestCase
         $this->assertStringContainsString('© '.date('Y').' Example Site', $footer);
     }
 
+    public function test_the_copyright_line_can_hold_simple_links_and_nothing_else(): void
+    {
+        $line = '© {year} {site_name}. Web design by <a href="https://agency.example" target="_self" onclick="steal()">Great <b>Web</b> Design</a>, '
+            .'<a href="/about">about us</a>, <a href="javascript:alert(1)">bad</a>, <a>no address</a> & <script>alert(2)</script> &copy;';
+
+        $html = NavigationMenus::linkedText($line)->toHtml();
+
+        $this->assertStringContainsString('<a href="https://agency.example" class="underline hover:no-underline" target="_blank" rel="noopener">Great &lt;b&gt;Web&lt;/b&gt; Design</a>', $html);
+        $this->assertStringContainsString('<a href="/about" class="underline hover:no-underline">about us</a>', $html);
+        $this->assertStringContainsString(', bad, no address &amp; &lt;script&gt;alert(2)&lt;/script&gt; &copy;', $html);
+        $this->assertStringNotContainsString('onclick', $html);
+        $this->assertStringNotContainsString('javascript:', $html);
+        $this->assertSame(['https://agency.example', '/about', 'javascript:alert(1)', null], NavigationMenus::linkAddresses($line));
+        $this->assertSame('Web design by Great <b>Web</b> Design', NavigationMenus::plainText('Web design by <a href="https://agency.example">Great <b>Web</b> Design</a>'));
+
+        // In the theme's footer, with the placeholders filled in; social links that aren't web addresses aren't shown.
+        $this->app['view']->getFinder()->prependLocation(SiteBuilderServiceProvider::themePath());
+        config(['app.social_links' => ['facebook' => 'javascript:alert(3)', 'youtube' => 'https://youtube.com/@villagehall']]);
+        $this->menus()->save([], ['copyright' => '© {year} {site_name}. Web design by <a href="https://agency.example">Agency</a>', 'columns' => []], []);
+
+        $footer = Blade::render('<x-layouts.app.footer />');
+        // Coloured like the footer's other links (Branding › Header & footer › Links).
+        $this->assertStringContainsString('© '.date('Y').' Example Site. Web design by <a href="https://agency.example" class="underline text-sb-footer-link transition-colors hover:text-sb-footer-link-hover focus-visible:text-sb-footer-link-hover" target="_blank" rel="noopener">Agency</a>', $footer);
+        $this->assertSame('© '.date('Y').' Example Site. Web design by Agency', $this->menus()->footer()['copyright']);
+        $this->assertStringContainsString('https://youtube.com/@villagehall', $footer);
+        $this->assertStringNotContainsString('javascript:alert(3)', $footer);
+    }
+
     private function menus(): NavigationMenus
     {
         return app(NavigationMenus::class);

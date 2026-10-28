@@ -51,12 +51,13 @@ class StatsBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('number'))
                 ->label(__('Numbers'))
                 ->schema([
                     Grid::make(2)->schema([
                         Select::make('source')
                             ->label(__('Number'))
+                            ->hintIcon(self::HELP_ICON, __('A number you type in, or a live figure that keeps itself up to date.'))
                             ->options(fn (): array => self::sources())
                             ->default('custom')
                             ->selectablePlaceholder(false)
@@ -66,7 +67,8 @@ class StatsBlock extends PageBlock
                             ->numeric()
                             ->required()
                             ->visible(fn (Get $get): bool => $get('source') === 'custom'),
-                        TextInput::make('prefix')->label(__('Before the number'))->maxLength(5)->placeholder('£'),
+                        TextInput::make('prefix')->label(__('Before the number'))->maxLength(5)->placeholder('£')
+                            ->hintIcon(self::HELP_ICON, __('Optional, e.g. £ to show £500, or + after it to show 500+.')),
                         TextInput::make('suffix')->label(__('After the number'))->maxLength(5)->placeholder('+'),
                     ]),
                     TextInput::make('label')->label(__('Label'))->required()->maxLength(80),

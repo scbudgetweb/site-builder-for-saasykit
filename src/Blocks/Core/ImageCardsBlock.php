@@ -62,7 +62,7 @@ class ImageCardsBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('cards')
+            static::itemTooltips(Repeater::make('cards'), __('card'))
                 ->label(__('Cards'))
                 ->schema([
                     Grid::make(2)->schema([
@@ -103,6 +103,7 @@ class ImageCardsBlock extends PageBlock
             Grid::make(2)->schema([
                 Select::make('image_shape')
                     ->label(__('Image shape'))
+                    ->hintIcon(self::HELP_ICON, __('Every card\'s image is trimmed to this shape, so the cards line up.'))
                     ->options(array_map(fn (array $shape): string => __($shape[0]), self::IMAGE_SHAPES))
                     ->default('photo')
                     ->selectablePlaceholder(false),

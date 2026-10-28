@@ -71,6 +71,7 @@ class ImageTextBlock extends PageBlock
         return [
             Select::make('image_side')
                 ->label(__('Image position'))
+                ->hintIcon(self::HELP_ICON, __('Left and right sit beside the text on tablets and computers, and above it on phones. Above and below stay that way on every screen.'))
                 ->options(array_map(fn (string $label): string => __($label), self::IMAGE_POSITIONS))
                 ->default('left')
                 ->selectablePlaceholder(false),

@@ -10,7 +10,7 @@ A page can also be shown **in place of** a built-in page, such as the home page.
 ## Creating a page
 
 1. Go to *Website › Pages* and click **New page**.
-2. Enter a **Title**. The **URL** fills in from the title (*About us* becomes `/about-us`); you can change it.
+2. Enter a **Title**. The **Web address** fills in from the title (*About us* becomes `/about-us`); you can change it.
 3. Click **Create**. You're taken to the page editor.
 4. On the **Content** tab, click **Add block**, choose a block and fill it in. Repeat for each block.
 5. When the page is ready, set **Status** to *Published* on the **Settings** tab, then **Save**.
@@ -31,19 +31,19 @@ Each block shows as a card with its name, heading, a short extract and its first
 - **Drag** cards, or use the arrows, to reorder them. The card's buttons **copy** or **delete** a block (you're asked to confirm), **save it to the [block library](block-library.md)**, or, on a linked library block, **make an editable copy**.
 - **Add block**, at the bottom or between blocks, opens the block picker.
 
-If a block has a problem when you save, a message names it, for example *Block 2 (Section) › Row 1 › Block 2 (Call to action): The heading field is required.*
+If a block has a problem when you save, a message names it, for example *Block 2 (Section) › Row 1 › Column 2 › Block 1 (Call to action): The heading field is required.*
 
 ### Settings tab
 
 | Setting | What it does |
 |---|---|
 | **Title** | The page's name, shown in its banner and in browser tabs |
-| **URL** | The address, for example `/about-us`. Lower-case letters, numbers and hyphens only. Addresses the site already uses (such as `/blog`) can't be chosen |
+| **Web address** | The address, for example `/about-us`. Lower-case letters, numbers and hyphens only. Addresses the site already uses (such as `/blog`) can't be chosen |
 | **Status** | *Draft* pages are hidden from visitors; *Published* pages are live |
 | **Replaces built-in page** | Shows this page instead of a built-in page, such as the home page (see below) |
 | **Show the standard page banner** | Adds the inner-page banner with the page title at the top. It isn't shown when the page starts with its own Hero or Banner |
 
-### SEO tab
+### Search & sharing tab
 
 | Setting | What it does |
 |---|---|
@@ -56,7 +56,7 @@ Published pages are added to the site's sitemap automatically.
 
 ## Replacing a built-in page
 
-Choose a page in **Replaces built-in page** to show your page at that address instead, for example your own home page. Only one page can replace each built-in page. The page's own URL then sends visitors to the built-in address.
+Choose a page in **Replaces built-in page** to show your page at that address instead, for example your own home page. Only one page can replace each built-in page. The page's own web address then sends visitors to the built-in address.
 
 Some built-in pages need a particular block to keep working. If yours is missing it, a warning says which block to add. While a page is a draft or in the bin, the built-in page shows as normal.
 
@@ -100,12 +100,16 @@ Your app may add blocks of its own. They appear at the end of the block picker.
 
 A **Section** is one styled area, such as a grey band or a coloured panel, holding one or more **rows** of blocks.
 
-- **Each row has its own layout:** stacked (one under another), 2, 3 or 4 equal columns, *narrow + wide* (⅓ + ⅔) or *wide + narrow* (⅔ + ⅓). Columns sit side by side on tablets and computers, and stack on phones.
-- **One block per column.** A row's blocks fill its columns in order. To put two blocks in one column, add another row.
-- **Line up blocks at the:** *Top*, *Middle*, *Bottom* or *Same height*. *Same height* stretches the blocks in a row to match, and lines up their buttons at the bottom.
-- **Last block first on phones** shows the row's last block on top on phones, for example so an image on the right appears above its text.
+- **Each row has its own layout**, grouped in the list by how many columns it has: one column (blocks one under another), two to five equal columns, or uneven columns, such as *Narrow left, wide right (⅓ + ⅔)*, ¼ + ¾, 40% + 60%, or *Wide middle, thin sides (¼ + ½ + ¼)*. Columns sit side by side on tablets and computers, and stack on phones.
+- **Each column holds its own blocks**, one under another. The row shows a box per column (*Column 1*, *Column 2*…), each with its own **Add block to column…** button. For example, put two Text blocks and an Image in column 1 and one large Image in column 2.
+- **Move a block to another column** with the left and right arrows on its card. It goes to the end of that column. Drag a card to reorder the blocks within a column, and use the arrows on a column to swap whole columns.
+- **Changing the layout keeps your blocks.** With fewer columns, the blocks from the columns that no longer fit move to the end of the last one; with more, the new columns start empty. An empty column keeps its place on the page.
+- **Line up columns at the:** *Top*, *Middle*, *Bottom* or *Same height*. *Same height* stretches the columns in a row to match, and lines up their buttons at the bottom; in a column with several blocks, the last one stretches.
+- **Space between columns** sets this row's own gap, from *None* (columns touch, e.g. two coloured halves) to *Large*. *Same as the section* uses the section's setting.
+- **Last column first on phones** shows the row's last column on top on phones, for example so an image on the right appears above its text.
+- **Column settings** (collapsed in each column) give that column its own background (a preset, a custom colour or a gradient), text colour and vertical alignment (*Line up at the*). Its **More options** add space inside, rounded corners, a border and a shadow. A column with a background, border or shadow gets some space inside automatically, and a dark background makes the column's text light. Column settings apply when the row has columns side by side; a stacked row ignores them.
 - **Row style** (collapsed under each row) adds a border, shadow, rounded corners and space inside around just that row.
-- **Add row** adds another row; rows can be reordered, copied and collapsed.
+- **Add row** adds another row; rows can be reordered, copied and collapsed. Each row is numbered (*Row 1 · Two equal columns: Text | Image*), and a block's panel is titled with where it is, e.g. *Section › Row 1 › Column 2 › Text*.
 - The section's **Layout** tab sets the space between rows and columns.
 
 Blocks inside a section take its text colour and heading decoration, unless you give them their own. Sections can't contain a Hero, a Banner or another Section.
@@ -121,7 +125,7 @@ Each block's panel is split into tabs, always in this order:
 | **Style** | How it looks: the block's own look (for example its cards or images), its background and text colour, heading decoration and sizes, and its border and shadow |
 | **Advanced** | Anchor ID and CSS classes |
 
-Only settings that do something for that block are shown. For example, heading settings don't appear on a Text block, and a Divider has nothing to style.
+Only settings that do something for that block are shown. For example, heading settings don't appear on a Text block, and a Divider has nothing to style. Settings most pages don't need (border and shadow, and the background panel) are under a collapsed **More options**. A **?** beside a setting explains it when you hover over it, and every button on a block card has a tooltip.
 
 ### Layout
 
@@ -130,7 +134,7 @@ Only settings that do something for that block are shown. For example, heading s
 | **Content width** | Narrow (for reading), Contained, Wide or Full width |
 | **Space above and below** | None, Small, Medium or Large |
 | **Heading alignment** | The block's usual alignment, Left or Centre |
-| **Background area** | *Full width*, or *Behind the content, as a panel*: a box with its own corners, which can **overlap the block above** |
+| **Background area** (More options) | *Full width*, or *Behind the content, as a panel*: a box with its own corners, which can **overlap the block above** |
 
 ### Style
 
@@ -140,7 +144,7 @@ Only settings that do something for that block are shown. For example, heading s
 | **Text colour** | Automatic (from the background), Dark or Light |
 | **Heading decoration** | Site style (from Branding), None, a short bar under the heading, a full-width line under it, or a short bar above it |
 | **Heading size** / **Text size** | From Small to Huge, or Standard |
-| **Border & shadow** | See below |
+| **Border & shadow** (More options) | See below |
 
 #### Borders and shadows
 
@@ -174,7 +178,7 @@ Until a visitor accepts marketing cookies, a video shows a still picture with a 
 
 ## Images
 
-Images can be JPG, PNG or WebP, up to 2 MB. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
+Images can be JPG, PNG, WebP or SVG, up to 2 MB. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
 
 An image you remove from a page is deleted from storage once nothing uses it any more. That includes other pages, the block library and the page's kept [revisions](revisions.md).
 

@@ -12,6 +12,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
+use ScBudgetWeb\SiteBuilder\Blocks\StoredBlocks;
 use ScBudgetWeb\SiteBuilder\Pages\PageRevisions;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
@@ -74,7 +75,7 @@ class Page extends Model
         return [
             'status' => PageStatus::class,
             'show_page_banner' => 'boolean',
-            'blocks' => 'array',
+            'blocks' => StoredBlocks::class,
             'noindex' => 'boolean',
             'published_at' => 'datetime',
         ];

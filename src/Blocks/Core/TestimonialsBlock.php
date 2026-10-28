@@ -30,7 +30,7 @@ class TestimonialsBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('testimonial'))
                 ->label(__('Testimonials'))
                 ->schema([
                     Textarea::make('quote')->label(__('Quote'))->required()->rows(3)->maxLength(800),

@@ -10,13 +10,14 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\UploadedFile;
 
 /**
- * Checks an uploaded SVG (a logo or favicon) before it's stored. Uploads are served from the site's own address, and
+ * Checks an uploaded SVG (a logo, favicon or block image) before it's stored. Uploads are served from the site's own address, and
  * an SVG opened on its own is a document that can run script, so an SVG is only accepted when it's a plain drawing:
  *
  *  - no script, foreignObject (HTML inside the SVG), animation that can change links, or other active elements;
  *  - no event handler attributes (onload="…") and no javascript: anywhere;
  *  - links and url() references only to #fragments in the same file, or inline raster data:image pictures;
- *  - no DOCTYPE (entities), and styles that pass the same checks as Custom CSS.
+ *  - no entities or DOCTYPE with declarations of its own (the plain DOCTYPE line some editors add is fine: it's never
+ *    loaded), no processing instructions such as <?xml-stylesheet?>, and styles that pass the same checks as Custom CSS.
  *
  * Elements in other namespaces (e.g. Inkscape's or Illustrator's metadata) are inert and allowed; anything in the
  * XHTML namespace isn't. Other file types pass straight through.
@@ -57,9 +58,10 @@ class SafeSvg implements ValidationRule
      */
     public static function problem(string $svg): ?string
     {
-        $unsafe = __('This SVG can\'t be used because it contains scripts, links to other files or other active content. Export it again as a plain drawing, or use a PNG or WebP.');
+        $unsafe = __('This SVG can\'t be used because it contains scripts, links to other files or other active content. Export it again as a plain SVG (in most design apps: Export › SVG, without editing data or scripts), or use a PNG or WebP.');
 
-        if (trim($svg) === '' || stripos($svg, '<!DOCTYPE') !== false || stripos($svg, '<!ENTITY') !== false) {
+        // A DOCTYPE with its own declarations ([…]) can define entities; a plain one only names a DTD that isn't loaded.
+        if (trim($svg) === '' || stripos($svg, '<!ENTITY') !== false || preg_match('/<!DOCTYPE[^>]*\[/i', $svg) === 1) {
             return $unsafe;
         }
 
@@ -73,7 +75,15 @@ class SafeSvg implements ValidationRule
             return __('This file isn\'t a valid SVG.');
         }
 
-        foreach ((new DOMXPath($document))->query('//*') ?: [] as $element) {
+        $xpath = new DOMXPath($document);
+
+        // E.g. an xml-stylesheet instruction, which would load a style sheet from elsewhere. (The XML declaration at
+        // the top isn't one.)
+        if (($xpath->query('//processing-instruction()')?->length ?? 0) > 0) {
+            return $unsafe;
+        }
+
+        foreach ($xpath->query('//*') ?: [] as $element) {
             if (! $element instanceof DOMElement || ! self::isAllowedElement($element)) {
                 return $unsafe;
             }

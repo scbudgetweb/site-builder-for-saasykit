@@ -19,19 +19,25 @@ trait ReportsBlockValidationErrors
         $problems = [];
 
         foreach ($exception->errors() as $key => $messages) {
-            // data.blocks.{id}.… or, in a Section's row, data.blocks.{id}.data.rows.{rowId}.blocks.{innerId}.…
-            if (! preg_match('/^data\.blocks\.([^.]+)\.(?:data\.rows\.([^.]+)\.blocks\.([^.]+)\.)?/', $key, $matches)) {
+            // data.blocks.{id}.… or, in a Section's row, data.blocks.{id}.data.rows.{rowId}.columns.{columnId}.blocks.{innerId}.…
+            if (! preg_match('/^data\.blocks\.([^.]+)\.(?:data\.rows\.([^.]+)\.columns\.([^.]+)\.blocks\.([^.]+)\.)?/', $key, $matches)) {
                 continue;
             }
 
             $where = $this->describeBlock($this->data['blocks'] ?? [], $matches[1]);
 
-            if (filled($matches[3] ?? null)) {
+            if (filled($matches[4] ?? null)) {
                 $rows = $this->data['blocks'][$matches[1]]['data']['rows'] ?? [];
-                $rowPosition = is_array($rows) ? array_search($matches[2], array_keys($rows), true) : false;
+                $columns = $rows[$matches[2]]['columns'] ?? [];
 
-                $where .= ' › '.__('Row :number', ['number' => $rowPosition === false ? '?' : $rowPosition + 1])
-                    .' › '.$this->describeBlock($rows[$matches[2]]['blocks'] ?? [], $matches[3]);
+                $where .= ' › '.__('Row :number', ['number' => $this->positionOf($rows, $matches[2])]);
+
+                // "Column 2", only when the row has columns side by side.
+                if (is_array($columns) && count($columns) > 1) {
+                    $where .= ' › '.__('Column :number', ['number' => $this->positionOf($columns, $matches[3])]);
+                }
+
+                $where .= ' › '.$this->describeBlock($columns[$matches[3]]['blocks'] ?? [], $matches[4]);
             }
 
             $problems[] = $where.': '.Str::of($messages[0] ?? '')->trim();
@@ -59,6 +65,16 @@ trait ReportsBlockValidationErrors
     protected function blockValidationErrorTitle(): string
     {
         return __('The :thing wasn\'t saved', ['thing' => static::getResource()::getModelLabel()]);
+    }
+
+    /**
+     * The item's position (from 1) among the repeater's items, or "?".
+     */
+    private function positionOf(mixed $items, string $id): int|string
+    {
+        $position = is_array($items) ? array_search($id, array_keys($items), true) : false;
+
+        return $position === false ? '?' : $position + 1;
     }
 
     /**

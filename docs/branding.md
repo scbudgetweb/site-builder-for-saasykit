@@ -5,7 +5,7 @@
 
 Branding sets the **look of the whole site**: the public website, the sign-in screens and emails, and the dashboards. Changes apply straight away; reload any open page to see them.
 
-Every setting is optional. Leave one blank to keep the standard look.
+Every setting is optional. Leave one blank to keep the standard look. A **?** beside a setting explains it when you hover over it, and settings most sites leave alone (text colours, dashboard fonts, the header's dropdown and button colours) are in collapsed sections.
 
 | Tab | What's on it |
 |---|---|

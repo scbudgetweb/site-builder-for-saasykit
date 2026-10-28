@@ -410,6 +410,11 @@
     flex-grow: 1;
 }
 
+/* A column holding several blocks (.flex): only its last block stretches, so the ones above keep their own height. */
+.sb-row-stretch > .flex > section:not(:last-child) {
+    flex-grow: 0;
+}
+
 .sb-row-stretch :not(.grid):has(.sb-block-buttons) {
     display: flex;
     flex-direction: column;

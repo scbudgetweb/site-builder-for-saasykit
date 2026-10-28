@@ -31,6 +31,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
+use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
@@ -244,6 +245,7 @@ class ManageBranding extends Page
                                                         ->columnSpanFull(),
                                                 ]),
                                             $this->uploadField('favicon', __('Favicon'), self::FAVICON_FILE_TYPES, 256)
+                                                ->hintIcon(PageBlock::HELP_ICON, __('Also shown in bookmarks and browser history. Your logo\'s symbol, without words, works best.'))
                                                 ->helperText(__('The small icon in the browser tab. ICO, PNG or SVG, up to 256 KB. Square, at least 48 × 48 pixels.')),
                                             $this->uploadField('apple_touch_icon', __('Apple touch icon'), self::APPLE_TOUCH_ICON_FILE_TYPES, 256)
                                                 ->helperText(__('The icon shown when someone adds the site to an iPhone or iPad home screen. PNG, 180 × 180 pixels, with no transparency.')),
@@ -251,13 +253,15 @@ class ManageBranding extends Page
                                                 ->helperText(__('Shown when a page is shared on social media, unless the page has its own. JPG or PNG, 1200 × 630 pixels, up to 2 MB.')),
                                         ]),
                                     Section::make(__('Colours'))
-                                        ->description(__('The website\'s colours. Lighter and darker shades are generated from each one automatically. Leave a colour blank to keep the standard one.'))
+                                        ->description(__('Your brand colours. Lighter and darker shades (tints) are made from each one automatically, so you only pick one. Leave a colour blank to keep the standard one.'))
                                         ->columns(2)
                                         ->schema([
                                             $this->colorField('site_color', __('Site colour'))
+                                                ->hintIcon(PageBlock::HELP_ICON, __('Your main brand colour. Pages use lighter and darker shades of it, e.g. for a "Site colour, light tint" background.'))
                                                 ->live()
                                                 ->helperText(fn (?string $state): string => $this->siteColorHelperText($state)),
                                             $this->colorField('site_secondary_color', __('Site secondary colour'))
+                                                ->hintIcon(PageBlock::HELP_ICON, __('An optional second brand colour for small touches, such as icons and highlights. Leave it blank if your brand has one main colour.'))
                                                 ->helperText(__('Used for highlights and accents on the public site.')),
                                         ]),
                                 ]),
@@ -281,6 +285,7 @@ class ManageBranding extends Page
                                                 ->helperText(__('The size of ordinary text on the website. Larger text is easier to read for many people.')),
                                             Select::make('heading_scale')
                                                 ->label(__('Heading sizes'))
+                                                ->hintIcon(PageBlock::HELP_ICON, __('Changes every heading on the website at once. A single block can still choose its own heading size on its Style tab.'))
                                                 ->options(BrandingStyle::labels(Branding::HEADING_SCALE_OPTIONS))
                                                 ->in(array_keys(Branding::HEADING_SCALE_OPTIONS))
                                                 ->selectablePlaceholder(false)
@@ -288,13 +293,17 @@ class ManageBranding extends Page
                                         ]),
                                     $this->headingsSection(),
                                     Section::make(__('Text colours'))
-                                        ->description(__('Text in page blocks. Blocks use dark text on light backgrounds and light text on dark ones. Leave blank to keep the standard near-black and white.'))
+                                        ->description(__('Most sites keep the standard near-black and white. Blocks use dark text on light backgrounds and light text on dark ones; change them here to tint your text. Leave blank to keep the standard.'))
+                                        ->collapsible()
+                                        ->collapsed()
                                         ->schema([
                                             $this->textColors(__('Dark text (on light backgrounds)'), ['text_dark_heading_color' => __('Headings'), 'text_dark_body_color' => __('Body text')], '#ffffff'),
                                             $this->textColors(__('Light text (on dark backgrounds)'), ['text_light_heading_color' => __('Headings'), 'text_light_body_color' => __('Body text')], '#111827'),
                                         ]),
                                     Section::make(__('Dashboards'))
-                                        ->description(__('The admin panel and the dashboards. Leave blank to keep each one\'s standard font.'))
+                                        ->description(__('Fonts for the admin panel and the dashboards, not the public website. Leave blank to keep each one\'s standard font.'))
+                                        ->collapsible()
+                                        ->collapsed()
                                         ->columns(2)
                                         ->schema([
                                             $this->fontSelect('app_heading_font', __('Heading font'), $fonts)
@@ -318,8 +327,10 @@ class ManageBranding extends Page
                                         ->schema([
                                             $this->colorPairs(__('Background & text'), ['header_bg_color', 'header_text_color']),
                                             $this->colorPairs(__('Menu links'), ['header_link_color', 'header_link_hover_color']),
-                                            $this->colorPairs(__('Dropdowns & mega menus'), ['header_menu_bg_color', 'header_menu_link_color', 'header_menu_link_hover_color', 'header_menu_heading_color']),
-                                            $this->colorPairs(__('Button'), ['header_button_color', 'header_button_hover_color', 'header_button_text_color', 'header_button_text_hover_color']),
+                                            $this->moreOptions(__('Dropdown menus and the header button.'), [
+                                                $this->colorPairs(__('Dropdowns & mega menus'), ['header_menu_bg_color', 'header_menu_link_color', 'header_menu_link_hover_color', 'header_menu_heading_color']),
+                                                $this->colorPairs(__('Button'), ['header_button_color', 'header_button_hover_color', 'header_button_text_color', 'header_button_text_hover_color']),
+                                            ]),
                                         ]),
                                     Section::make(__('Footer'))
                                         ->description(__('Colours for the site footer. Social icons only show for networks with a link in General Settings. Leave blank to keep the standard look.'))
@@ -355,10 +366,11 @@ class ManageBranding extends Page
                                 ->icon('heroicon-o-code-bracket')
                                 ->schema([
                                     Section::make(__('Custom CSS'))
-                                        ->description(__('Your own CSS for the public website, added last so it overrides everything else. Check the site after saving: CSS can break the layout. For safety, "<", @import and files from other websites aren\'t allowed; url(), image-set() and src() can point to files on this site (starting with /), inline images or #references. Mistakes such as a misspelt property or an extra "}" are listed below after saving.'))
+                                        ->description(__('For people who write CSS (the code that styles web pages). If you don\'t, leave this empty: everything else in Branding works without it. Your CSS is added last, so it overrides the rest of the site\'s look. Check the site after saving, because CSS can break the layout. Mistakes such as a misspelt property or an extra "}" are listed below after saving.'))
                                         ->schema([
                                             CodeEditor::make('custom_css')
-                                                ->hiddenLabel()
+                                                ->label(__('Your CSS'))
+                                                ->hintIcon(PageBlock::HELP_ICON, __('For safety, "<", @import and files from other websites aren\'t allowed. url(), image-set() and src() can point to files on this site (starting with /), inline images or #references. To style one block, give it a name in its CSS classes (Advanced tab) and use that here, e.g. .promo { … }.'))
                                                 ->language(Language::Css)
                                                 // Mistakes that don't make it unsafe are saved, but listed here.
                                                 ->helperText(fn (?string $state): ?HtmlString => ($warnings = CustomCss::warnings($state)) === []
@@ -532,6 +544,7 @@ class ManageBranding extends Page
                 $backgroundField = $this->contrastBackgroundField($name);
 
                 return $this->colorField($name, __(self::ELEMENT_COLOR_FIELDS[$name][1]))
+                    ->hintIcon(str_contains($name, 'hover') ? PageBlock::HELP_ICON : null, str_contains($name, 'hover') ? __('Hover: when someone points at it with the mouse, taps it, or reaches it with the Tab key.') : null)
                     ->live()
                     ->helperText(fn (Get $get, ?string $state): ?string => $backgroundField !== null && $this->isUnreadable($state, $get($backgroundField))
                         ? __('Warning: this may be hard to read on its background colour.')
@@ -616,6 +629,10 @@ class ManageBranding extends Page
             BrandingField::IMAGE => $this->uploadField($name, $label, $field->getFileTypes(), $field->getMaxSize())->image(),
         };
 
+        if ($field->getTooltip() !== null && method_exists($component, 'hintIcon')) {
+            $component->hintIcon(PageBlock::HELP_ICON, $field->getTooltip());
+        }
+
         // A colour's helper text is set above, with its contrast warning.
         return $field->type === BrandingField::COLOUR || $field->getHelperText() === null ? $component : $component->helperText($field->getHelperText());
     }
@@ -695,6 +712,7 @@ class ManageBranding extends Page
             ->schema([
                 ToggleButtons::make("{$banner}_background_type")
                     ->label(__('Background'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('Gradient: two or three colours blending into each other. Colour: one flat colour. Image: a photo, with an optional see-through overlay to keep the text readable.'))
                     ->options([
                         Branding::BANNER_TYPE_GRADIENT => __('Gradient'),
                         Branding::BANNER_TYPE_COLOR => __('Colour'),
@@ -723,6 +741,7 @@ class ManageBranding extends Page
                     ->visible($isGradient),
                 Select::make("{$banner}_gradient_direction")
                     ->label(__('Gradient direction'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('Which way the colours blend, from the start colour to the end colour.'))
                     ->options(Colour::translated(Colour::GRADIENT_DIRECTIONS))
                     ->in(array_map('strval', array_keys(Colour::GRADIENT_DIRECTIONS)))
                     ->selectablePlaceholder(false)
@@ -855,7 +874,8 @@ class ManageBranding extends Page
             ->description(__('Headings that introduce a part of a page, such as a block\'s heading.'))
             ->columns(2)
             ->schema([
-                $this->styleSelect('style_heading_weight', __('Weight'), BrandingStyle::HEADING_WEIGHT_OPTIONS),
+                $this->styleSelect('style_heading_weight', __('Weight'), BrandingStyle::HEADING_WEIGHT_OPTIONS)
+                    ->hintIcon(PageBlock::HELP_ICON, __('How thick and bold the section headings look.')),
                 Select::make('style_heading_decoration')
                     ->label(__('Decoration'))
                     ->options(Colour::translated(BrandingStyle::HEADING_DECORATION_OPTIONS))
@@ -878,11 +898,14 @@ class ManageBranding extends Page
             ->description(__('Shapes across the public site: the pages you build, cards and forms. The standard choices keep the current look. Button corners are on the Buttons tab.'))
             ->columns(2)
             ->schema([
-                $this->styleSelect('style_card_corners', __('Card and panel corners'), BrandingStyle::CARD_CORNER_OPTIONS),
+                $this->styleSelect('style_card_corners', __('Card and panel corners'), BrandingStyle::CARD_CORNER_OPTIONS)
+                    ->hintIcon(PageBlock::HELP_ICON, __('How round the corners are on cards (e.g. in Features, Team or Image cards blocks) and on blocks shown as a panel. Square: sharp corners.')),
                 $this->styleSelect('style_image_corners', __('Image corners'), BrandingStyle::IMAGE_CORNER_OPTIONS)
                     ->helperText(__('Images in the pages you build. Each Image and Image + text block can override it.')),
-                $this->styleSelect('style_input_corners', __('Form field corners'), BrandingStyle::INPUT_CORNER_OPTIONS),
-                $this->styleSelect('style_shadows', __('Card shadows'), BrandingStyle::SHADOW_OPTIONS),
+                $this->styleSelect('style_input_corners', __('Form field corners'), BrandingStyle::INPUT_CORNER_OPTIONS)
+                    ->hintIcon(PageBlock::HELP_ICON, __('The boxes people type into, such as on the sign-in and contact forms.')),
+                $this->styleSelect('style_shadows', __('Card shadows'), BrandingStyle::SHADOW_OPTIONS)
+                    ->hintIcon(PageBlock::HELP_ICON, __('The soft shadow under cards and panels that lifts them off the page.')),
             ]);
     }
 
@@ -896,10 +919,11 @@ class ManageBranding extends Page
             ->description(__('Four button styles to choose from when adding buttons to a page; the site\'s own buttons use the first one. Leave a colour blank to keep the standard one. Hover colours are also used when a button is pressed or reached with the keyboard.'))
             ->schema([
                 $this->styleSelect('style_button_corners', __('Button corners'), BrandingStyle::BUTTON_CORNER_OPTIONS)
+                    ->hintIcon(PageBlock::HELP_ICON, __('How round the button corners are. Pill: fully rounded ends.'))
                     ->helperText(__('For every button style.')),
                 Tabs::make()->tabs(array_map(fn (int $slot): Tab => $this->buttonStyleTab($slot), BrandingStyle::BUTTON_SLOTS)),
                 Section::make(__('Automatic buttons'))
-                    ->description(__('Buttons set to "Automatic" use one of these, depending on the background they sit on.'))
+                    ->description(__('A button set to "Automatic" picks one of these by itself, depending on the background it sits on, so it\'s always easy to see.'))
                     ->columns(2)
                     ->compact()
                     ->schema([
@@ -940,14 +964,16 @@ class ManageBranding extends Page
                     ->live(onBlur: true)
                     ->columnSpanFull(),
                 $this->colorField("button_{$slot}_bg", __('Background colour'))->live(),
-                $this->colorField("button_{$slot}_bg_hover", __('Background hover colour'))->live(),
+                $this->colorField("button_{$slot}_bg_hover", __('Background hover colour'))->hintIcon(PageBlock::HELP_ICON, __('Hover: when someone points at it with the mouse, taps it, or reaches it with the Tab key.'))->live(),
                 $this->colorField("button_{$slot}_text", __('Text colour'))
                     ->live()
                     ->helperText($unreadableWarning('text', 'bg')),
                 $this->colorField("button_{$slot}_text_hover", __('Text hover colour'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('Hover: when someone points at it with the mouse, taps it, or reaches it with the Tab key.'))
                     ->live()
                     ->helperText($unreadableWarning('text_hover', 'bg_hover')),
-                $this->colorField("button_{$slot}_border", __('Border colour')),
+                $this->colorField("button_{$slot}_border", __('Border colour'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('A line around the button. Leave it blank for no border, or set it with no background colour for an outline button.')),
                 $this->colorField("button_{$slot}_border_hover", __('Border hover colour')),
                 Toggle::make("button_{$slot}_uppercase")
                     ->label(__('Capital letters'))
@@ -968,6 +994,21 @@ class ManageBranding extends Page
             ->options(BrandingStyle::labels($options))
             ->in(array_keys($options))
             ->selectablePlaceholder(false);
+    }
+
+    /**
+     * Settings most sites leave alone, in a collapsed "More options" so the everyday ones stand out.
+     *
+     * @param  array<int, Component>  $components
+     */
+    private function moreOptions(string $description, array $components): Section
+    {
+        return Section::make(__('More options'))
+            ->description($description)
+            ->collapsible()
+            ->collapsed()
+            ->compact()
+            ->schema($components);
     }
 
     /**

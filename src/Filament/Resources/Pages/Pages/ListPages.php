@@ -10,6 +10,11 @@ class ListPages extends ListRecords
 {
     protected static string $resource = PageResource::class;
 
+    public function getSubheading(): ?string
+    {
+        return __('Your website\'s own pages, each built from blocks. A page stays a draft, hidden from visitors, until you publish it.');
+    }
+
     protected function getHeaderActions(): array
     {
         return [

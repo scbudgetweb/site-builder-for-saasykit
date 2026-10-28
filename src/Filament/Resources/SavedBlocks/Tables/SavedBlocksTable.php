@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Tables;
 
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
@@ -24,6 +25,7 @@ class SavedBlocksTable
             ->emptyStateHeading(__('No library blocks yet'))
             ->emptyStateDescription(__('Save a block or section from a page with the bookmark button on its card, or create one here. Then reuse it on any page.'))
             ->emptyStateIcon(Heroicon::OutlinedBookmark)
+            ->emptyStateActions([CreateAction::make()->label(__('New library block'))])
             ->columns([
                 TextColumn::make('name')
                     ->label(__('Name'))
@@ -35,6 +37,7 @@ class SavedBlocksTable
                     ->formatStateUsing(fn (string $state): string => $registry->labelFor($state)),
                 TextColumn::make('used_on')
                     ->label(__('Used on'))
+                    ->tooltip(__('Pages that link to this block. They all change when you save it.'))
                     ->state(function (SavedBlock $record): string {
                         $count = app(BlockLibrary::class)->usedOn($record)->count();
 

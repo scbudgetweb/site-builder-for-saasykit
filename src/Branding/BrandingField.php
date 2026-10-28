@@ -37,6 +37,8 @@ final class BrandingField
 
     private ?string $helperText = null;
 
+    private ?string $tooltip = null;
+
     private mixed $default = null;
 
     /** @var array<string, string> */
@@ -146,6 +148,16 @@ final class BrandingField
     }
 
     /**
+     * A short explanation shown when hovering the ? beside the setting, for a setting someone new might not understand.
+     */
+    public function tooltip(string $text): self
+    {
+        $this->tooltip = $text;
+
+        return $this;
+    }
+
+    /**
      * The value used while nothing is saved (or the saved value fails its checks). Text defaults show as placeholders.
      */
     public function default(mixed $value): self
@@ -185,6 +197,11 @@ final class BrandingField
     public function getHelperText(): ?string
     {
         return $this->helperText === null ? null : __($this->helperText);
+    }
+
+    public function getTooltip(): ?string
+    {
+        return $this->tooltip === null ? null : __($this->tooltip);
     }
 
     public function getDefault(): mixed

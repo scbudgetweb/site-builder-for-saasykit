@@ -4,11 +4,15 @@ namespace ScBudgetWeb\SiteBuilder\Blocks;
 
 use Closure;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Field;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
@@ -196,7 +200,6 @@ class BlockAppearance
      */
     public static function styleGroup(string $defaultBackground = 'none', array $headingSettings = ['align', 'decoration', 'size'], bool $hasBodyText = true): Group
     {
-        $background = fn (Get $get): ?string => $get('background');
         [$headingSize, $textSize] = self::sizeFields();
 
         return Group::make()
@@ -204,64 +207,103 @@ class BlockAppearance
             ->schema([
                 Fieldset::make(__('Background'))
                     ->columns(2)
-                    ->schema([
-                        Select::make('background')
-                            ->label(__('Background'))
-                            ->options(self::translated(self::BACKGROUNDS))
-                            ->default($defaultBackground)
-                            ->selectablePlaceholder(false)
-                            ->live(),
-                        Select::make('text')
-                            ->label(__('Text colour'))
-                            ->options(self::translated(self::TEXT_COLOURS))
-                            ->default('auto')
-                            ->selectablePlaceholder(false),
-                        ColorPicker::make('background_color')
-                            ->label(__('Background colour'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->required()
-                            ->visible(fn (Get $get): bool => $background($get) === 'custom'),
-                        ColorPicker::make('gradient_start')
-                            ->label(__('Gradient start colour'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->required()
-                            ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
-                        ColorPicker::make('gradient_end')
-                            ->label(__('Gradient end colour'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->required()
-                            ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
-                        ColorPicker::make('gradient_middle')
-                            ->label(__('Gradient middle colour (optional)'))
-                            ->regex('/^#[0-9a-fA-F]{6}$/')
-                            ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
-                        Select::make('gradient_direction')
-                            ->label(__('Gradient direction'))
-                            ->options(array_map(fn (string $label): string => __($label), Colour::GRADIENT_DIRECTIONS))
-                            ->default(Colour::DEFAULT_GRADIENT_DIRECTION)
-                            ->selectablePlaceholder(false)
-                            ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
-                        PageBlock::imageUpload('background_image', __('Background image'))
-                            ->required()
-                            ->visible(fn (Get $get): bool => $background($get) === 'image')
-                            ->columnSpanFull(),
-                        ...self::overlayFields(fn (Get $get): bool => $background($get) === 'image'),
-                    ]),
-                // On the panel when the background is one, otherwise on the whole block.
-                BorderShadow::fieldset(automaticLabel: __('Automatic (site style on a panel, none otherwise)')),
+                    ->schema(self::backgroundFields($defaultBackground)),
                 Fieldset::make(__('Text'))
                     ->columns(2)
                     ->visible($headingSettings !== [] || $hasBodyText)
                     ->schema(array_values(array_filter([
                         in_array('decoration', $headingSettings, true) ? Select::make('heading_decoration')
                             ->label(__('Heading decoration'))
+                            ->hintIcon(PageBlock::HELP_ICON, __('A small bar or line that sets off the heading. Site style uses the one chosen in Branding.'))
                             ->options(self::translated(self::HEADING_DECORATIONS))
                             ->default('site')
                             ->selectablePlaceholder(false) : null,
                         in_array('size', $headingSettings, true) ? $headingSize : null,
                         $hasBodyText ? $textSize : null,
                     ]))),
+                // On the panel when the background is one, otherwise on the whole block.
+                self::moreOptions(__('A border or shadow around the block.'), [
+                    ...BorderShadow::borderFields(),
+                    ...BorderShadow::shadowFields(automaticLabel: __('Automatic (site style on a panel, none otherwise)')),
+                ]),
             ]);
+    }
+
+    /**
+     * Settings most pages don't need, in a collapsed "More options" so the everyday ones stand out. Only the editor
+     * changes: the fields keep their saved keys.
+     *
+     * @param  array<int, Component|Field>  $fields
+     */
+    public static function moreOptions(string $description, array $fields): Section
+    {
+        return Section::make(__('More options'))
+            ->description($description)
+            ->collapsible()
+            ->collapsed()
+            ->compact()
+            ->gridContainer()
+            ->columns(['@md' => 2])
+            ->schema($fields);
+    }
+
+    /**
+     * Background (a preset, a custom colour, a gradient, or with $withImage an image and its overlay) and text colour.
+     * Shared by blocks and a Section's columns, which have no image (backgroundLook()).
+     *
+     * @return array<int, Select|ColorPicker|FileUpload|Slider>
+     */
+    public static function backgroundFields(string $defaultBackground = 'none', bool $withImage = true): array
+    {
+        $background = fn (Get $get): ?string => $get('background');
+
+        return [
+            Select::make('background')
+                ->label(__('Background'))
+                ->hintIcon(PageBlock::HELP_ICON, __('The colour or picture behind it. The site colours follow Branding, so they change if your brand colour does.'))
+                ->options(self::translated($withImage ? self::BACKGROUNDS : array_diff_key(self::BACKGROUNDS, ['image' => true])))
+                ->default($defaultBackground)
+                ->selectablePlaceholder(false)
+                ->live(),
+            Select::make('text')
+                ->label(__('Text colour'))
+                ->hintIcon(PageBlock::HELP_ICON, __('Automatic picks dark or light text, whichever is easier to read on the background.'))
+                ->options(self::translated(self::TEXT_COLOURS))
+                ->default('auto')
+                ->selectablePlaceholder(false),
+            ColorPicker::make('background_color')
+                ->label(__('Background colour'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->required()
+                ->visible(fn (Get $get): bool => $background($get) === 'custom'),
+            ColorPicker::make('gradient_start')
+                ->label(__('Gradient start colour'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->required()
+                ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
+            ColorPicker::make('gradient_end')
+                ->label(__('Gradient end colour'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->required()
+                ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
+            ColorPicker::make('gradient_middle')
+                ->label(__('Gradient middle colour (optional)'))
+                ->regex('/^#[0-9a-fA-F]{6}$/')
+                ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
+            Select::make('gradient_direction')
+                ->label(__('Gradient direction'))
+                ->options(array_map(fn (string $label): string => __($label), Colour::GRADIENT_DIRECTIONS))
+                ->default(Colour::DEFAULT_GRADIENT_DIRECTION)
+                ->selectablePlaceholder(false)
+                ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
+            ...($withImage ? [
+                PageBlock::imageUpload('background_image', __('Background image'))
+                    ->required()
+                    ->visible(fn (Get $get): bool => $background($get) === 'image')
+                    ->columnSpanFull(),
+                ...self::overlayFields(fn (Get $get): bool => $background($get) === 'image'),
+            ] : []),
+        ];
     }
 
     /**
@@ -282,11 +324,13 @@ class BlockAppearance
                     ->schema(array_values(array_filter([
                         Select::make('width')
                             ->label(__('Content width'))
+                            ->hintIcon(PageBlock::HELP_ICON, __('How wide the content can get on a big screen. Narrow is easiest for long text; Full width goes from edge to edge.'))
                             ->options(self::translated(self::WIDTHS))
                             ->default($defaultWidth)
                             ->selectablePlaceholder(false),
                         Select::make('spacing')
                             ->label(__('Space above and below'))
+                            ->hintIcon(PageBlock::HELP_ICON, __('Empty space between this block and the ones above and below it.'))
                             ->options(self::translated(self::SPACINGS))
                             ->default($defaultSpacing)
                             ->selectablePlaceholder(false),
@@ -296,32 +340,29 @@ class BlockAppearance
                             ->default('block')
                             ->selectablePlaceholder(false) : null,
                     ]))),
-                Fieldset::make(__('Background panel'))
-                    ->columns(2)
-                    ->visible(fn (Get $get): bool => $background($get) !== 'none')
-                    ->schema([
-                        Select::make('background_area')
-                            ->label(__('Background area'))
-                            ->options(self::translated(self::BACKGROUND_AREAS))
-                            ->default('full')
-                            ->selectablePlaceholder(false)
-                            ->live()
-                            ->helperText(__('A panel is a card behind the content, which can have rounded corners, and a border and shadow (Style tab).'))
-                            ->visible(fn (Get $get): bool => $background($get) !== 'none'),
-                        Select::make('corners')
-                            ->label(__('Panel corners'))
-                            ->options(self::translated(self::PANEL_CORNERS))
-                            ->default('site')
-                            ->selectablePlaceholder(false)
-                            ->visible($isPanel),
-                        Select::make('overlap')
-                            ->label(__('Overlap the block above'))
-                            ->options(self::translated(self::OVERLAPS))
-                            ->default('none')
-                            ->selectablePlaceholder(false)
-                            ->helperText(__('Moves the panel up so it floats over the bottom of the block above, e.g. over a banner.'))
-                            ->visible($isPanel),
-                    ]),
+                self::moreOptions(__('Show the background as a card behind the content, and float it over the block above.'), [
+
+                    Select::make('background_area')
+                        ->label(__('Background area'))
+                        ->options(self::translated(self::BACKGROUND_AREAS))
+                        ->default('full')
+                        ->selectablePlaceholder(false)
+                        ->live()
+                        ->helperText(__('A panel is a card behind the content, which can have rounded corners, and a border and shadow (Style tab).')),
+                    Select::make('corners')
+                        ->label(__('Panel corners'))
+                        ->options(self::translated(self::PANEL_CORNERS))
+                        ->default('site')
+                        ->selectablePlaceholder(false)
+                        ->visible($isPanel),
+                    Select::make('overlap')
+                        ->label(__('Overlap the block above'))
+                        ->options(self::translated(self::OVERLAPS))
+                        ->default('none')
+                        ->selectablePlaceholder(false)
+                        ->helperText(__('Moves the panel up so it floats over the bottom of the block above, e.g. over a banner.'))
+                        ->visible($isPanel),
+                ])->visible(fn (Get $get): bool => $background($get) !== 'none'),
             ]);
     }
 
@@ -336,6 +377,7 @@ class BlockAppearance
             ->schema([
                 TextInput::make('anchor')
                     ->label(__('Anchor ID'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('A short name for this part of the page, so a button or menu link can jump straight to it.'))
                     ->helperText(__('Optional. Lets buttons link to this block, e.g. an anchor of "pricing" makes a link to #pricing scroll here.'))
                     ->alphaDash()
                     ->maxLength(50),
@@ -390,6 +432,7 @@ class BlockAppearance
                 ->selectablePlaceholder(false),
             Select::make('text_size')
                 ->label(__('Text size'))
+                ->hintIcon(PageBlock::HELP_ICON, __('The size of the body text. On a Section, the blocks inside use it unless they choose their own.'))
                 ->options(array_map(fn (array $size): string => __($size[0]), self::TEXT_SIZES))
                 ->default('standard')
                 ->selectablePlaceholder(false),
@@ -400,6 +443,7 @@ class BlockAppearance
     {
         return TextInput::make('css_class')
             ->label(__('CSS classes'))
+            ->hintIcon(PageBlock::HELP_ICON, __('For people who write CSS: names that Branding › Custom CSS can style. Leave it empty if you don\'t need it.'))
             ->helperText(__('Optional. Names to style in Branding › Custom CSS, separated by spaces, e.g. "promo dark-cards".'))
             ->maxLength(100)
             ->regex(self::CSS_CLASS_PATTERN)
@@ -478,9 +522,7 @@ class BlockAppearance
             $text === 'dark' => false,
             $text === 'light' => true,
             $inheritsText => $parentIsDark,
-            default => in_array($background, self::DARK_BACKGROUNDS, true)
-                || ($background === 'custom' && $customColor !== null && Colour::isReadableTextOn('#ffffff', $customColor))
-                || ($gradientStops !== [] && self::suitsLightText($gradientStops)),
+            default => self::isDarkBackground($background, $customColor, $gradientStops),
         };
 
         $backgroundStyle = match (true) {
@@ -545,6 +587,7 @@ class BlockAppearance
         return [
             Select::make("{$prefix}overlay_type")
                 ->label(__('Overlay'))
+                ->hintIcon(PageBlock::HELP_ICON, __('A see-through colour laid over the picture, so text on top of it is easy to read.'))
                 ->options(self::translated(self::OVERLAY_TYPES))
                 ->default('solid')
                 ->selectablePlaceholder(false)
@@ -642,6 +685,58 @@ class BlockAppearance
     private static function overlayStyle(array $appearance): ?string
     {
         return self::overlayCss(self::imageOverlay($appearance));
+    }
+
+    /**
+     * The classes and inline style for a background without an image (a Section's column): its preset, custom colour or
+     * gradient, and its text colour. "textScheme" is null when the text follows the area around it (no background and
+     * Automatic text). Every value is re-checked against the whitelists, as in resolve().
+     *
+     * @param  array<string, mixed>  $values
+     * @return array{class: string, style: string, textScheme: ?string, hasBackground: bool}
+     */
+    public static function backgroundLook(array $values): array
+    {
+        $background = self::pick($values['background'] ?? null, array_diff_key(self::BACKGROUNDS, ['image' => true]), 'none');
+        $text = self::pick($values['text'] ?? null, self::TEXT_COLOURS, 'auto');
+        $customColor = Colour::isValidHex($values['background_color'] ?? null) ? $values['background_color'] : null;
+        $gradientStops = $background === 'gradient' ? self::gradientStops($values) : [];
+        $gradient = $gradientStops !== [] ? Colour::gradientCss($values) : null;
+
+        $textScheme = match (true) {
+            $text === 'dark' => 'dark',
+            $text === 'light' => 'light',
+            $background === 'none' => null,
+            default => self::isDarkBackground($background, $customColor, $gradientStops) ? 'light' : 'dark',
+        };
+
+        return [
+            'class' => trim(self::BACKGROUND_CLASSES[$background].' '.match ($textScheme) {
+                'light' => 'text-white',
+                'dark' => 'text-gray-900',
+                default => '',
+            }),
+            'style' => match (true) {
+                $background === 'custom' && $customColor !== null => "background-color: {$customColor};",
+                $gradient !== null => "background-image: {$gradient};",
+                default => '',
+            },
+            'textScheme' => $textScheme,
+            'hasBackground' => $background !== 'none',
+        ];
+    }
+
+    /**
+     * Whether a background is dark enough for light text: a dark preset, or a custom colour or gradient that white
+     * text reads well on.
+     *
+     * @param  array<string>  $gradientStops
+     */
+    private static function isDarkBackground(string $background, ?string $customColor, array $gradientStops): bool
+    {
+        return in_array($background, self::DARK_BACKGROUNDS, true)
+            || ($background === 'custom' && $customColor !== null && Colour::isReadableTextOn('#ffffff', $customColor))
+            || ($gradientStops !== [] && self::suitsLightText($gradientStops));
     }
 
     /**

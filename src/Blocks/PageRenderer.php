@@ -14,8 +14,9 @@ use Throwable;
  * the whole page down (in debug mode it throws, so it's seen). Pages whose blocks are all cacheable are cached
  * (RenderCache).
  *
- * A Section renders its rows' blocks inside its wrapper. Blocks inside take the section's text colour unless they have
- * a background of their own, and its heading decoration unless they choose their own (lesson 7).
+ * A Section renders its rows' blocks inside its wrapper. Blocks inside take the section's text colour (or their column's,
+ * when it has a background) unless they have a background of their own, and its heading decoration unless they choose
+ * their own (lesson 7).
  */
 class PageRenderer
 {
@@ -102,9 +103,18 @@ class PageRenderer
                 $extra = $blockClass::viewData($block['data'], $page);
 
                 if (is_a($blockClass, SectionBlock::class, true)) {
+                    // A column with its own background (or text colour) gives its blocks its text colour.
                     $extra['rows'] = array_map(fn (array $row): array => [
                         ...$row,
-                        'blocks' => $this->renderBlocks($row['blocks'], $page, $appearance['isDark'] ?? false, $appearance['headingDecoration'] ?? null),
+                        'columns' => array_map(fn (array $column): array => [
+                            ...$column,
+                            'blocks' => $this->renderBlocks(
+                                $column['blocks'],
+                                $page,
+                                $column['textScheme'] === null ? ($appearance['isDark'] ?? false) : $column['textScheme'] === 'light',
+                                $appearance['headingDecoration'] ?? null,
+                            ),
+                        ], $row['columns']),
                     ], SectionBlock::rows($block['data']));
                 }
 

@@ -160,6 +160,12 @@ Helpers for fields:
 - `imageStyleFieldset()` and `PageBlock::imageStyle()`;
 - `pick()`, which whitelists a saved choice and accepts integer keys (lesson 2).
 
+To match the core blocks for people new to the editor:
+
+- explain a setting that isn't obvious with `->hintIcon(PageBlock::HELP_ICON, __('…'))`, which shows a **?** with a tooltip;
+- give a list's buttons tooltips with `PageBlock::itemTooltips($repeater, 'card')`, e.g. *Duplicate this card*;
+- put settings most pages don't need in `BlockAppearance::moreOptions(__('…'), [...])`, a collapsed *More options* that keeps the fields' saved keys.
+
 ## 6. Extending a core block
 
 To change a core block everywhere, extend its class and register the subclass. It has the same `name()`, so it replaces the core block in the picker (in the same place), in Section rows (for blocks that can go in one), in the block library and on pages already using it. Saved data stays valid because the stored type doesn't change.

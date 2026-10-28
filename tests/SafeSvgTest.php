@@ -35,6 +35,18 @@ class SafeSvgTest extends TestCase
         $this->assertNull(SafeSvg::problem(self::PLAIN));
     }
 
+    public function test_an_svg_exported_from_a_design_app_is_accepted(): void
+    {
+        // The DOCTYPE line, comment, classes and enable-background a design app such as Illustrator writes.
+        $exported = '<?xml version="1.0" encoding="utf-8"?>'."\n"
+            .'<!-- Generator: a design app -->'."\n"
+            .'<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">'."\n"
+            .'<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 200 50" style="enable-background:new 0 0 200 50;" xml:space="preserve">'
+            .'<style type="text/css">.st0{fill:#0A3D2E;}</style><g><path class="st0" d="M0,0h200v50H0V0z"/></g></svg>';
+
+        $this->assertNull(SafeSvg::problem($exported));
+    }
+
     public function test_svgs_with_active_content_or_links_to_other_files_are_refused(): void
     {
         $svg = fn (string $inner, string $attributes = ''): string => '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '.$attributes.'>'.$inner.'</svg>';
@@ -53,6 +65,8 @@ class SafeSvgTest extends TestCase
             $svg('<set attributeName="href" to="javascript:alert(1)"/>'),
             $svg('<html:script xmlns:html="http://www.w3.org/1999/xhtml">alert(1)</html:script>'),
             '<?xml version="1.0"?><!DOCTYPE svg [<!ENTITY x "y">]><svg xmlns="http://www.w3.org/2000/svg">&x;</svg>',
+            '<?xml version="1.0"?><!DOCTYPE svg PUBLIC "x" "y" [<!ATTLIST svg onload CDATA "alert(1)">]><svg xmlns="http://www.w3.org/2000/svg"/>',
+            '<?xml version="1.0"?><?xml-stylesheet href="https://evil.example/x.css"?><svg xmlns="http://www.w3.org/2000/svg"/>',
             '<html><body>not an svg</body></html>',
             'not xml at all',
         ] as $input) {

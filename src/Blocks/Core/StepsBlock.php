@@ -29,7 +29,7 @@ class StepsBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('step'))
                 ->label(__('Steps'))
                 ->schema([
                     TextInput::make('title')->label(__('Title'))->required()->maxLength(100),

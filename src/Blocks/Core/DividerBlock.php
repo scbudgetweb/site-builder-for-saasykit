@@ -39,6 +39,7 @@ class DividerBlock extends PageBlock
                 ->selectablePlaceholder(false),
             Select::make('size')
                 ->label(__('Space'))
+                ->hintIcon(self::HELP_ICON, __('How much room the divider takes up above and below.'))
                 ->options(['small' => __('Small'), 'medium' => __('Medium'), 'large' => __('Large')])
                 ->default('medium')
                 ->selectablePlaceholder(false),

@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
+use ScBudgetWeb\SiteBuilder\Blocks\StoredBlocks;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 
 /**
@@ -26,7 +27,7 @@ class SavedBlock extends Model
     protected function casts(): array
     {
         return [
-            'blocks' => 'array',
+            'blocks' => StoredBlocks::class,
         ];
     }
 

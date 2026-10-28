@@ -7,7 +7,7 @@ Every time a page is saved with changes, the site keeps a copy of that version: 
 
 ## What a revision keeps
 
-A revision keeps the page's **title**, its **blocks**, whether it shows the **standard page banner**, and its **SEO settings** (search title, description, share image and *Hide from search engines*). It also records **who saved it** and **when**.
+A revision keeps the page's **title**, its **blocks**, whether it shows the **standard page banner**, and its **search & sharing settings** (search title, description, share image and *Hide from search engines*). It also records **who saved it** and **when**.
 
 It doesn't keep the page's address (URL), its status (draft or published) or which built-in page it replaces. Restoring a revision never changes those.
 

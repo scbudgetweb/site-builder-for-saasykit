@@ -67,21 +67,30 @@ class BlockLibrary
     }
 
     /**
-     * A copy of a library item's block for a page, with fresh keys for a Section's rows and their blocks, so the copy
-     * never shares builder item IDs with the library.
+     * A copy of a library item's block for a page, with new uids (BlockSchema) and fresh keys for a Section's rows,
+     * columns and blocks, so the copy never shares an ID with the library.
      *
-     * @return array{type: string, data: array<string, mixed>}|null
+     * @return array{uid: string, type: string, data: array<string, mixed>}|null
      */
     public function copy(mixed $id): ?array
     {
         $block = is_numeric($id) ? SavedBlock::query()->find((int) $id)?->block() : null;
+        $block = $block === null ? null : BlockSchema::withNewUids([$block])[0];
 
         if ($block !== null && $block['type'] === SectionBlock::NAME && is_array($block['data']['rows'] ?? null)) {
-            $block['data']['rows'] = collect($block['data']['rows'])
-                ->mapWithKeys(fn (mixed $row): array => [(string) Str::uuid() => is_array($row) && is_array($row['blocks'] ?? null)
-                    ? [...$row, 'blocks' => collect($row['blocks'])->mapWithKeys(fn (mixed $inner): array => [(string) Str::uuid() => $inner])->all()]
-                    : $row])
-                ->all();
+            $freshKeys = fn (array $items): array => collect($items)->mapWithKeys(fn (mixed $item): array => [(string) Str::uuid() => $item])->all();
+            $rows = [];
+
+            foreach ($block['data']['rows'] as $row) {
+                if (is_array($row)) {
+                    $row = SectionBlock::normaliseRow($row);
+                    $row['columns'] = $freshKeys(array_map(fn (array $column): array => [...$column, 'blocks' => $freshKeys($column['blocks'])], $row['columns']));
+                }
+
+                $rows[] = $row;
+            }
+
+            $block['data']['rows'] = $freshKeys($rows);
         }
 
         return $block;
@@ -112,11 +121,9 @@ class BlockLibrary
                 $ids[] = (int) $block['data']['saved_block_id'];
             }
 
-            if (($block['type'] ?? null) === SectionBlock::NAME && is_array($block['data']['rows'] ?? null)) {
-                foreach ($block['data']['rows'] as $row) {
-                    if (is_array($row) && is_array($row['blocks'] ?? null)) {
-                        $ids = [...$ids, ...$this->linkedIds($row['blocks'])];
-                    }
+            if (($block['type'] ?? null) === SectionBlock::NAME && is_array($block['data'] ?? null)) {
+                foreach (SectionBlock::rows($block['data']) as $row) {
+                    $ids = [...$ids, ...$this->linkedIds($row['blocks'])];
                 }
             }
         }
@@ -135,6 +142,7 @@ class BlockLibrary
 
         foreach ($blocks as $key => $block) {
             if (is_array($block) && ($block['type'] ?? null) === SavedBlockBlock::NAME) {
+                $link = $block;
                 $item = $items->get((int) ($block['data']['saved_block_id'] ?? 0));
                 $block = $item?->block();
 
@@ -142,13 +150,24 @@ class BlockLibrary
                 if ($block === null || $block['type'] === SavedBlockBlock::NAME || ($isNested && ! self::canGoInSection($item))) {
                     continue;
                 }
+
+                // It stands in for the link, so it keeps the link's uid.
+                $block['uid'] = $link['uid'] ?? $block['uid'] ?? null;
             } elseif (! $isNested && is_array($block) && ($block['type'] ?? null) === SectionBlock::NAME && is_array($block['data']['rows'] ?? null)) {
                 // A page's own Section: its rows can link to library items. (A linked Section's rows come from the
                 // library, which holds no links.)
                 foreach ($block['data']['rows'] as $rowKey => $row) {
-                    if (is_array($row) && is_array($row['blocks'] ?? null)) {
-                        $block['data']['rows'][$rowKey]['blocks'] = $this->expandWith($row['blocks'], $items, isNested: true);
+                    if (! is_array($row)) {
+                        continue;
                     }
+
+                    $row = SectionBlock::normaliseRow($row);
+
+                    foreach ($row['columns'] as $columnKey => $column) {
+                        $row['columns'][$columnKey]['blocks'] = $this->expandWith($column['blocks'], $items, isNested: true);
+                    }
+
+                    $block['data']['rows'][$rowKey] = $row;
                 }
             }
 

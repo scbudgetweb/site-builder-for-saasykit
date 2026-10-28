@@ -13,7 +13,7 @@ use ScBudgetWeb\SiteBuilder\Support\Colour;
 /**
  * The "Card style" settings for blocks made of cards with an icon, title and text (e.g. Features):
  * card background and border (on, off or a colour), where the icon sits, and the icon, title and text
- * colours. Saved under the block's "card" key; every value is re-checked in resolve(), so only whitelisted
+ * colours. The everyday ones show first, and the rest are under More options. Saved under the block's "card" key; every value is re-checked in resolve(), so only whitelisted
  * classes and validated hex colours reach the page. Blank colours keep the standard look.
  */
 class CardStyle
@@ -76,30 +76,9 @@ class CardStyle
             ->statePath('card')
             ->columns(2)
             ->schema([
-                self::onByDefaultToggle('background', __('Card background')),
-                self::colorField('background_color', __('Background colour'))
-                    ->placeholder('#ffffff')
-                    ->visible($hasBackground),
+                self::onByDefaultToggle('background', __('Card background'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('A background and border make each card a box. Turn both off for a lighter look.')),
                 self::onByDefaultToggle('border', __('Card border')),
-                self::colorField('border_color', __('Border colour'))
-                    ->placeholder('#e5e7eb')
-                    ->visible($hasBorder),
-                Select::make('border_style')
-                    ->label(__('Border line'))
-                    ->options(array_map(fn (string $label): string => __($label), self::BORDER_STYLES))
-                    ->default('solid')
-                    ->selectablePlaceholder(false)
-                    ->visible($hasBorder),
-                TextInput::make('border_width')
-                    ->label(__('Border width'))
-                    ->numeric()
-                    ->integer()
-                    ->minValue(1)
-                    ->maxValue(BorderShadow::MAX_BORDER_WIDTH)
-                    ->suffix('px')
-                    ->default(1)
-                    ->visible($hasBorder),
-                ...BorderShadow::shadowFields('', __('Automatic (site style on cards with a background)')),
                 Select::make('icon_position')
                     ->label(__('Icon position'))
                     ->options(array_map(fn (string $label): string => __($label), self::ICON_POSITIONS))
@@ -108,22 +87,47 @@ class CardStyle
                         $component->state($state ?? 'top');
                     })
                     ->selectablePlaceholder(false),
-                Select::make('icon_background')
-                    ->label(__('Icon background'))
-                    ->options(array_map(fn (string $label): string => __($label), self::ICON_BACKGROUNDS))
-                    ->default('tile')
-                    ->selectablePlaceholder(false)
-                    ->live(),
-                self::colorField('icon_color', __('Icon colour'))
-                    ->helperText(__('Blank: the site colour.')),
-                self::colorField('icon_background_color', __('Icon tile colour'))
-                    ->helperText(__('Blank: a light tint of the site colour.'))
-                    ->visible($hasTile),
                 self::sizeSelect('icon_size', __('Icon size'), array_map(fn (array $size): string => $size[0], self::ICON_SIZES), 'medium'),
-                self::sizeSelect('title_size', __('Title size'), array_map(fn (array $size): string => $size[0], self::TITLE_SIZES), 'standard'),
-                self::colorField('title_color', __('Title colour')),
-                self::sizeSelect('text_size', __('Text size'), array_map(fn (array $size): string => $size[0], self::TEXT_SIZES), 'standard'),
-                self::colorField('text_color', __('Text colour')),
+                BlockAppearance::moreOptions(__('Card colours, border line and shadow, the icon\'s tile, and title and text sizes.'), [
+                    self::colorField('background_color', __('Background colour'))
+                        ->placeholder('#ffffff')
+                        ->visible($hasBackground),
+                    self::colorField('border_color', __('Border colour'))
+                        ->placeholder('#e5e7eb')
+                        ->visible($hasBorder),
+                    Select::make('border_style')
+                        ->label(__('Border line'))
+                        ->options(array_map(fn (string $label): string => __($label), self::BORDER_STYLES))
+                        ->default('solid')
+                        ->selectablePlaceholder(false)
+                        ->visible($hasBorder),
+                    TextInput::make('border_width')
+                        ->label(__('Border width'))
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(BorderShadow::MAX_BORDER_WIDTH)
+                        ->suffix('px')
+                        ->default(1)
+                        ->visible($hasBorder),
+                    ...BorderShadow::shadowFields('', __('Automatic (site style on cards with a background)')),
+                    Select::make('icon_background')
+                        ->label(__('Icon background'))
+                        ->hintIcon(PageBlock::HELP_ICON, __('A tile is a small square of colour behind the icon.'))
+                        ->options(array_map(fn (string $label): string => __($label), self::ICON_BACKGROUNDS))
+                        ->default('tile')
+                        ->selectablePlaceholder(false)
+                        ->live(),
+                    self::colorField('icon_color', __('Icon colour'))
+                        ->helperText(__('Blank: the site colour.')),
+                    self::colorField('icon_background_color', __('Icon tile colour'))
+                        ->helperText(__('Blank: a light tint of the site colour.'))
+                        ->visible($hasTile),
+                    self::sizeSelect('title_size', __('Title size'), array_map(fn (array $size): string => $size[0], self::TITLE_SIZES), 'standard'),
+                    self::colorField('title_color', __('Title colour')),
+                    self::sizeSelect('text_size', __('Text size'), array_map(fn (array $size): string => $size[0], self::TEXT_SIZES), 'standard'),
+                    self::colorField('text_color', __('Text colour')),
+                ])->columnSpanFull(),
             ]);
     }
 

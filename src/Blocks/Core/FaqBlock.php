@@ -37,7 +37,7 @@ class FaqBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('question'))
                 ->label(__('Questions'))
                 ->schema([
                     TextInput::make('question')->label(__('Question'))->required()->maxLength(250),

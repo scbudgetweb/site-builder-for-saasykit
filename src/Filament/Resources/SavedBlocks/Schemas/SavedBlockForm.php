@@ -10,6 +10,7 @@ use Filament\Schemas\Schema;
 use Illuminate\Support\HtmlString;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
@@ -32,6 +33,7 @@ class SavedBlockForm
                     ->maxLength(100),
                 app(BlockRegistry::class)->editor(Builder::make('blocks'))
                     ->label(__('Block'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('The block to reuse. Pages show it with the "Saved block (library)" block, and change when you save it here.'))
                     ->minItems(1)
                     ->maxItems(1)
                     ->addActionLabel(__('Choose the block')),

@@ -29,11 +29,12 @@ class GalleryBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('images')
+            static::itemTooltips(Repeater::make('images'), __('image'))
                 ->label(__('Images'))
                 ->schema([
                     static::imageUpload('image', __('Image'))->required(),
-                    TextInput::make('alt')->label(__('Alternative text'))->required()->maxLength(200),
+                    TextInput::make('alt')->label(__('Alternative text'))->required()->maxLength(200)
+                        ->hintIcon(self::HELP_ICON, __('A few words describing the image, read out to people who can\'t see it, e.g. "The main hall set up for a wedding".')),
                     TextInput::make('caption')->label(__('Caption'))->maxLength(200),
                 ])
                 ->minItems(1)

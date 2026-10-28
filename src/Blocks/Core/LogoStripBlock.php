@@ -58,12 +58,13 @@ class LogoStripBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('logos')
+            static::itemTooltips(Repeater::make('logos'), __('logo'))
                 ->label(__('Logos'))
                 ->schema([
                     static::imageUpload('image', __('Logo'))->required(),
                     TextInput::make('name')->label(__('Organisation name'))->required()->maxLength(100),
-                    TextInput::make('url')->label(__('Website (optional)'))->url()->maxLength(500),
+                    TextInput::make('url')->label(__('Website (optional)'))->url()->maxLength(500)
+                        ->hintIcon(self::HELP_ICON, __('Clicking the logo opens this website.')),
                 ])
                 ->minItems(1)
                 ->defaultItems(1)
@@ -87,6 +88,7 @@ class LogoStripBlock extends PageBlock
             Grid::make(2)->schema([
                 Select::make('display')
                     ->label(__('Display'))
+                    ->hintIcon(self::HELP_ICON, __('A static row shows every logo at once. A scrolling loop moves along slowly. A carousel shows a few at a time, with arrows.'))
                     ->options(array_map(fn (string $label): string => __($label), self::DISPLAYS))
                     ->default('row')
                     ->selectablePlaceholder(false)

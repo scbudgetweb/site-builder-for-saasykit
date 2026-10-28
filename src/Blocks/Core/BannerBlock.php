@@ -147,12 +147,14 @@ class BannerBlock extends PageBlock
                 ->schema([
                     Select::make('style')
                         ->label(__('Background'))
+                        ->hintIcon(self::HELP_ICON, __('Use the banner style from Branding, so it matches the rest of the site, or your own image.'))
                         ->options(array_map(fn (string $label): string => __($label), self::STYLES))
                         ->default('hero')
                         ->selectablePlaceholder(false)
                         ->live(),
                     Select::make('image_position')
                         ->label(__('Keep in view when cropped'))
+                        ->hintIcon(self::HELP_ICON, __('On narrower screens the picture is trimmed to fit. Choose the part that must stay in view, e.g. a face on the left.'))
                         ->options(array_map(fn (string $label): string => __($label), Colour::IMAGE_POSITIONS))
                         ->default('center')
                         ->selectablePlaceholder(false)
@@ -187,6 +189,7 @@ class BannerBlock extends PageBlock
             Grid::make(2)->schema([
                 Select::make('height')
                     ->label(__('Height'))
+                    ->hintIcon(self::HELP_ICON, __('How tall the banner is. Full screen fills the visitor\'s screen below the menu.'))
                     ->options(array_map(fn (array $height): string => __($height[0]), self::HEIGHTS))
                     ->default(static::defaultHeight())
                     ->selectablePlaceholder(false),

@@ -114,8 +114,9 @@ class BlockRegistry
     /**
      * The page editor's Builder: block cards (previews) that open the block's settings in a slide-over titled with
      * the block, e.g. "Call to action: Get started". Adding a block opens its settings in the same panel. A block in
-     * a Section's row opens a second panel over the section's. On the page editor, each block card also has Save to
-     * library and, on a linked block, Make an editable copy.
+     * a Section's row opens a second panel over the section's, titled with where it is, e.g. "Section › Row 1 ›
+     * Column 2 › Text". Every button on a block card has a tooltip. On the page editor, each block card also has Save
+     * to library and, on a linked block, Make an editable copy.
      *
      * @param  array<int, Block>|null  $blocks  the blocks to offer (all of them by default)
      */
@@ -128,16 +129,23 @@ class BlockRegistry
             ->blockPickerWidth('3xl')
             ->collapsible()
             ->cloneable()
-            ->deleteAction(fn (Action $action): Action => $action->requiresConfirmation())
+            ->deleteAction(fn (Action $action): Action => $action->requiresConfirmation()->tooltip(__('Delete this block')))
+            ->cloneAction(fn (Action $action): Action => $action->tooltip(__('Duplicate this block')))
+            ->reorderAction(fn (Action $action): Action => $action->tooltip(__('Drag to move this block')))
+            ->moveUpAction(fn (Action $action): Action => $action->tooltip(__('Move this block up')))
+            ->moveDownAction(fn (Action $action): Action => $action->tooltip(__('Move this block down')))
+            ->collapseAction(fn (Action $action): Action => $action->tooltip(__('Collapse')))
+            ->expandAction(fn (Action $action): Action => $action->tooltip(__('Expand')))
             ->editAction(fn (Action $action): Action => $this->slideOver($action)
+                ->tooltip(__('Edit this block'))
                 ->modalHeading(function (array $arguments, Builder $component): string {
                     $item = $component->getRawState()[$arguments['item']] ?? [];
                     $block = is_string($item['type'] ?? null) ? $this->find($item['type']) : null;
 
-                    return $block ? $block::editorTitle(is_array($item['data'] ?? null) ? $item['data'] : []) : __('Edit block');
+                    return $this->inPlace($component, $block ? $block::editorTitle(is_array($item['data'] ?? null) ? $item['data'] : []) : __('Edit block'));
                 }))
-            ->addAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments): string => $this->addHeading($arguments)))
-            ->addBetweenAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments): string => $this->addHeading($arguments)))
+            ->addAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments, Builder $component): string => $this->inPlace($component, $this->addHeading($arguments))))
+            ->addBetweenAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments, Builder $component): string => $this->inPlace($component, $this->addHeading($arguments))))
             ->extraItemActions($this->libraryItemActions())
             ->default([]);
     }
@@ -251,7 +259,8 @@ class BlockRegistry
 
     /**
      * The block panel: a wide slide-over whose footer also has Save page and Preview (on the page editor, which
-     * provides saveFromEditor()). They run in the browser, so they don't open another dialog.
+     * provides saveFromEditor()). They run in the browser, so they don't open another dialog. A Section's panel is
+     * wider still, so its columns sit side by side with room for their blocks and settings.
      */
     private function slideOver(Action $action): Action
     {
@@ -259,7 +268,9 @@ class BlockRegistry
 
         return $action
             ->slideOver()
-            ->modalWidth(Width::ThreeExtraLarge)
+            ->modalWidth(fn (array $arguments, Builder $component): Width => ($arguments['block'] ?? $component->getRawState()[$arguments['item'] ?? '']['type'] ?? null) === Core\SectionBlock::NAME
+                ? Width::SevenExtraLarge
+                : Width::FourExtraLarge)
             ->extraModalFooterActions([
                 Action::make('savePage')
                     ->label(__('Save page'))
@@ -276,6 +287,17 @@ class BlockRegistry
                         .Js::from($livewire->getRecord()->previewUrl()).', '.Js::from('site-builder-preview-'.$livewire->getRecord()->getKey()).')')
                     ->visible($isPageEditor),
             ]);
+    }
+
+    /**
+     * A block panel's title with where the block is, when it's in a Section's column: "Section › Row 1 › Column 2 ›
+     * Text", so it's clear which panel is open over the section's.
+     */
+    private function inPlace(Builder $component, string $title): string
+    {
+        $place = Core\SectionBlock::placeOf($component);
+
+        return $place === null ? $title : __('Section').' › '.$place.' › '.$title;
     }
 
     /**

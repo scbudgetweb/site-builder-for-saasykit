@@ -83,6 +83,7 @@ class BorderShadow
         return array_values(array_filter([
             Select::make($prefix.'border_style')
                 ->label(__('Border'))
+                ->hintIcon(PageBlock::HELP_ICON, __('A line around the edge. Choose the line, then its width, colour and which sides.'))
                 ->options(array_map(fn (string $label): string => __($label), self::BORDER_STYLES))
                 ->default('none')
                 ->selectablePlaceholder(false)
@@ -129,6 +130,7 @@ class BorderShadow
         return [
             Select::make($prefix.'shadow')
                 ->label(__('Shadow'))
+                ->hintIcon(PageBlock::HELP_ICON, __('A soft shadow that lifts it off the page. Custom lets you set its size, softness and colour.'))
                 ->options(self::shadowOptions($automaticLabel))
                 ->default($automaticLabel === null ? 'none' : self::AUTOMATIC)
                 ->selectablePlaceholder(false)
@@ -137,10 +139,10 @@ class BorderShadow
                 ->columnSpanFull()
                 ->visible($isCustom)
                 ->schema([
-                    $pixels('shadow_x', __('Across'), 0),
-                    $pixels('shadow_y', __('Down'), 8),
-                    $pixels('shadow_blur', __('Blur'), 24, 0),
-                    $pixels('shadow_spread', __('Spread'), 0),
+                    $pixels('shadow_x', __('Across'), 0)->hintIcon(PageBlock::HELP_ICON, __('How far the shadow falls to the right. Below 0: to the left.')),
+                    $pixels('shadow_y', __('Down'), 8)->hintIcon(PageBlock::HELP_ICON, __('How far the shadow falls downwards. Below 0: upwards.')),
+                    $pixels('shadow_blur', __('Blur'), 24, 0)->hintIcon(PageBlock::HELP_ICON, __('How soft the shadow\'s edge is. 0 is a sharp edge.')),
+                    $pixels('shadow_spread', __('Spread'), 0)->hintIcon(PageBlock::HELP_ICON, __('How much bigger (or, below 0, smaller) the shadow is than the thing it\'s under.')),
                     ColorPicker::make($prefix.'shadow_color')
                         ->label(__('Shadow colour'))
                         ->regex(self::HEX)

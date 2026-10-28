@@ -12,9 +12,9 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
@@ -195,13 +195,14 @@ class ManageNavigation extends Page
 
     private function headerRepeater(): Repeater
     {
-        return Repeater::make('header')
+        return self::withButtonTips(Repeater::make('header'), __('link'))
             ->hiddenLabel()
             ->helperText(__('The main links in the header, on desktop and in the mobile menu. Give a link "Dropdown links" to turn it into a dropdown, or choose a mega menu for a wide panel with columns. The Log in and account buttons are added automatically.'))
             ->schema([
                 ...$this->linkFields(isHeaderItem: true),
                 Select::make('menu')
                     ->label(__('Menu style'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('What opens when someone points at this link: a short list of links, or a wide panel with columns of links, descriptions and icons.'))
                     ->options([
                         NavigationMenus::MENU_DROPDOWN => __('Dropdown (a list under the link)'),
                         NavigationMenus::MENU_MEGA => __('Mega menu (a full-width panel with columns)'),
@@ -210,7 +211,7 @@ class ManageNavigation extends Page
                     ->afterStateHydrated(fn (Select $component, ?string $state) => $component->state($state ?? NavigationMenus::MENU_DROPDOWN))
                     ->selectablePlaceholder(false)
                     ->live(),
-                Repeater::make('children')
+                self::withButtonTips(Repeater::make('children'), __('link'))
                     ->label(__('Dropdown links'))
                     ->schema($this->linkFields(isHeaderItem: false))
                     ->visible(fn (Get $get): bool => $get('menu') !== NavigationMenus::MENU_MEGA)
@@ -265,14 +266,14 @@ class ManageNavigation extends Page
                 ->label(__('Tagline'))
                 ->helperText(__('Shown under the logo. Leave empty to hide it.'))
                 ->maxLength(200),
-            Repeater::make('footer.columns')
+            self::withButtonTips(Repeater::make('footer.columns'), __('column'))
                 ->label(__('Link columns'))
                 ->schema([
                     TextInput::make('heading')
                         ->label(__('Column heading (optional)'))
                         ->maxLength(60)
                         ->live(onBlur: true),
-                    Repeater::make('links')
+                    self::withButtonTips(Repeater::make('links'), __('link'))
                         ->label(__('Links'))
                         ->schema($this->linkFields(isHeaderItem: false))
                         ->minItems(1)
@@ -291,6 +292,7 @@ class ManageNavigation extends Page
                 ->addActionLabel(__('Add column')),
             TextInput::make('footer.copyright')
                 ->label(__('Copyright line'))
+                ->hintIcon(PageBlock::HELP_ICON, __('The small print at the very bottom of every page.'))
                 ->placeholder(NavigationMenus::defaultCopyright())
                 ->helperText(__('{year} becomes the current year and {site_name} the site name. Add a link like <a href="https://example.com">Example</a>; links to other sites open in a new tab. Leave empty for the standard line.'))
                 ->maxLength(300)
@@ -327,6 +329,7 @@ class ManageNavigation extends Page
             Grid::make(2)->schema([
                 Select::make('type')
                     ->label(__('Link to'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('A page you built here, one of the site\'s own pages (such as Log in or Contact), or any web address, including another website.'))
                     ->options($types)
                     ->default(NavigationMenus::TYPE_BUILTIN)
                     ->selectablePlaceholder(false)
@@ -378,21 +381,21 @@ class ManageNavigation extends Page
      * A mega menu: up to four columns of links (each with an optional icon and description), side by side, and an
      * optional highlight panel on the right.
      *
-     * @return array<int, Repeater|Fieldset>
+     * @return array<int, Repeater|Section>
      */
     private function megaMenuFields(): array
     {
         $isMega = fn (Get $get): bool => $get('menu') === NavigationMenus::MENU_MEGA;
 
         return [
-            Repeater::make('columns')
+            self::withButtonTips(Repeater::make('columns'), __('column'))
                 ->label(__('Mega menu columns'))
                 ->schema([
                     TextInput::make('heading')
                         ->label(__('Column heading (optional)'))
                         ->maxLength(60)
                         ->live(onBlur: true),
-                    Repeater::make('links')
+                    self::withButtonTips(Repeater::make('links'), __('link'))
                         ->label(__('Links'))
                         ->schema([
                             ...$this->linkFields(isHeaderItem: false),
@@ -420,7 +423,12 @@ class ManageNavigation extends Page
                 ->collapsible()
                 ->itemLabel(fn (array $state): string => filled($state['heading'] ?? null) ? (string) $state['heading'] : __('Column'))
                 ->addActionLabel(__('Add column')),
-            Fieldset::make(__('Highlight panel (optional)'))
+            // A highlight panel is an extra, so it starts folded away.
+            Section::make(__('Highlight panel (optional)'))
+                ->description(__('A box beside the columns to promote one thing, with a heading, a line of text and a button.'))
+                ->collapsible()
+                ->collapsed()
+                ->compact()
                 ->statePath('promo')
                 ->visible($isMega)
                 ->columns(2)
@@ -437,6 +445,20 @@ class ManageNavigation extends Page
                         ->placeholder('/contact'),
                 ]),
         ];
+    }
+
+    /**
+     * Tooltips on a menu list's icon buttons, e.g. "Move this link up", "Delete this column".
+     */
+    private static function withButtonTips(Repeater $repeater, string $thing): Repeater
+    {
+        return $repeater
+            ->moveUpAction(fn (Action $action): Action => $action->tooltip(__('Move this :thing up', ['thing' => $thing])))
+            ->moveDownAction(fn (Action $action): Action => $action->tooltip(__('Move this :thing down', ['thing' => $thing])))
+            ->reorderAction(fn (Action $action): Action => $action->tooltip(__('Drag to move this :thing', ['thing' => $thing])))
+            ->deleteAction(fn (Action $action): Action => $action->tooltip(__('Delete this :thing', ['thing' => $thing])))
+            ->collapseAction(fn (Action $action): Action => $action->tooltip(__('Collapse')))
+            ->expandAction(fn (Action $action): Action => $action->tooltip(__('Expand')));
     }
 
     /**

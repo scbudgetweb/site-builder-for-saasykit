@@ -31,7 +31,7 @@ class FeaturesBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('feature'))
                 ->label(__('Features'))
                 ->schema([
                     Grid::make(2)->schema([
@@ -42,6 +42,7 @@ class FeaturesBlock extends PageBlock
                     Grid::make(2)->schema([
                         TextInput::make('link_url')
                             ->label(__('Link (optional)'))
+                            ->hintIcon(self::HELP_ICON, __('A page on this site (/about-us), a part of this page (#pricing) or a full web address (https://…).'))
                             ->maxLength(500)
                             ->regex('/^(https?:\/\/|\/|#)/i')
                             ->validationMessages(['regex' => __('Start the link with https://, / or #.')]),

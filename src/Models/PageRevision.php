@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\URL;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockSchema;
 
 /**
  * A saved version of a page (Pages › Revisions): written on every save that changes the page's content, banner or
@@ -58,13 +59,21 @@ class PageRevision extends Model
     }
 
     /**
-     * The snapshot's known attributes only, so a hand-edited row can't set anything else.
+     * The snapshot's known attributes only, so a hand-edited row can't set anything else. Blocks come back in today's
+     * shape (BlockSchema, from the snapshot's blocks_version), as a revision saved by 1.4 or earlier fills the editor
+     * directly.
      *
      * @return array<string, mixed>
      */
     public function attributesToRestore(): array
     {
-        return array_intersect_key(is_array($this->snapshot) ? $this->snapshot : [], array_flip(self::ATTRIBUTES));
+        $attributes = array_intersect_key(is_array($this->snapshot) ? $this->snapshot : [], array_flip(self::ATTRIBUTES));
+
+        if (is_array($attributes['blocks'] ?? null)) {
+            $attributes['blocks'] = BlockSchema::read($attributes['blocks'], (int) ($this->snapshot['blocks_version'] ?? 1));
+        }
+
+        return $attributes;
     }
 
     /**

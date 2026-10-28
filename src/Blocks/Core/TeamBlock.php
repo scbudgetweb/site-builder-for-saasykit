@@ -30,7 +30,7 @@ class TeamBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('members')
+            static::itemTooltips(Repeater::make('members'), __('person'))
                 ->label(__('People'))
                 ->schema([
                     static::imageUpload('photo', __('Photo')),

@@ -40,6 +40,7 @@ class PageForm
                         ->schema([
                             app(BlockRegistry::class)->editor(Builder::make('blocks'))
                                 ->hiddenLabel()
+                                ->helperText(__('A page is built from blocks, one under another. Add a block, then click its card to change its words, pictures and look. To put blocks side by side, add a Section.'))
                                 ->addActionLabel(__('Add block')),
                         ]),
                     Tab::make(__('Settings'))
@@ -48,6 +49,7 @@ class PageForm
                         ->schema([
                             TextInput::make('title')
                                 ->label(__('Title'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('The page\'s name, shown in its banner, in the list of pages and in search results (unless you set a title for search engines).'))
                                 ->required()
                                 ->maxLength(150)
                                 ->live(onBlur: true)
@@ -57,7 +59,8 @@ class PageForm
                                     }
                                 }),
                             TextInput::make('slug')
-                                ->label(__('URL'))
+                                ->label(__('Web address'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('The end of the page\'s web address: lower-case words joined by hyphens, e.g. about-the-hall. Changing it breaks links to the old address.'))
                                 ->prefix(rtrim(url('/'), '/').'/')
                                 ->required()
                                 ->maxLength(100)
@@ -74,6 +77,7 @@ class PageForm
                                 ]),
                             Select::make('status')
                                 ->label(__('Status'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('Draft: hidden from visitors while you work on it. Published: anyone can visit it.'))
                                 ->options(PageStatus::options())
                                 ->default(PageStatus::Draft->value)
                                 ->selectablePlaceholder(false)
@@ -85,6 +89,7 @@ class PageForm
                                     : __('Only published pages are visible on the site. Use Preview to check a draft.')),
                             Select::make('replaces')
                                 ->label(__('Replaces built-in page'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('Show this page instead of one of the site\'s own pages, such as the home page. The site\'s page comes back if you unpublish this one.'))
                                 ->options(fn (): array => self::slotOptions())
                                 ->placeholder(__('No, it\'s a page of its own'))
                                 ->unique(ignoreRecord: true)
@@ -96,19 +101,22 @@ class PageForm
                                 ->visible(fn (): bool => self::slotOptions() !== []),
                             Toggle::make('show_page_banner')
                                 ->label(__('Show the standard page banner with the page title'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('A strip across the top of the page with its title. Turn it off when the page starts with a Banner or Hero of its own.'))
                                 ->helperText(__('Not shown when the page starts with its own Banner block.'))
                                 ->default(true)
                                 ->columnSpanFull(),
                         ]),
-                    Tab::make(__('SEO'))
+                    Tab::make(__('Search & sharing'))
                         ->icon(Heroicon::OutlinedMagnifyingGlass)
                         ->schema([
                             Grid::make(2)->schema([
                                 TextInput::make('seo_title')
                                     ->label(__('Title for search engines'))
+                                    ->hintIcon(PageBlock::HELP_ICON, __('The blue link people click in search results, such as Google. Most pages can leave this blank.'))
                                     ->helperText(__('Shown in search results and browser tabs. Leave blank to use the page title. Around 60 characters works best.'))
                                     ->maxLength(70),
-                                PageBlock::imageUpload('share_image', __('Share image'))
+                                // Social sites don't show SVGs.
+                                PageBlock::imageUpload('share_image', __('Share image'), allowsSvg: false)
                                     ->helperText(__('Shown when the page is shared on social media. 1200 × 630 pixels works best. Leave blank to use the one in Branding.')),
                             ]),
                             Textarea::make('seo_description')
@@ -118,6 +126,7 @@ class PageForm
                                 ->maxLength(300),
                             Toggle::make('noindex')
                                 ->label(__('Hide from search engines'))
+                                ->hintIcon(PageBlock::HELP_ICON, __('For pages you only share by link, such as a thank-you page. Visitors can still open it.'))
                                 ->helperText(__('Asks search engines not to list this page, and leaves it out of the sitemap.')),
                         ]),
                 ]),

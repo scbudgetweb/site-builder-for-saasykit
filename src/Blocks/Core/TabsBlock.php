@@ -29,7 +29,7 @@ class TabsBlock extends PageBlock
     {
         return [
             ...static::headingFields(),
-            Repeater::make('items')
+            static::itemTooltips(Repeater::make('items'), __('tab'))
                 ->label(__('Tabs'))
                 ->schema([
                     TextInput::make('title')->label(__('Tab title'))->required()->maxLength(60),

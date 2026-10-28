@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Tables;
 
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
+use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -31,6 +32,7 @@ class PagesTable
             ->emptyStateHeading(__('No pages yet'))
             ->emptyStateDescription(__('Build a page from blocks: banners, text, images and calls to action. It can live at its own address or replace the home page.'))
             ->emptyStateIcon(Heroicon::OutlinedDocumentText)
+            ->emptyStateActions([CreateAction::make()->label(__('New page'))])
             ->columns([
                 TextColumn::make('title')
                     ->label(__('Title'))
@@ -43,7 +45,7 @@ class PagesTable
                     ->formatStateUsing(fn (PageStatus $state): string => $state->label())
                     ->color(fn (PageStatus $state): string => $state === PageStatus::Published ? 'success' : 'gray'),
                 TextColumn::make('replaces')
-                    ->label(__('Replaces'))
+                    ->label(__('Replaces built-in page'))
                     ->badge()
                     ->color('info')
                     ->formatStateUsing(fn (Page $record): string => $record->slot()?->label() ?? '')
@@ -60,6 +62,7 @@ class PagesTable
             ->recordActions([
                 Action::make('preview')
                     ->label(__('Preview'))
+                    ->tooltip(__('See the page as visitors will, drafts too, in a new tab'))
                     ->icon(Heroicon::OutlinedEye)
                     ->color('gray')
                     ->url(fn (Page $record): string => $record->previewUrl(), shouldOpenInNewTab: true)
@@ -67,6 +70,7 @@ class PagesTable
                 EditAction::make(),
                 Action::make('duplicate')
                     ->label(__('Duplicate'))
+                    ->tooltip(__('Make a draft copy of this page to start a new one from'))
                     ->icon(Heroicon::OutlinedDocumentDuplicate)
                     ->color('gray')
                     ->authorize('create')

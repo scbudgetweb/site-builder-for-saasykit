@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Pages;
 
+use ScBudgetWeb\SiteBuilder\Blocks\BlockSchema;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 
@@ -35,7 +36,7 @@ class PageRevisions
         $user = auth()->user();
 
         $page->revisions()->create([
-            'snapshot' => $page->only(PageRevision::ATTRIBUTES),
+            'snapshot' => [...$page->only(PageRevision::ATTRIBUTES), 'blocks_version' => BlockSchema::VERSION],
             'user_id' => is_numeric($user?->getAuthIdentifier()) ? (int) $user->getAuthIdentifier() : null,
             'user_name' => is_string($user?->getAttribute('name')) ? $user->getAttribute('name') : null,
         ]);

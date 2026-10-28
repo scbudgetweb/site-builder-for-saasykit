@@ -46,6 +46,7 @@ class ImageBlock extends PageBlock
             TextInput::make('caption')->label(__('Caption'))->maxLength(200),
             TextInput::make('link')
                 ->label(__('Link (optional)'))
+                ->hintIcon(self::HELP_ICON, __('Where clicking the image goes: a page on this site (/about-us), a part of this page (#pricing) or a full web address (https://…).'))
                 ->maxLength(500)
                 ->regex('/^(https?:\/\/|\/|#)/i')
                 ->validationMessages(['regex' => __('Start the link with https://, / or #.')]),

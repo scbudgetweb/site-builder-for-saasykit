@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
+use Filament\Actions\Action;
 use Filament\Forms\Components\Builder\Block;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Field;
@@ -19,6 +20,7 @@ use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
@@ -28,6 +30,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
+use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
 
 /**
  * One page block: its admin form (a Filament Builder block) and its public view. Core blocks' views live in the
@@ -37,6 +40,12 @@ use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
 abstract class PageBlock
 {
     public const IMAGE_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+
+    /** Block images may also be SVGs, checked on upload (SafeSvg), except where only a picture file works (a share image). */
+    public const SVG_FILE_TYPE = 'image/svg+xml';
+
+    /** The icon beside a setting whose tooltip explains it (->hintIcon(PageBlock::HELP_ICON, __('…'))). */
+    public const HELP_ICON = Heroicon::OutlinedQuestionMarkCircle;
 
     public const IMAGE_MAX_KILOBYTES = 2048;
 
@@ -165,12 +174,23 @@ abstract class PageBlock
      * The Builder block, for the page's builder or (with $isNested) a Section's, where Appearance defaults to no
      * extra spacing and the full width of its column, because the section provides both.
      *
-     * Its editor is split into tabs (Content, Layout, Style, Advanced); tabs only change the editor, and every
-     * setting keeps its saved key (shared settings stay under "appearance").
+     * Its editor is split into tabs (Content, Layout, Style, Advanced), each with an icon; tabs only change the
+     * editor, and every setting keeps its saved key (shared settings stay under "appearance"). The Advanced tab says
+     * most blocks don't need it.
      */
     public static function make(bool $isNested = false): Block
     {
         $hasAppearance = static::hasAppearance();
+        $advanced = [
+            ...static::advancedFields(),
+            ...($hasAppearance ? [BlockAppearance::advancedGroup()] : []),
+        ];
+        $icons = [
+            static::contentTabLabel() => Heroicon::OutlinedPencilSquare,
+            __('Layout') => Heroicon::OutlinedViewColumns,
+            __('Style') => Heroicon::OutlinedSwatch,
+            __('Advanced') => Heroicon::OutlinedCog6Tooth,
+        ];
 
         $tabs = array_filter([
             static::contentTabLabel() => static::fields(),
@@ -182,9 +202,9 @@ abstract class PageBlock
                 ...static::styleFields(),
                 ...($hasAppearance ? [BlockAppearance::styleGroup(static::defaultBackground(), static::headingSettings(), static::hasBodyText())] : []),
             ],
-            __('Advanced') => [
-                ...static::advancedFields(),
-                ...($hasAppearance ? [BlockAppearance::advancedGroup()] : []),
+            __('Advanced') => $advanced === [] ? [] : [
+                Text::make(__('Most blocks don\'t need these. They\'re for linking straight to this block, and for custom styling.')),
+                ...$advanced,
             ],
         ]);
 
@@ -199,7 +219,7 @@ abstract class PageBlock
                 ...(count($tabs) === 1 ? reset($tabs) : [
                     Tabs::make()
                         ->tabs(array_map(
-                            fn (string $label, array $fields): Tab => Tab::make($label)->schema($fields),
+                            fn (string $label, array $fields): Tab => Tab::make($label)->icon($icons[$label] ?? null)->schema($fields),
                             array_keys($tabs),
                             $tabs,
                         )),
@@ -299,7 +319,11 @@ abstract class PageBlock
             ]);
     }
 
-    public static function imageUpload(string $name, string $label): FileUpload
+    /**
+     * A block image: JPG, PNG or WebP, and (with $allowsSvg) an SVG, which stays sharp at any size. An SVG is served
+     * from the site's own address, so it's only accepted when it's a plain drawing, with no scripts or links (SafeSvg).
+     */
+    public static function imageUpload(string $name, string $label, bool $allowsSvg = true): FileUpload
     {
         $pages = app(PageService::class);
 
@@ -309,7 +333,8 @@ abstract class PageBlock
             ->directory($pages->uploadDirectory())
             ->visibility('public')
             ->image()
-            ->acceptedFileTypes(self::IMAGE_FILE_TYPES)
+            ->acceptedFileTypes($allowsSvg ? [...self::IMAGE_FILE_TYPES, self::SVG_FILE_TYPE] : self::IMAGE_FILE_TYPES)
+            ->rule(new SafeSvg)
             ->maxSize(self::IMAGE_MAX_KILOBYTES)
             ->imagePreviewHeight('120')
             // Filament only trusts existing paths from a model attribute, but block images live inside the blocks JSON,
@@ -347,13 +372,14 @@ abstract class PageBlock
     {
         return Select::make('image_corners')
             ->label(__('Image corners'))
+            ->hintIcon(self::HELP_ICON, __('How round the image\'s corners are. Site style uses the one chosen in Branding.'))
             ->options(['site' => __('Site style (Branding)')] + BrandingStyle::labels(BrandingStyle::IMAGE_CORNER_OPTIONS))
             ->default('site')
             ->selectablePlaceholder(false);
     }
 
     /**
-     * The Style tab's "Image" settings: corners, border and shadow.
+     * The Style tab's "Image" settings: corners, with border and shadow under More options.
      */
     protected static function imageStyleFieldset(?string $automaticShadowLabel = null): Fieldset
     {
@@ -361,8 +387,10 @@ abstract class PageBlock
             ->columns(2)
             ->schema([
                 static::imageCornersSelect()->columnSpanFull(),
-                ...BorderShadow::borderFields('image_', withSides: false),
-                ...BorderShadow::shadowFields('image_', $automaticShadowLabel),
+                BlockAppearance::moreOptions(__('A border or shadow around the image.'), [
+                    ...BorderShadow::borderFields('image_', withSides: false),
+                    ...BorderShadow::shadowFields('image_', $automaticShadowLabel),
+                ])->columnSpanFull(),
             ]);
     }
 
@@ -393,11 +421,12 @@ abstract class PageBlock
     }
 
     /**
-     * Up to $max buttons: text, link, style, width, and whether it opens in a new tab.
+     * Up to $max buttons: text, link, style and width, with a shadow, an icon and whether it opens in a new tab under
+     * More options.
      */
     protected static function buttonsRepeater(int $max = 2, string $name = 'buttons'): Repeater
     {
-        return Repeater::make($name)
+        return static::itemTooltips(Repeater::make($name), __('button'))
             ->label(__('Buttons'))
             ->schema([
                 Grid::make(2)->schema([
@@ -408,9 +437,11 @@ abstract class PageBlock
                         ->maxLength(500)
                         ->regex(self::LINK_PATTERN)
                         ->validationMessages(['regex' => __('Start the link with https://, / (a page on this site), # (a section on this page), mailto: or tel:.')])
-                        ->placeholder('/about-us'),
+                        ->placeholder('/about-us')
+                        ->hintIcon(self::HELP_ICON, __('Where the button goes: a page on this site (/about-us), a part of this page (#pricing), a full web address (https://…), an email (mailto:…) or a phone number (tel:…).')),
                     Select::make('style')
                         ->label(__('Style'))
+                        ->hintIcon(self::HELP_ICON, __('Automatic picks the button style that stands out best on the background. Custom colours are for this button only.'))
                         ->options(fn (): array => ['auto' => __('Automatic (suits the background)')] + app(BrandingStyle::class)->buttonNames() + [self::CUSTOM_BUTTON_STYLE => __('Custom colours')])
                         ->helperText(__('Button styles are set in Branding.'))
                         ->default('auto')
@@ -447,15 +478,20 @@ abstract class PageBlock
                                 ->default(2)
                                 ->visible(fn (Get $get): bool => filled($get('border_color'))),
                         ]),
-                    Select::make('shadow')
-                        ->label(__('Shadow'))
-                        ->options(BorderShadow::shadowOptions(withCustom: false))
-                        ->default('none')
-                        ->selectablePlaceholder(false),
-                    Toggle::make('new_tab')->label(__('Open in a new tab'))->inline(false),
-                    static::iconSelect('icon', __('Icon (optional)'))
-                        ->helperText(null)
-                        ->columnSpanFull(),
+                    BlockAppearance::moreOptions(__('An icon, a shadow, and opening in a new tab.'), [
+                        static::iconSelect('icon', __('Icon (optional)'))
+                            ->helperText(null)
+                            ->columnSpanFull(),
+                        Select::make('shadow')
+                            ->label(__('Shadow'))
+                            ->options(BorderShadow::shadowOptions(withCustom: false))
+                            ->default('none')
+                            ->selectablePlaceholder(false),
+                        Toggle::make('new_tab')
+                            ->label(__('Open in a new tab'))
+                            ->hintIcon(self::HELP_ICON, __('Best for links to other websites. Links to this site usually open in the same tab.'))
+                            ->inline(false),
+                    ])->columnSpanFull(),
                 ]),
             ])
             ->maxItems($max)
@@ -463,6 +499,23 @@ abstract class PageBlock
             ->collapsible()
             ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)
             ->addActionLabel(__('Add button'));
+    }
+
+    /**
+     * Tooltips for a repeater's item buttons that name the item, e.g. "Duplicate this card" and "Delete this card".
+     */
+    public static function itemTooltips(Repeater $repeater, string $item): Repeater
+    {
+        $tooltip = fn (string $text): \Closure => fn (Action $action): Action => $action->tooltip(__($text, ['item' => $item]));
+
+        return $repeater
+            ->cloneAction($tooltip('Duplicate this :item'))
+            ->deleteAction($tooltip('Delete this :item'))
+            ->moveUpAction($tooltip('Move this :item up'))
+            ->moveDownAction($tooltip('Move this :item down'))
+            ->reorderAction($tooltip('Drag to move this :item'))
+            ->collapseAction($tooltip('Collapse'))
+            ->expandAction($tooltip('Expand'));
     }
 
     /**
@@ -485,6 +538,7 @@ abstract class PageBlock
     {
         return Select::make('columns')
             ->label(__('Columns on wide screens'))
+            ->hintIcon(self::HELP_ICON, __('How many sit side by side on a computer. Tablets show fewer, and phones show one under another.'))
             ->options(collect($choices)->mapWithKeys(fn (int $count): array => [$count => (string) $count])->all())
             ->default($default)
             ->selectablePlaceholder(false);

@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
@@ -129,12 +130,13 @@ class BlockLibraryTest extends PageTestCase
 
         $component->unmountAction()->mountAction(TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => $sectionKey]));
         $rowKey = array_key_first($component->get('mountedActions.0.data.rows'));
-        $innerKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.blocks"));
+        $columnKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns"));
+        $innerKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns.{$columnKey}.blocks"));
 
         $component
             ->mountAction([
                 TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => $sectionKey]),
-                TestAction::make('edit')->schemaComponent("rows.{$rowKey}.blocks", 'mountedActionSchema0')->arguments(['item' => $innerKey]),
+                TestAction::make('edit')->schemaComponent("rows.{$rowKey}.columns.{$columnKey}.blocks", 'mountedActionSchema0')->arguments(['item' => $innerKey]),
             ])
             ->assertFormFieldExists('saved_block_id', 'mountedActionSchema1', fn ($field): bool => array_values($field->getOptions()) === ['Join CTA (Call to action)']);
     }
@@ -190,7 +192,7 @@ class BlockLibraryTest extends PageTestCase
 
         $item = SavedBlock::query()->sole();
         $this->assertSame(['Join CTA', 'call_to_action', 'Join us'], [$item->name, $item->type, $item->block()['data']['heading']]);
-        $this->assertSame([self::linked($item)], array_values($page->fresh()->blocks));
+        $this->assertSame([self::linked($item)], array_map(fn (array $block): array => Arr::except($block, 'uid'), array_values($page->fresh()->blocks)));
         $this->get('/about-us')->assertSee('Join us');
     }
 
@@ -222,19 +224,20 @@ class BlockLibraryTest extends PageTestCase
 
         $component->mountAction(TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => $sectionKey]));
         $rowKey = array_key_first($component->get('mountedActions.0.data.rows'));
-        $innerKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.blocks"));
+        $columnKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns"));
+        $innerKey = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns.{$columnKey}.blocks"));
 
         $component
             ->mountAction([
                 TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => $sectionKey]),
-                TestAction::make('saveToLibrary')->schemaComponent("rows.{$rowKey}.blocks", 'mountedActionSchema0')->arguments(['item' => $innerKey]),
+                TestAction::make('saveToLibrary')->schemaComponent("rows.{$rowKey}.columns.{$columnKey}.blocks", 'mountedActionSchema0')->arguments(['item' => $innerKey]),
             ])
             ->setActionData(['name' => 'Row text', 'link' => false])
             ->callMountedAction()
             ->assertHasNoActionErrors();
 
         $this->assertSame('text', SavedBlock::query()->sole()->type);
-        $this->assertSame('text', $component->get("mountedActions.0.data.rows.{$rowKey}.blocks.{$innerKey}.type"));
+        $this->assertSame('text', $component->get("mountedActions.0.data.rows.{$rowKey}.columns.{$columnKey}.blocks.{$innerKey}.type"));
     }
 
     public function test_make_an_editable_copy_swaps_the_link_for_the_library_content(): void
@@ -252,8 +255,11 @@ class BlockLibraryTest extends PageTestCase
 
         $block = array_values($page->fresh()->blocks)[0];
         $this->assertSame('section', $block['type']);
-        $this->assertStringContainsString('Copied', array_values(array_values($block['data']['rows'])[0]['blocks'])[0]['data']['content']);
+        $row = array_values($block['data']['rows'])[0];
+        $this->assertStringContainsString('Copied', array_values(array_values($row['columns'])[0]['blocks'])[0]['data']['content']);
         $this->assertNotContains('row', array_keys($block['data']['rows']), 'The copy gets its own row keys.');
+        $this->assertNotContains('inner', array_keys(array_values($row['columns'])[0]['blocks']), 'The copy gets its own block keys.');
+        $this->assertCount(2, $row['columns'], 'A 1.4 row from the library comes back in columns.');
         $this->assertSame([], app(BlockLibrary::class)->usedOn($item)->all());
     }
 

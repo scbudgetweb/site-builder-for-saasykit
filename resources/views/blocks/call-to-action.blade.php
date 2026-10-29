@@ -1,5 +1,6 @@
 {{-- A heading, a line of text and buttons. --}}
 <div @class(['max-w-3xl', 'mx-auto text-center' => $isCentered])>
+    @include('site-builder::blocks.partials.eyebrow')
     <h2 class="sb-h2 block-heading">{{ $block['heading'] ?? '' }}</h2>
 
     @if (filled($block['text'] ?? null))

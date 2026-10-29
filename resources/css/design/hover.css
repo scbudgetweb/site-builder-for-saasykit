@@ -1,0 +1,54 @@
+/*
+ * Hover values (the panel's Hover state, Design\DesignValue's "-h"): each applies while the block is
+ * pointed at. The class sits on the section, its container or its panel (or a Section's row or column), so a rule
+ * applies when that element, or the block's section, is hovered. Imported after the other design files, so hover wins.
+ */
+:is(.sb-d-pt-h:hover, [data-block]:hover > .sb-d-pt-h, [data-block]:hover > * > .sb-d-pt-h) { padding-top: var(--sb-pt-h); }
+:is(.sb-d-pr-h:hover, [data-block]:hover > .sb-d-pr-h, [data-block]:hover > * > .sb-d-pr-h) { padding-right: var(--sb-pr-h); }
+:is(.sb-d-pb-h:hover, [data-block]:hover > .sb-d-pb-h, [data-block]:hover > * > .sb-d-pb-h) { padding-bottom: var(--sb-pb-h); }
+:is(.sb-d-pl-h:hover, [data-block]:hover > .sb-d-pl-h, [data-block]:hover > * > .sb-d-pl-h) { padding-left: var(--sb-pl-h); }
+:is(.sb-d-mt-h:hover, [data-block]:hover > .sb-d-mt-h, [data-block]:hover > * > .sb-d-mt-h) { margin-top: var(--sb-mt-h); }
+:is(.sb-d-mr-h:hover, [data-block]:hover > .sb-d-mr-h, [data-block]:hover > * > .sb-d-mr-h) { margin-right: var(--sb-mr-h); }
+:is(.sb-d-mb-h:hover, [data-block]:hover > .sb-d-mb-h, [data-block]:hover > * > .sb-d-mb-h) { margin-bottom: var(--sb-mb-h); }
+:is(.sb-d-ml-h:hover, [data-block]:hover > .sb-d-ml-h, [data-block]:hover > * > .sb-d-ml-h) { margin-left: var(--sb-ml-h); }
+:is(.sb-d-w-h:hover, [data-block]:hover > .sb-d-w-h, [data-block]:hover > * > .sb-d-w-h) { width: var(--sb-w-h); }
+:is(.sb-d-maxw-h:hover, [data-block]:hover > .sb-d-maxw-h, [data-block]:hover > * > .sb-d-maxw-h) { max-width: var(--sb-maxw-h); }
+:is(.sb-d-h-h:hover, [data-block]:hover > .sb-d-h-h, [data-block]:hover > * > .sb-d-h-h) { height: var(--sb-h-h); }
+:is(.sb-d-maxh-h:hover, [data-block]:hover > .sb-d-maxh-h, [data-block]:hover > * > .sb-d-maxh-h) { max-height: var(--sb-maxh-h); }
+:is(.sb-d-minh-h:hover, [data-block]:hover > .sb-d-minh-h, [data-block]:hover > * > .sb-d-minh-h) { min-height: var(--sb-minh-h); }
+:is(.sb-d-rtl-h:hover, [data-block]:hover > .sb-d-rtl-h, [data-block]:hover > * > .sb-d-rtl-h) { border-top-left-radius: var(--sb-rtl-h); }
+:is(.sb-d-rtr-h:hover, [data-block]:hover > .sb-d-rtr-h, [data-block]:hover > * > .sb-d-rtr-h) { border-top-right-radius: var(--sb-rtr-h); }
+:is(.sb-d-rbr-h:hover, [data-block]:hover > .sb-d-rbr-h, [data-block]:hover > * > .sb-d-rbr-h) { border-bottom-right-radius: var(--sb-rbr-h); }
+:is(.sb-d-rbl-h:hover, [data-block]:hover > .sb-d-rbl-h, [data-block]:hover > * > .sb-d-rbl-h) { border-bottom-left-radius: var(--sb-rbl-h); }
+:is(.sb-d-bwt-h:hover, [data-block]:hover > .sb-d-bwt-h, [data-block]:hover > * > .sb-d-bwt-h) { border-top-width: var(--sb-bwt-h) !important; }
+:is(.sb-d-bwr-h:hover, [data-block]:hover > .sb-d-bwr-h, [data-block]:hover > * > .sb-d-bwr-h) { border-right-width: var(--sb-bwr-h) !important; }
+:is(.sb-d-bwb-h:hover, [data-block]:hover > .sb-d-bwb-h, [data-block]:hover > * > .sb-d-bwb-h) { border-bottom-width: var(--sb-bwb-h) !important; }
+:is(.sb-d-bwl-h:hover, [data-block]:hover > .sb-d-bwl-h, [data-block]:hover > * > .sb-d-bwl-h) { border-left-width: var(--sb-bwl-h) !important; }
+:is(.sb-d-tx-h:hover, [data-block]:hover > .sb-d-tx-h, [data-block]:hover > * > .sb-d-tx-h) { --sb-tx-now: var(--sb-tx-h); }
+:is(.sb-d-ty-h:hover, [data-block]:hover > .sb-d-ty-h, [data-block]:hover > * > .sb-d-ty-h) { --sb-ty-now: var(--sb-ty-h); }
+:is(.sb-d-ox-h:hover, [data-block]:hover > .sb-d-ox-h, [data-block]:hover > * > .sb-d-ox-h) { --sb-ox-now: var(--sb-ox-h); }
+:is(.sb-d-oy-h:hover, [data-block]:hover > .sb-d-oy-h, [data-block]:hover > * > .sb-d-oy-h) { --sb-oy-now: var(--sb-oy-h); }
+.sb-d-hs-h:hover :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-size: var(--sb-hs-h); }
+.sb-d-hlh-h:hover :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { line-height: var(--sb-hlh-h); }
+.sb-d-hls-h:hover :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { letter-spacing: var(--sb-hls-h); }
+.sb-d-hc-h:hover :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { color: var(--sb-hc-h); }
+.sb-d-ts-h:hover :is(.block-text, p, li, blockquote) { font-size: var(--sb-ts-h); }
+.sb-d-tlh-h:hover :is(.block-text, p, li, blockquote) { line-height: var(--sb-tlh-h); }
+.sb-d-tls-h:hover :is(.block-text, p, li, blockquote) { letter-spacing: var(--sb-tls-h); }
+.sb-d-tc-h:hover :is(.block-text, p, li, blockquote) { color: var(--sb-tc-h); }
+.sb-d-tc-h:hover { color: var(--sb-tc-h); }
+.sb-d-li-indent-h:hover :is(ul, ol) { padding-left: var(--sb-li-indent-h); }
+.sb-d-quote-bw-h:hover blockquote { border-left-width: var(--sb-quote-bw-h); }
+.sb-d-filter-h img:not([aria-hidden="true"] > img) { transition: filter 300ms ease; }
+.sb-d-filter-h:hover img:not([aria-hidden="true"] > img) { filter: var(--sb-filter-h); }
+
+/* Hover changes ease in, over Advanced › Transitions when it's set. */
+:is(.sb-d-bwb-h, .sb-d-bwl-h, .sb-d-bwr-h, .sb-d-bwt-h, .sb-d-h-h, .sb-d-hc-h, .sb-d-hlh-h, .sb-d-hls-h, .sb-d-hs-h, .sb-d-li-indent-h, .sb-d-maxh-h, .sb-d-maxw-h, .sb-d-mb-h, .sb-d-minh-h, .sb-d-ml-h, .sb-d-mr-h, .sb-d-mt-h, .sb-d-ox-h, .sb-d-oy-h, .sb-d-pb-h, .sb-d-pl-h, .sb-d-pr-h, .sb-d-pt-h, .sb-d-quote-bw-h, .sb-d-rbl-h, .sb-d-rbr-h, .sb-d-rtl-h, .sb-d-rtr-h, .sb-d-tc-h, .sb-d-tlh-h, .sb-d-tls-h, .sb-d-ts-h, .sb-d-tx-h, .sb-d-ty-h, .sb-d-w-h) {
+    transition-property: padding, margin, width, max-width, height, max-height, min-height, border-width, border-radius, color, translate, font-size, letter-spacing;
+    transition-duration: var(--sb-transition-duration, 300ms);
+    transition-timing-function: var(--sb-transition-curve, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    :is(.sb-d-bwb-h, .sb-d-bwl-h, .sb-d-bwr-h, .sb-d-bwt-h, .sb-d-h-h, .sb-d-hc-h, .sb-d-hlh-h, .sb-d-hls-h, .sb-d-hs-h, .sb-d-li-indent-h, .sb-d-maxh-h, .sb-d-maxw-h, .sb-d-mb-h, .sb-d-minh-h, .sb-d-ml-h, .sb-d-mr-h, .sb-d-mt-h, .sb-d-ox-h, .sb-d-oy-h, .sb-d-pb-h, .sb-d-pl-h, .sb-d-pr-h, .sb-d-pt-h, .sb-d-quote-bw-h, .sb-d-rbl-h, .sb-d-rbr-h, .sb-d-rtl-h, .sb-d-rtr-h, .sb-d-tc-h, .sb-d-tlh-h, .sb-d-tls-h, .sb-d-ts-h, .sb-d-tx-h, .sb-d-ty-h, .sb-d-w-h) { transition: none; }
+}

@@ -15,6 +15,7 @@ use Illuminate\Support\Js;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\CreatePage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
@@ -40,6 +41,7 @@ class BlockRegistry
         Core\StepsBlock::class,
         Core\StatsBlock::class,
         Core\CallToActionBlock::class,
+        Core\MailingListBlock::class,
         Core\ButtonsBlock::class,
         Core\TestimonialsBlock::class,
         Core\TeamBlock::class,
@@ -51,11 +53,47 @@ class BlockRegistry
         Core\LogoStripBlock::class,
         Core\SocialFollowBlock::class,
         Core\DividerBlock::class,
+        // Theme Builder (templates only)
+        Core\SiteLogoBlock::class,
+        Core\SiteMenuBlock::class,
+        Core\SiteAccountLinksBlock::class,
+        Core\SiteFooterLinksBlock::class,
+        Core\SiteCopyrightBlock::class,
         // Block library
         Core\SavedBlockBlock::class,
     ];
 
+    /** The Theme Builder template type being edited (null: a page or library item), for the blocks offered. */
+    private ?string $templateType = null;
+
     public function __construct(private SiteBuilder $siteBuilder) {}
+
+    /**
+     * The editor in use edits a template of this type (or, null, a page or library item): the block pickers then
+     * offer the blocks made for it (PageBlock::templateTypes()). Set by the editor on every request.
+     */
+    public function editingTemplate(?string $type): static
+    {
+        $this->templateType = $type;
+
+        return $this;
+    }
+
+    public function editingTemplateType(): ?string
+    {
+        return $this->templateType;
+    }
+
+    /**
+     * The blocks the editor offers: ordinary blocks, plus those made for the template type being edited.
+     *
+     * @return array<string, class-string<PageBlock>>
+     */
+    public function offered(): array
+    {
+        return array_filter($this->all(), fn (string $block): bool => $block::templateTypes() === null
+            || ($this->templateType !== null && in_array($this->templateType, $block::templateTypes(), true)));
+    }
 
     /**
      * @return array<string, class-string<PageBlock>> name => class
@@ -94,7 +132,7 @@ class BlockRegistry
      */
     public function builderBlocks(): array
     {
-        return array_values(array_map(fn (string $block): Block => $block::make(), $this->all()));
+        return array_values(array_map(fn (string $block): Block => $block::make(), $this->offered()));
     }
 
     /**
@@ -107,7 +145,7 @@ class BlockRegistry
     {
         return array_values(array_map(
             fn (string $block): Block => $block::make(isNested: true),
-            array_filter($this->all(), fn (string $block): bool => ! in_array($block::name(), Core\SectionBlock::EXCLUDED_BLOCKS, true)),
+            array_filter($this->offered(), fn (string $block): bool => ! in_array($block::name(), Core\SectionBlock::EXCLUDED_BLOCKS, true)),
         ));
     }
 
@@ -261,13 +299,25 @@ class BlockRegistry
      * The block panel: a wide slide-over whose footer also has Save page and Preview (on the page editor, which
      * provides saveFromEditor()). They run in the browser, so they don't open another dialog. A Section's panel is
      * wider still, so its columns sit side by side with room for their blocks and settings.
+     *
+     * In the visual builder (a Section's own add and edit), it opens in the floating panel instead, stacked over the
+     * Section's: its title says where the block is, and Save or Cancel goes back to the Section.
      */
     private function slideOver(Action $action): Action
     {
         $isPageEditor = fn (mixed $livewire): bool => $livewire instanceof EditPage;
+        $isVisualBuilder = fn (mixed $livewire): bool => $livewire instanceof VisualEditor;
 
         return $action
-            ->slideOver()
+            ->slideOver(fn (mixed $livewire): bool => ! $isVisualBuilder($livewire))
+            ->extraModalWindowAttributes(function (mixed $livewire, array $arguments, Builder $component) use ($isVisualBuilder): array {
+                $type = $arguments['block'] ?? $component->getRawState()[$arguments['item'] ?? '']['type'] ?? null;
+                $blockClass = is_string($type) ? $this->find($type) : null;
+                // Its level's colour along the panel's top (SettingsPanel::LEVEL_COLOURS).
+                $level = ['data-sb-level' => $blockClass ? $blockClass::structureLevel() : 'block'];
+
+                return $isVisualBuilder($livewire) ? ['class' => 'sb-floating-panel', 'data-sb-stacked' => 'true', ...$level] : $level;
+            })
             ->modalWidth(fn (array $arguments, Builder $component): Width => ($arguments['block'] ?? $component->getRawState()[$arguments['item'] ?? '']['type'] ?? null) === Core\SectionBlock::NAME
                 ? Width::SevenExtraLarge
                 : Width::FourExtraLarge)

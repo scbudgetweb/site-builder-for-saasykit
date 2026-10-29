@@ -124,6 +124,9 @@ class Branding
     /** Admin-written CSS for the public site, checked by Support\CustomCss. */
     public const CUSTOM_CSS = 'branding.custom_css';
 
+    /** Named colours any block can use (Colour::REFERENCE_PREFIX): a list of {id, name, colour}. */
+    public const GLOBAL_COLOURS = 'branding.global_colours';
+
     /**
      * Element colour settings => the CSS variables (site-builder.css) each one sets.
      * Some settings drive two variables whose defaults differ, e.g. menu links and account links.
@@ -246,7 +249,14 @@ class Branding
     /** The host app's own extra fonts. */
     public const APP_FONTS_DIRECTORY = 'fonts/site-builder';
 
-    public function __construct(private Settings $settings) {}
+    /**
+     * The settings, from the container each time: this service lives for the whole app, but Settings is scoped (it keeps
+     * what it read for one request or queue job only).
+     */
+    private function settings(): Settings
+    {
+        return app(Settings::class);
+    }
 
     /**
      * Every setting key (including the generated banner and panel colour keys, and BrandingStyle's).
@@ -263,7 +273,7 @@ class Branding
             self::LOGO_HEADER, self::LOGO_FOOTER, self::LOGO_AUTH, self::LOGO_DASHBOARDS,
             self::FAVICON, self::APPLE_TOUCH_ICON, self::SHARE_IMAGE,
             ...array_keys(self::ELEMENT_COLOR_VARIABLES),
-            self::CUSTOM_CSS,
+            self::CUSTOM_CSS, self::GLOBAL_COLOURS,
         ];
 
         foreach (self::BANNERS as $banner) {
@@ -405,7 +415,7 @@ class Branding
 
     public function get(string $key): mixed
     {
-        return $this->settings->get($key);
+        return $this->settings()->get($key);
     }
 
     /**
@@ -413,14 +423,14 @@ class Branding
      */
     public function string(string $key): ?string
     {
-        $value = $this->settings->get($key);
+        $value = $this->settings()->get($key);
 
         return is_string($value) || is_int($value) ? (string) $value : null;
     }
 
     public function isOn(string $key): bool
     {
-        return in_array($this->settings->get($key), [true, 1, '1'], true);
+        return in_array($this->settings()->get($key), [true, 1, '1'], true);
     }
 
     /**
@@ -432,7 +442,7 @@ class Branding
     {
         $allowed = array_flip([...self::keys(), ...$this->appColourKeys(), ...$this->appSectionKeys()]);
 
-        $this->settings->set(array_filter(
+        $this->settings()->set(array_filter(
             $values,
             fn (string $key): bool => isset($allowed[$key]) || str_starts_with($key, 'branding.panel_color_'),
             ARRAY_FILTER_USE_KEY,
@@ -578,6 +588,12 @@ class Branding
             }
         }
 
+        foreach ($this->globalColours() as $id => $colour) {
+            if (! isset(Colour::BUILT_IN_GLOBALS[$id])) {
+                $variables[] = "--sb-gc-{$id}: {$colour['colour']}";
+            }
+        }
+
         foreach ($this->appColourGroups() as $group) {
             foreach ($group->colours as $key => $colour) {
                 if (Colour::isValidHex($color = $this->string(ColourGroup::settingKey($key)))) {
@@ -621,6 +637,35 @@ class Branding
         }
 
         return $variables === [] ? '' : ':root { '.implode('; ', $variables).'; }';
+    }
+
+    /**
+     * The colours a block can refer to, in order: the site and secondary colours, then the named ones. "colour" is the
+     * hex value (null for a built-in colour that isn't set, which follows the theme's standard one).
+     *
+     * @return array<string, array{name: string, colour: ?string}> id => colour
+     */
+    public function globalColours(): array
+    {
+        $colours = [];
+
+        foreach (Colour::BUILT_IN_GLOBALS as $id => [$label]) {
+            $value = $this->string($id === 'primary' ? self::SITE_COLOR : self::SITE_SECONDARY_COLOR);
+            $colours[$id] = ['name' => __($label), 'colour' => Colour::isValidHex($value) ? $value : null];
+        }
+
+        $saved = $this->get(self::GLOBAL_COLOURS);
+
+        foreach (is_array($saved) ? $saved : [] as $colour) {
+            $id = is_array($colour) ? ($colour['id'] ?? null) : null;
+
+            if (is_string($id) && preg_match(Colour::GLOBAL_ID_PATTERN, $id) === 1 && ! isset($colours[$id])
+                && Colour::isValidHexWithAlpha($colour['colour'] ?? null) && is_string($colour['name'] ?? null) && trim($colour['name']) !== '') {
+                $colours[$id] = ['name' => trim($colour['name']), 'colour' => $colour['colour']];
+            }
+        }
+
+        return $colours;
     }
 
     /**
@@ -822,7 +867,7 @@ class Branding
     public function usedUploads(): array
     {
         return array_values(array_unique(array_filter(
-            $this->settings->startingWith('branding.'),
+            $this->settings()->startingWith('branding.'),
             fn (mixed $value): bool => BrandingField::isBrandingUpload($value),
         )));
     }

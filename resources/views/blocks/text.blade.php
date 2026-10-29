@@ -5,6 +5,10 @@
     </div>
 @endif
 
+<div @class(['text-center' => $isCentered])>
+    @include('site-builder::blocks.partials.eyebrow')
+</div>
+
 <div @class(['block-text sb-prose', 'text-center' => $isCentered])>
     {!! $html !!}
 </div>

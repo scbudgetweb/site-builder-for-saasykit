@@ -7,8 +7,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
+use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
+use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
  * Serves published pages at /{slug} (from the fallback route, so a page can never hide one of the app's routes) and
@@ -49,6 +53,44 @@ class PageController extends Controller
         $page->forceFill($revision->attributesToRestore());
 
         return self::private(view('site-builder::pages.show', ['page' => $page, 'isPreview' => true, 'revision' => $revision]));
+    }
+
+    /**
+     * The visual builder's canvas, in an iframe on the editor: the page with this person's draft (or as it's saved, until
+     * they change something), each block, row and column marked with its uid. Through a temporary signed link; nothing
+     * is saved.
+     */
+    public function canvas(Page $page, int $user): Response
+    {
+        $draft = PageDraft::query()->where('page_id', $page->getKey())->where('user_id', $user)->first();
+
+        if ($draft !== null) {
+            $page->forceFill(['blocks' => $draft->blocks]);
+        }
+
+        return self::private(view('site-builder::pages.show', ['page' => $page, 'isPreview' => true, 'isCanvas' => true]));
+    }
+
+    /**
+     * A block library item's canvas: its block on its own, in the theme, with this person's draft if they have one.
+     */
+    public function libraryCanvas(SavedBlock $savedBlock, int $user): Response
+    {
+        $draft = PageDraft::query()->where('saved_block_id', $savedBlock->getKey())->where('user_id', $user)->first();
+
+        return self::private(view('site-builder::pages.show', ['page' => $savedBlock->previewPage($draft?->blocks), 'isPreview' => true, 'isCanvas' => true]));
+    }
+
+    /**
+     * A Theme Builder template's canvas: its blocks as the page's content, with the site's header and footer hidden, so
+     * a header template is edited on its own.
+     */
+    public function templateCanvas(Template $template, int $user): Response
+    {
+        $draft = PageDraft::query()->where('template_id', $template->getKey())->where('user_id', $user)->first();
+        request()->attributes->set(Templates::HIDE_CHROME_ATTRIBUTE, true);
+
+        return self::private(view('site-builder::pages.show', ['page' => $template->previewPage($draft?->blocks), 'isPreview' => true, 'isCanvas' => true]));
     }
 
     /**

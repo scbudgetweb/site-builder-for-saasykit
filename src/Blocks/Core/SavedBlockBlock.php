@@ -48,11 +48,6 @@ class SavedBlockBlock extends PageBlock
         return false;
     }
 
-    public static function headingSettings(): array
-    {
-        return [];
-    }
-
     /**
      * A link that wasn't swapped (its item is gone, or it was saved somewhere links can't go) shows nothing.
      */

@@ -1,0 +1,79 @@
+/*
+ * Design › Transform and Advanced › Transitions, Position and Visibility (overflow) (Design\Position). Each rule only
+ * applies when its class is on the block's section. Moves and offsets can differ by screen size, desktop first: each
+ * screen's value feeds one "current" variable (--sb-tx-now…), so moving across and down combine.
+ */
+.sb-d-tx { --sb-tx-now: var(--sb-tx); }
+.sb-d-ty { --sb-ty-now: var(--sb-ty); }
+.sb-d-ox { --sb-ox-now: var(--sb-ox); }
+.sb-d-oy { --sb-oy-now: var(--sb-oy); }
+
+@media (max-width: 63.99rem) {
+    .sb-d-tx-t { --sb-tx-now: var(--sb-tx-t); }
+    .sb-d-ty-t { --sb-ty-now: var(--sb-ty-t); }
+    .sb-d-ox-t { --sb-ox-now: var(--sb-ox-t); }
+    .sb-d-oy-t { --sb-oy-now: var(--sb-oy-t); }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-d-tx-p { --sb-tx-now: var(--sb-tx-p); }
+    .sb-d-ty-p { --sb-ty-now: var(--sb-ty-p); }
+    .sb-d-ox-p { --sb-ox-now: var(--sb-ox-p); }
+    .sb-d-oy-p { --sb-oy-now: var(--sb-oy-p); }
+}
+
+/* Transform: CSS's own scale, rotate and translate, so an entrance animation (on transform) still works. */
+.sb-d-scale { scale: var(--sb-scale); }
+.sb-d-rotate { rotate: var(--sb-rotate); }
+.sb-d-skew { transform: var(--sb-skew); }
+:is(.sb-d-tx, .sb-d-ty, .sb-d-tx-t, .sb-d-ty-t, .sb-d-tx-p, .sb-d-ty-p, .sb-d-tx-h, .sb-d-ty-h) { translate: var(--sb-tx-now, 0) var(--sb-ty-now, 0); }
+
+.sb-d-origin-top-left { transform-origin: top left; }
+.sb-d-origin-top { transform-origin: top center; }
+.sb-d-origin-top-right { transform-origin: top right; }
+.sb-d-origin-left { transform-origin: center left; }
+.sb-d-origin-center { transform-origin: center; }
+.sb-d-origin-right { transform-origin: center right; }
+.sb-d-origin-bottom-left { transform-origin: bottom left; }
+.sb-d-origin-bottom { transform-origin: bottom center; }
+.sb-d-origin-bottom-right { transform-origin: bottom right; }
+
+/* Transitions: how hover changes (colours, borders, shadows, transform, filters) play. */
+.sb-d-transition {
+    transition-property: color, background-color, border-color, box-shadow, scale, rotate, translate, transform, filter, opacity;
+    transition-duration: var(--sb-transition-duration, 300ms);
+    transition-delay: var(--sb-transition-delay, 0ms);
+    transition-timing-function: var(--sb-transition-curve, ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-d-transition { transition: none; }
+}
+
+/* Overflow. */
+.sb-d-ovx-visible { overflow-x: visible; }
+.sb-d-ovx-hidden { overflow-x: hidden; }
+.sb-d-ovx-auto { overflow-x: auto; }
+.sb-d-ovx-scroll { overflow-x: scroll; }
+.sb-d-ovy-visible { overflow-y: visible; }
+.sb-d-ovy-hidden { overflow-y: hidden; }
+.sb-d-ovy-auto { overflow-y: auto; }
+.sb-d-ovy-scroll { overflow-y: scroll; }
+
+/* Position: relative nudges by the offsets; absolute places it in the section (or column) around it. */
+.sb-d-pos-relative { position: relative; left: var(--sb-ox-now, 0); top: var(--sb-oy-now, 0); }
+.sb-d-pos-absolute { position: absolute; width: max-content; max-width: 100%; }
+.sb-d-at-top-left { top: var(--sb-oy-now, 0); left: var(--sb-ox-now, 0); }
+.sb-d-at-top-right { top: var(--sb-oy-now, 0); right: var(--sb-ox-now, 0); }
+.sb-d-at-bottom-left { bottom: var(--sb-oy-now, 0); left: var(--sb-ox-now, 0); }
+.sb-d-at-bottom-right { bottom: var(--sb-oy-now, 0); right: var(--sb-ox-now, 0); }
+.sb-d-at-top { top: var(--sb-oy-now, 0); left: var(--sb-ox-now, 0); right: calc(var(--sb-ox-now, 0px) * -1); margin-inline: auto; }
+.sb-d-at-bottom { bottom: var(--sb-oy-now, 0); left: var(--sb-ox-now, 0); right: calc(var(--sb-ox-now, 0px) * -1); margin-inline: auto; }
+.sb-d-at-left { left: var(--sb-ox-now, 0); top: var(--sb-oy-now, 0); bottom: calc(var(--sb-oy-now, 0px) * -1); margin-block: auto; height: fit-content; }
+.sb-d-at-right { right: var(--sb-ox-now, 0); top: var(--sb-oy-now, 0); bottom: calc(var(--sb-oy-now, 0px) * -1); margin-block: auto; height: fit-content; }
+.sb-d-at-center { inset: var(--sb-oy-now, 0) calc(var(--sb-ox-now, 0px) * -1) calc(var(--sb-oy-now, 0px) * -1) var(--sb-ox-now, 0); margin: auto; height: fit-content; }
+
+.sb-d-z { z-index: var(--sb-z); }
+
+/* A column holds an absolutely placed block in itself. */
+[data-column] { position: relative; }

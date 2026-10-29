@@ -2,9 +2,10 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
+use Closure;
 use Filament\Actions\Action;
+use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\Builder\Block;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Field;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Hidden;
@@ -15,22 +16,33 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Text;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\View;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
+use ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\ButtonsRepeater;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\HeadingInput;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteRichEditor;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
 use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
+use Throwable;
 
 /**
  * One page block: its admin form (a Filament Builder block) and its public view. Core blocks' views live in the
@@ -39,7 +51,7 @@ use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
  */
 abstract class PageBlock
 {
-    public const IMAGE_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+    public const IMAGE_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 
     /** Block images may also be SVGs, checked on upload (SafeSvg), except where only a picture file works (a share image). */
     public const SVG_FILE_TYPE = 'image/svg+xml';
@@ -73,6 +85,36 @@ abstract class PageBlock
     ];
 
     /**
+     * Images uploaded in an open panel but not saved yet (key => their temporary preview URL), shown by imageUrl() while
+     * the visual builder renders a live preview (previewingImages()).
+     *
+     * @var array<string, string>
+     */
+    private static array $previewImages = [];
+
+    /**
+     * Renders with images that are uploaded but not yet saved: imageUrl() gives each key its preview URL, for this
+     * render only.
+     *
+     * @template T
+     *
+     * @param  array<string, string>  $urls  key => preview URL
+     * @param  Closure(): T  $render
+     * @return T
+     */
+    public static function previewingImages(array $urls, Closure $render): mixed
+    {
+        $before = self::$previewImages;
+        self::$previewImages = $urls + $before;
+
+        try {
+            return $render();
+        } finally {
+            self::$previewImages = $before;
+        }
+    }
+
+    /**
      * The stored block type, e.g. "image_text". Never rename one once pages use it.
      */
     abstract public static function name(): string;
@@ -99,22 +141,76 @@ abstract class PageBlock
 
     /**
      * The heading settings that affect this block: "align" and "decoration" need the shared heading
-     * (.section-heading), "size" any block heading (.section-heading or .block-heading). Blocks without a
-     * heading return [], so the editor doesn't offer settings that do nothing.
+     * (.section-heading), "size" any block heading (.section-heading or .block-heading), so the editor doesn't offer
+     * settings that do nothing.
+     *
+     * Found from the block's fields (uses()): all three with the shared heading (headingFields()), none without. A block
+     * that draws a heading of its own overrides this, e.g. ['size'] for a .block-heading.
      *
      * @return array<int, string>
      */
     public static function headingSettings(): array
     {
-        return ['align', 'decoration', 'size'];
+        return static::uses(HeadingInput::class) ? ['align', 'decoration', 'size'] : [];
     }
 
     /**
-     * Whether the block has body text (marked .block-text) for Style › Text size.
+     * Whether the block has body text (marked .block-text) for Style › Text size. Found from its fields: the shared
+     * heading's intro or rich text (richText()). A block that draws body text of its own overrides this.
      */
     public static function hasBodyText(): bool
     {
-        return true;
+        return static::uses(HeadingInput::class) || static::uses(SiteRichEditor::class);
+    }
+
+    /**
+     * Whether the block's settings hold a field of this class anywhere (in its own toggles, groups and lists, but not in
+     * blocks nested in a Builder): how a block's panel finds what it needs without the block declaring it
+     * (ButtonsRepeater, HeadingInput, SiteRichEditor). Worked out once per type.
+     *
+     * @param  class-string<Component>  $fieldClass
+     */
+    public static function uses(string $fieldClass): bool
+    {
+        static $cache = [];
+
+        $classes = $cache[static::class] ??= (function (): array {
+            $classes = [];
+            $walk = function (array $components) use (&$walk, &$classes): void {
+                foreach ($components as $component) {
+                    if (! $component instanceof Component) {
+                        continue;
+                    }
+
+                    $classes[$component::class] = true;
+
+                    // A Section's Builder holds other blocks: theirs are their own.
+                    if ($component instanceof Builder) {
+                        continue;
+                    }
+
+                    $children = $component->getDefaultChildComponents();
+                    $walk(is_array($children) ? $children : []);
+                }
+            };
+
+            // Its content, and its own toggles (Layout, Style and Advanced settings among them).
+            $walk(static::fields());
+
+            foreach (static::blockToggles() as $toggle) {
+                $walk($toggle?->fields ?? []);
+            }
+
+            return array_keys($classes);
+        })();
+
+        foreach ($classes as $class) {
+            if (is_a($class, $fieldClass, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public static function contentTabLabel(): string
@@ -180,52 +276,218 @@ abstract class PageBlock
      */
     public static function make(bool $isNested = false): Block
     {
-        $hasAppearance = static::hasAppearance();
-        $advanced = [
-            ...static::advancedFields(),
-            ...($hasAppearance ? [BlockAppearance::advancedGroup()] : []),
-        ];
-        $icons = [
-            static::contentTabLabel() => Heroicon::OutlinedPencilSquare,
-            __('Layout') => Heroicon::OutlinedViewColumns,
-            __('Style') => Heroicon::OutlinedSwatch,
-            __('Advanced') => Heroicon::OutlinedCog6Tooth,
-        ];
-
-        $tabs = array_filter([
-            static::contentTabLabel() => static::fields(),
-            __('Layout') => [
-                ...static::layoutFields(),
-                ...($hasAppearance ? [BlockAppearance::layoutGroup($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : 'medium', static::headingSettings())] : []),
-            ],
-            __('Style') => [
-                ...static::styleFields(),
-                ...($hasAppearance ? [BlockAppearance::styleGroup(static::defaultBackground(), static::headingSettings(), static::hasBodyText())] : []),
-            ],
-            __('Advanced') => $advanced === [] ? [] : [
-                Text::make(__('Most blocks don\'t need these. They\'re for linking straight to this block, and for custom styling.')),
-                ...$advanced,
-            ],
-        ]);
-
         return Block::make(static::name())
             ->label(fn (?array $state): string => $state === null ? static::label() : static::itemLabel($state))
             ->icon(static::icon())
-            ->schema([
-                // Not saved: only gives the admin preview card the block's name.
-                Hidden::make('preview_label')
-                    ->afterStateHydrated(fn (Hidden $component) => $component->state(static::label()))
-                    ->dehydrated(false),
-                ...(count($tabs) === 1 ? reset($tabs) : [
-                    Tabs::make()
-                        ->tabs(array_map(
-                            fn (string $label, array $fields): Tab => Tab::make($label)->icon($icons[$label] ?? null)->schema($fields),
-                            array_keys($tabs),
-                            $tabs,
-                        )),
-                ]),
-            ])
+            // Its level's colour along the top of its card (SettingsPanel::LEVEL_COLOURS).
+            ->extraAttributes(['data-sb-level' => static::structureLevel()])
+            // Built only when a block of this type is shown or edited: a page's Builder, and each Section column's,
+            // offers every block type, and building every form up front costs a lot of memory on each request.
+            ->schema(fn (): array => static::editorSchema($isNested))
             ->preview('site-builder::filament.blocks.block-preview');
+    }
+
+    /**
+     * The block's editor (SettingsPanel): the Content, Design and Advanced tabs, each a list of
+     * toggles. In a Section ($isNested), Appearance defaults to no extra spacing and the full width of its column.
+     *
+     * @return array<Component|Field>
+     */
+    protected static function editorSchema(bool $isNested): array
+    {
+        $toggles = array_values(array_filter(static::toggles($isNested), fn (?PanelToggle $toggle): bool => $toggle !== null && $toggle->fields !== []));
+        $isContentOnly = count($toggles) === 1 && $toggles[0]->key === 'main';
+
+        return [
+            // Not saved: only gives the admin preview card the block's name.
+            Hidden::make('preview_label')
+                ->afterStateHydrated(fn (Hidden $component) => $component->state(static::label()))
+                ->dehydrated(false),
+            ...($isContentOnly ? $toggles[0]->fields : [
+                View::make('site-builder::filament.blocks.panel-tools'),
+                ...(static::hasAppearance() ? static::presetFields($isNested) : []),
+                ...SettingsPanel::schema($toggles, [PanelToggle::CONTENT => static::contentTabLabel()]),
+            ]),
+        ];
+    }
+
+    /**
+     * Presets, at the top of the panel (BlockPresets): pick one of the saved styles for this kind of block, or
+     * (with the presets permission) save this block's style as a new one, update one from it, make one the default or
+     * delete one. Saving or updating moves the block's style into the preset, so the block then follows it.
+     *
+     * @return array<int, Component>
+     */
+    protected static function presetFields(bool $isNested): array
+    {
+        $presets = app(BlockPresets::class);
+        $type = static::name();
+        $paths = fn (): array => StyleClipboard::paths('all', static::class);
+        $tops = fn (): array => array_values(array_unique(array_filter(array_map(fn (string $path): string => Str::before($path, '.'), $paths()), fn (string $top): bool => ! str_contains($top, '*'))));
+        // The block's style settings as they are in the panel now.
+        $style = function (Get $get) use ($paths, $tops): array {
+            $data = [];
+
+            foreach ($tops() as $top) {
+                $data[$top] = $get($top);
+            }
+
+            return StyleClipboard::extract(array_filter($data, fn (mixed $value): bool => $value !== null), $paths());
+        };
+        // Clears the block's style settings, so it follows its preset.
+        $clearStyle = function (Get $get, Set $set) use ($paths, $tops): void {
+            $data = [];
+
+            foreach ($tops() as $top) {
+                $data[$top] = $get($top);
+            }
+
+            $cleared = StyleClipboard::apply(array_filter($data, fn (mixed $value): bool => $value !== null), [], $paths());
+
+            foreach ($tops() as $top) {
+                $set($top, $cleared[$top] ?? null);
+            }
+        };
+        $chosen = fn (Get $get): ?string => match (true) {
+            $get('preset') === BlockPresets::NONE => null,
+            is_string($get('preset')) && isset($presets->names($type)[$get('preset')]) => $get('preset'),
+            default => $presets->defaultId($type),
+        };
+
+        return [
+            Grid::make(['default' => 1, 'sm' => 2])
+                ->visible(fn (): bool => BlockPresets::canManage() || $presets->names($type) !== [])
+                ->schema([
+                    Select::make('preset')
+                        ->label(__('Preset'))
+                        ->hintIcon(self::HELP_ICON, __('A saved style for this kind of block. The preset fills in every style setting this block leaves as it is, so changing the preset changes every block using it.'))
+                        ->options(fn (): array => [
+                            BlockPresets::NONE => __('No preset'),
+                            ...$presets->names($type),
+                        ])
+                        ->placeholder(fn (): string => ($default = $presets->defaultId($type)) !== null
+                            ? __('Default preset (:name)', ['name' => $presets->names($type)[$default]])
+                            : __('Default preset (none yet)'))
+                        ->live(),
+                    Actions::make([
+                        Action::make('savePreset')
+                            ->label(__('Save as preset'))
+                            ->icon(Heroicon::OutlinedBookmark)
+                            ->link()
+                            ->size('sm')
+                            ->visible(fn (): bool => BlockPresets::canManage())
+                            ->modalHeading(__('Save this block\'s style as a preset'))
+                            ->modalDescription(__('Its style settings move into the preset, and the block uses it. Content isn\'t saved.'))
+                            ->modalWidth('md')
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label(__('Name'))
+                                    ->required()
+                                    ->maxLength(60),
+                                Toggle::make('is_default')
+                                    ->label(__('Make it the default'))
+                                    ->helperText(__('Used by every block of this kind that hasn\'t picked another preset.')),
+                            ])
+                            ->action(function (array $data, Get $get, Set $set) use ($presets, $type, $style, $clearStyle): void {
+                                $id = $presets->create($type, (string) $data['name'], $style($get), (bool) ($data['is_default'] ?? false));
+                                $clearStyle($get, $set);
+                                $set('preset', ($data['is_default'] ?? false) ? null : $id);
+                            }),
+                        Action::make('updatePreset')
+                            ->label(__('Update preset'))
+                            ->tooltip(__('Save this block\'s style changes into its preset, for every block using it'))
+                            ->icon(Heroicon::OutlinedArrowUpTray)
+                            ->link()
+                            ->size('sm')
+                            ->visible(fn (Get $get): bool => BlockPresets::canManage() && $chosen($get) !== null)
+                            ->action(function (Get $get, Set $set) use ($presets, $type, $style, $clearStyle, $chosen, $isNested): void {
+                                $id = (string) $chosen($get);
+                                $presets->update($type, $id, BlockPresets::fillBlanks($style($get), $presets->valuesFor($type, ['preset' => $id]), static::fieldDefaults($isNested)));
+                                $clearStyle($get, $set);
+                            }),
+                        Action::make('makeDefaultPreset')
+                            ->label(__('Make default'))
+                            ->icon(Heroicon::OutlinedStar)
+                            ->link()
+                            ->size('sm')
+                            ->visible(fn (Get $get): bool => BlockPresets::canManage() && is_string($get('preset')) && isset($presets->names($type)[$get('preset')]) && $presets->defaultId($type) !== $get('preset'))
+                            ->action(function (Get $get, Set $set) use ($presets, $type): void {
+                                $presets->makeDefault($type, (string) $get('preset'));
+                                $set('preset', null);
+                            }),
+                        Action::make('deletePreset')
+                            ->label(__('Delete preset'))
+                            ->icon(Heroicon::OutlinedTrash)
+                            ->color('danger')
+                            ->link()
+                            ->size('sm')
+                            ->visible(fn (Get $get): bool => BlockPresets::canManage() && $chosen($get) !== null)
+                            ->requiresConfirmation()
+                            ->modalHeading(__('Delete this preset?'))
+                            ->modalDescription(__('Every block using it loses its style and goes back to the default preset (or none). This can\'t be undone.'))
+                            ->action(function (Get $get, Set $set) use ($presets, $type, $chosen): void {
+                                $presets->delete($type, (string) $chosen($get));
+                                $set('preset', null);
+                            }),
+                    ])->verticallyAlignEnd(),
+                ]),
+        ];
+    }
+
+    /**
+     * Every toggle in the block's panel: its content (open), its own settings (blockToggles()), its buttons' look, and
+     * the shared settings (Appearance, the design options and an admin label).
+     *
+     * @return array<int, PanelToggle|null>
+     */
+    protected static function toggles(bool $isNested = false): array
+    {
+        return [
+            PanelToggle::content('main', static::label(), static::fields(), isOpen: true),
+            ...static::blockToggles(),
+            static::hasButtons() ? PanelToggle::design('button', __('Buttons'), [static::buttonDesignFields()], 70) : null,
+            ...(static::hasAppearance() ? [
+                ...BlockAppearance::toggles($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : 'medium', static::defaultBackground(), static::headingSettings(), static::hasBodyText()),
+                ...BlockDesign::toggles(static::designWithout()),
+            ] : []),
+            PanelToggle::content('admin_label', __('Admin label'), [static::adminLabelField()], 99),
+            BlockConditions::toggle(),
+        ];
+    }
+
+    /**
+     * The block's own settings beyond its content: Layout (layoutFields()) first on the Design tab, then its look
+     * (styleFields(), titled styleToggleTitle()), and advancedFields() under CSS ID & classes. A block can return its
+     * own toggles instead, to name or split them.
+     *
+     * @return array<int, PanelToggle|null>
+     */
+    protected static function blockToggles(): array
+    {
+        return [
+            PanelToggle::design('layout', __('Layout'), static::layoutFields()),
+            PanelToggle::design('style', static::styleToggleTitle(), static::styleFields()),
+            PanelToggle::advanced('classes', __('CSS ID & classes'), static::advancedFields()),
+        ];
+    }
+
+    /**
+     * The title of the Design toggle holding styleFields(), e.g. "Image" or "Cards".
+     */
+    protected static function styleToggleTitle(): string
+    {
+        return __('Style');
+    }
+
+    /**
+     * The block's own name in the builder (canvas label, layers, form cards). Visitors never see it.
+     */
+    protected static function adminLabelField(): TextInput
+    {
+        return TextInput::make('admin_label')
+            ->label(__('Admin label'))
+            ->hintIcon(self::HELP_ICON, __('Your own name for this block, shown in the builder so it\'s easy to find. Visitors never see it.'))
+            ->maxLength(60);
     }
 
     /**
@@ -282,20 +544,54 @@ abstract class PageBlock
      */
     protected static function itemLabel(array $state): string
     {
+        $adminLabel = $state['admin_label'] ?? null;
+
+        if (is_string($adminLabel) && filled($adminLabel)) {
+            return static::label().': '.Str::limit($adminLabel, 60);
+        }
+
         $heading = $state['heading'] ?? null;
 
         return is_string($heading) && filled($heading) ? static::label().': '.Str::limit($heading, 60) : static::label();
     }
 
+    /** How a small heading (eyebrow) looks: small capitals, or a pill (a badge). */
+    public const EYEBROW_STYLES = [
+        'text' => 'Small capitals',
+        'pill' => 'Pill',
+    ];
+
+    /**
+     * A small heading above the block's heading, e.g. "A solid SaaS" or "Most popular", and how it looks.
+     */
+    public static function eyebrowFields(): Grid
+    {
+        return Grid::make(['default' => 1, 'sm' => 3])->schema([
+            TextInput::make('eyebrow')
+                ->label(__('Small heading (optional)'))
+                ->hintIcon(self::HELP_ICON, __('A short label above the heading, e.g. "New" or "Most popular".'))
+                ->maxLength(60)
+                ->live(onBlur: true)
+                ->columnSpan(['sm' => 2]),
+            Select::make('eyebrow_style')
+                ->label(__('Looks like'))
+                ->options(array_map(fn (string $label): string => __($label), self::EYEBROW_STYLES))
+                ->default('text')
+                ->selectablePlaceholder(false)
+                ->visible(fn (Get $get): bool => filled($get('eyebrow'))),
+        ]);
+    }
+
     /**
      * Optional heading and intro shown above the block's content.
      *
-     * @return array<Field>
+     * @return array<Component|Field>
      */
     protected static function headingFields(bool $isRequired = false): array
     {
         return [
-            TextInput::make('heading')
+            static::eyebrowFields(),
+            HeadingInput::make('heading')
                 ->label(__('Heading'))
                 ->maxLength(150)
                 ->required($isRequired)
@@ -309,18 +605,22 @@ abstract class PageBlock
 
     protected static function richText(string $name, string $label): RichEditor
     {
-        return RichEditor::make($name)
+        return SiteRichEditor::make($name)
             ->label($label)
+            // Dynamic content, as Filament's merge tags: type {{ or use the toolbar's tags button.
+            ->mergeTags(DynamicContent::labels())
             ->toolbarButtons([
-                ['bold', 'italic', 'underline', 'link'],
+                ['bold', 'italic', 'underline', 'link', 'code'],
                 ['h2', 'h3', 'h4', 'paragraph'],
-                ['bulletList', 'orderedList', 'blockquote', 'horizontalRule', 'table'],
+                ['alignStart', 'alignCenter', 'alignEnd'],
+                ['bulletList', 'orderedList', 'blockquote', 'codeBlock', 'horizontalRule', 'table'],
+                ['mergeTags'],
                 ['clearFormatting', 'undo', 'redo'],
             ]);
     }
 
     /**
-     * A block image: JPG, PNG or WebP, and (with $allowsSvg) an SVG, which stays sharp at any size. An SVG is served
+     * A block image: JPG, PNG, WebP or AVIF, and (with $allowsSvg) an SVG, which stays sharp at any size. An SVG is served
      * from the site's own address, so it's only accepted when it's a plain drawing, with no scripts or links (SafeSvg).
      */
     public static function imageUpload(string $name, string $label, bool $allowsSvg = true): FileUpload
@@ -358,7 +658,7 @@ abstract class PageBlock
             ->getOptionLabelUsing(fn (?string $value): ?string => IconLibrary::optionHtml($value))
             ->placeholder(__('No icon'))
             ->helperText(__('Type to search over 1,600 icons, e.g. "calendar", "map" or "trophy". Add "filled" or "logo" for those styles.'))
-            ->rule(fn (): \Closure => function (string $attribute, mixed $value, \Closure $fail): void {
+            ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
                 if (($value !== null && ! is_string($value)) || ! IconLibrary::isValid($value)) {
                     $fail(__('Choose an icon from the list.'));
                 }
@@ -381,16 +681,13 @@ abstract class PageBlock
     /**
      * The Style tab's "Image" settings: corners, with border and shadow under More options.
      */
-    protected static function imageStyleFieldset(?string $automaticShadowLabel = null): Fieldset
+    protected static function imageStyleFieldset(?string $automaticShadowLabel = null): Grid
     {
-        return Fieldset::make(__('Image'))
-            ->columns(2)
+        return Grid::make(['default' => 1, 'sm' => 2])
             ->schema([
                 static::imageCornersSelect()->columnSpanFull(),
-                BlockAppearance::moreOptions(__('A border or shadow around the image.'), [
-                    ...BorderShadow::borderFields('image_', withSides: false),
-                    ...BorderShadow::shadowFields('image_', $automaticShadowLabel),
-                ])->columnSpanFull(),
+                ...BorderShadow::borderFields('image_', withSides: false),
+                ...BorderShadow::shadowFields('image_', $automaticShadowLabel),
             ]);
     }
 
@@ -421,12 +718,13 @@ abstract class PageBlock
     }
 
     /**
-     * Up to $max buttons: text, link, style and width, with a shadow, an icon and whether it opens in a new tab under
-     * More options.
+     * Up to $max buttons: each one's text, link, icon and whether it opens in a new tab. Their look (style, width,
+     * colours, border, shadow) is set for the whole block in Design › Buttons (buttonDesignFields()); a button that should
+     * look different turns on "This button looks different" and gets its own (hasOwnLook()).
      */
     protected static function buttonsRepeater(int $max = 2, string $name = 'buttons'): Repeater
     {
-        return static::itemTooltips(Repeater::make($name), __('button'))
+        return static::itemTooltips(ButtonsRepeater::make($name), __('button'))
             ->label(__('Buttons'))
             ->schema([
                 Grid::make(2)->schema([
@@ -439,59 +737,28 @@ abstract class PageBlock
                         ->validationMessages(['regex' => __('Start the link with https://, / (a page on this site), # (a section on this page), mailto: or tel:.')])
                         ->placeholder('/about-us')
                         ->hintIcon(self::HELP_ICON, __('Where the button goes: a page on this site (/about-us), a part of this page (#pricing), a full web address (https://…), an email (mailto:…) or a phone number (tel:…).')),
-                    Select::make('style')
-                        ->label(__('Style'))
-                        ->hintIcon(self::HELP_ICON, __('Automatic picks the button style that stands out best on the background. Custom colours are for this button only.'))
-                        ->options(fn (): array => ['auto' => __('Automatic (suits the background)')] + app(BrandingStyle::class)->buttonNames() + [self::CUSTOM_BUTTON_STYLE => __('Custom colours')])
-                        ->helperText(__('Button styles are set in Branding.'))
-                        ->default('auto')
-                        ->selectablePlaceholder(false)
-                        ->live(),
-                    Select::make('width')
-                        ->label(__('Width'))
-                        ->options(array_map(fn (array $width): string => __($width[0]), self::BUTTON_WIDTHS))
-                        ->helperText(__('Give buttons side by side the same width to line them up.'))
-                        ->default('auto')
-                        ->selectablePlaceholder(false),
-                    Grid::make(2)
-                        ->visible(fn (Get $get): bool => $get('style') === self::CUSTOM_BUTTON_STYLE)
+                    static::iconSelect('icon', __('Icon (optional)'))
+                        ->helperText(null),
+                    Toggle::make('new_tab')
+                        ->label(__('Open in a new tab'))
+                        ->hintIcon(self::HELP_ICON, __('Best for links to other websites. Links to this site usually open in the same tab.'))
+                        ->inline(false),
+                    Toggle::make('own_style')
+                        ->label(__('This button looks different'))
+                        ->hintIcon(self::HELP_ICON, __('Buttons take the look set in Style › Buttons. Turn this on to give this one its own, e.g. a plainer second button.'))
+                        // Buttons saved before the block-wide look kept their own; they still do. (Turned off, a button's
+                        // look fields are hidden and not saved, so a button with a look of its own was saved before.)
+                        ->afterStateHydrated(fn (Toggle $component, mixed $state, Get $get) => ! $state && $component->state(self::hasOwnLook([
+                            'style' => $get('style'), 'width' => $get('width'), 'shadow' => $get('shadow'),
+                        ])))
+                        ->live()
+                        ->columnSpanFull(),
+                    Section::make(__('This button\'s look'))
+                        ->compact()
+                        ->columns(2)
                         ->columnSpanFull()
-                        ->schema([
-                            self::buttonColorField('bg_color', __('Background colour'))->required(),
-                            self::buttonColorField('text_color', __('Text colour'))->required(),
-                            self::buttonColorField('hover_bg_color', __('Hover background colour'))->helperText(__('Blank: a little darker.')),
-                            self::buttonColorField('hover_text_color', __('Hover text colour'))->helperText(__('Blank: the same text colour.')),
-                            self::buttonColorField('border_color', __('Border colour (optional)'))->live(onBlur: true),
-                            Select::make('border_style')
-                                ->label(__('Border line'))
-                                ->options(array_map(fn (string $label): string => __($label), CardStyle::BORDER_STYLES))
-                                ->default('solid')
-                                ->selectablePlaceholder(false)
-                                ->visible(fn (Get $get): bool => filled($get('border_color'))),
-                            TextInput::make('border_width')
-                                ->label(__('Border width'))
-                                ->numeric()
-                                ->integer()
-                                ->minValue(1)
-                                ->maxValue(8)
-                                ->suffix('px')
-                                ->default(2)
-                                ->visible(fn (Get $get): bool => filled($get('border_color'))),
-                        ]),
-                    BlockAppearance::moreOptions(__('An icon, a shadow, and opening in a new tab.'), [
-                        static::iconSelect('icon', __('Icon (optional)'))
-                            ->helperText(null)
-                            ->columnSpanFull(),
-                        Select::make('shadow')
-                            ->label(__('Shadow'))
-                            ->options(BorderShadow::shadowOptions(withCustom: false))
-                            ->default('none')
-                            ->selectablePlaceholder(false),
-                        Toggle::make('new_tab')
-                            ->label(__('Open in a new tab'))
-                            ->hintIcon(self::HELP_ICON, __('Best for links to other websites. Links to this site usually open in the same tab.'))
-                            ->inline(false),
-                    ])->columnSpanFull(),
+                        ->visible(fn (Get $get): bool => (bool) $get('own_style'))
+                        ->schema(self::buttonLookFields()),
                 ]),
             ])
             ->maxItems($max)
@@ -502,11 +769,234 @@ abstract class PageBlock
     }
 
     /**
+     * The saved keys of the block's own Style and Layout settings (e.g. its cards' look), for copying "All styles" to a
+     * block of the same type (StyleClipboard). Fields' names, or the state path of a group that has one.
+     *
+     * @return array<int, string>
+     */
+    public static function ownStyleKeys(): array
+    {
+        $keys = [];
+        $walk = function (array $components) use (&$walk, &$keys): void {
+            foreach ($components as $component) {
+                if ($component instanceof Field) {
+                    $keys[] = $component->getName();
+                } elseif ($component instanceof Component && filled($statePath = $component->getStatePath(isAbsolute: false))) {
+                    $keys[] = $statePath;
+                } elseif ($component instanceof Component) {
+                    $children = $component->getDefaultChildComponents();
+                    $walk(is_array($children) ? $children : []);
+                }
+            }
+        };
+
+        $walk([...static::styleFields(), ...static::layoutFields()]);
+
+        return array_values(array_unique(array_filter($keys)));
+    }
+
+    /**
+     * Each setting's default in the block's editor, by saved dot key (e.g. "appearance.spacing" => "medium"), so a
+     * preset can tell a setting the admin chose from one that was only saved with its default (BlockPresets). Settings
+     * inside lists (repeaters) aren't included. Worked out once per type.
+     *
+     * @return array<string, mixed>
+     */
+    public static function fieldDefaults(bool $isNested = false): array
+    {
+        static $cache = [];
+
+        return $cache[static::class][(int) $isNested] ??= (function () use ($isNested): array {
+            $defaults = [];
+            $walk = function (array $components, string $prefix) use (&$walk, &$defaults): void {
+                foreach ($components as $component) {
+                    if ($component instanceof Field) {
+                        try {
+                            $defaults[$prefix.$component->getName()] = $component->getDefaultState();
+                        } catch (Throwable) {
+                            // A default worked out from the form's other values: there's no fixed one.
+                        }
+                    } elseif ($component instanceof Component) {
+                        $statePath = $component->getStatePath(isAbsolute: false);
+                        $children = $component->getDefaultChildComponents();
+                        $walk(is_array($children) ? $children : [], filled($statePath) ? $prefix.$statePath.'.' : $prefix);
+                    }
+                }
+            };
+
+            $walk(static::editorSchema($isNested), '');
+
+            return $defaults;
+        })();
+    }
+
+    /**
+     * The Theme Builder template types the block is made for (e.g. ["header", "footer"] for a menu), or null for an
+     * ordinary block, offered on pages and in every template. A block made for templates is never offered on a page.
+     *
+     * @return array<int, string>|null
+     */
+    public static function templateTypes(): ?array
+    {
+        return null;
+    }
+
+    /**
+     * Whether the block has buttons, so its panel offers Design › Buttons. Found from its fields: a buttonsRepeater()
+     * (ButtonsRepeater) anywhere. A block that draws buttons of its own overrides this.
+     */
+    public static function hasButtons(): bool
+    {
+        return static::uses(ButtonsRepeater::class);
+    }
+
+    /**
+     * The block's level in the page's structure, for its colour in the editors (SettingsPanel::LEVEL_COLOURS): a
+     * block, or a Section.
+     */
+    public static function structureLevel(): string
+    {
+        return 'block';
+    }
+
+    /**
+     * The design options this block's panel leaves out (BlockDesign::toggles()): a group's key, or "group.setting".
+     * Saved values for them don't apply either.
+     *
+     * @return array<int, string>
+     */
+    public static function designWithout(): array
+    {
+        return [];
+    }
+
+    /**
+     * The block's Appearance values as they're drawn. A block that takes settings off its panel can leave their saved
+     * values out here, so they can't apply out of sight (a Section's text settings).
+     *
+     * @return array<string, mixed>
+     */
+    public static function shownAppearance(mixed $appearance): array
+    {
+        return is_array($appearance) ? $appearance : [];
+    }
+
+    /**
+     * Style › Buttons: the look of all the block's buttons (data.button_design), unless a button has its own.
+     */
+    protected static function buttonDesignFields(): Group
+    {
+        return Group::make()
+            ->statePath('button_design')
+            ->columns(2)
+            ->schema([
+                Text::make(__('Every button in the block, except one with "This button looks different" (in its content) set to a look of its own.'))
+                    ->columnSpanFull(),
+                ...self::buttonLookFields(),
+            ]);
+    }
+
+    /**
+     * A button's look: style, width, custom colours and border, and shadow. Used for the whole block and for a button
+     * with its own look; saved under the same keys either way.
+     *
+     * @return array<Component|Field>
+     */
+    private static function buttonLookFields(): array
+    {
+        return [
+            Select::make('style')
+                ->label(__('Style'))
+                ->hintIcon(self::HELP_ICON, __('Automatic picks the button style that stands out best on the background. Button styles are set in Branding.'))
+                ->options(fn (): array => ['auto' => __('Automatic (suits the background)')] + app(BrandingStyle::class)->buttonNames() + [self::CUSTOM_BUTTON_STYLE => __('Custom colours')])
+                ->default('auto')
+                ->selectablePlaceholder(false)
+                ->live(),
+            Select::make('width')
+                ->label(__('Width'))
+                ->hintIcon(self::HELP_ICON, __('Give buttons side by side the same width to line them up.'))
+                ->options(array_map(fn (array $width): string => __($width[0]), self::BUTTON_WIDTHS))
+                ->default('auto')
+                ->selectablePlaceholder(false),
+            Grid::make(2)
+                ->visible(fn (Get $get): bool => $get('style') === self::CUSTOM_BUTTON_STYLE)
+                ->columnSpanFull()
+                ->schema([
+                    self::buttonColorField('bg_color', __('Background colour'))->helperText(__('Blank: see-through, for an outline button.')),
+                    self::buttonColorField('text_color', __('Text colour'))->helperText(__('Blank: white or dark, whichever reads best.')),
+                    self::buttonColorField('hover_bg_color', __('Hover background colour'))->helperText(__('Blank: a little darker.')),
+                    self::buttonColorField('hover_text_color', __('Hover text colour'))->helperText(__('Blank: the same text colour.')),
+                    self::buttonColorField('border_color', __('Border colour (optional)'))->live(onBlur: true),
+                    Select::make('border_style')
+                        ->label(__('Border line'))
+                        ->options(array_map(fn (string $label): string => __($label), CardStyle::BORDER_STYLES))
+                        ->default('solid')
+                        ->selectablePlaceholder(false)
+                        ->visible(fn (Get $get): bool => filled($get('border_color'))),
+                    TextInput::make('border_width')
+                        ->label(__('Border width'))
+                        ->numeric()
+                        ->integer()
+                        ->minValue(1)
+                        ->maxValue(8)
+                        ->suffix('px')
+                        ->default(2)
+                        ->visible(fn (Get $get): bool => filled($get('border_color'))),
+                ]),
+            Select::make('shadow')
+                ->label(__('Shadow'))
+                ->options(BorderShadow::shadowOptions(withCustom: false))
+                ->default('none')
+                ->selectablePlaceholder(false),
+        ];
+    }
+
+    /** The keys that make up a button's look. */
+    public const BUTTON_LOOK_KEYS = ['style', 'width', 'bg_color', 'text_color', 'hover_bg_color', 'hover_text_color', 'border_color', 'border_style', 'border_width', 'shadow'];
+
+    /**
+     * Whether a button has its own look rather than the block's: "This button looks different" is on, or (saved before
+     * that existed) it has a style, width or shadow of its own.
+     *
+     * @param  array<string, mixed>  $button
+     */
+    public static function hasOwnLook(array $button): bool
+    {
+        $hasLookOfItsOwn = ! in_array($button['style'] ?? 'auto', ['auto', null, ''], true)
+            || ! in_array($button['width'] ?? 'auto', ['auto', null, ''], true)
+            || ! in_array($button['shadow'] ?? 'none', ['none', null, ''], true);
+
+        // Turned on but left as it was (Automatic, nothing else set): it follows the block's look, as it looks the same.
+        if (array_key_exists('own_style', $button) && $button['own_style'] !== null) {
+            return (bool) $button['own_style'] && $hasLookOfItsOwn;
+        }
+
+        return $hasLookOfItsOwn;
+    }
+
+    /**
+     * The button with the look it shows: its own, or the block's (Style › Buttons). buttonLook() checks every value.
+     *
+     * @param  array<string, mixed>  $button
+     * @return array<string, mixed>
+     */
+    public static function withLook(array $button, mixed $blockLook): array
+    {
+        if (self::hasOwnLook($button)) {
+            return $button;
+        }
+
+        $keys = array_flip(self::BUTTON_LOOK_KEYS);
+
+        return [...array_diff_key($button, $keys), ...(is_array($blockLook) ? array_intersect_key($blockLook, $keys) : [])];
+    }
+
+    /**
      * Tooltips for a repeater's item buttons that name the item, e.g. "Duplicate this card" and "Delete this card".
      */
     public static function itemTooltips(Repeater $repeater, string $item): Repeater
     {
-        $tooltip = fn (string $text): \Closure => fn (Action $action): Action => $action->tooltip(__($text, ['item' => $item]));
+        $tooltip = fn (string $text): Closure => fn (Action $action): Action => $action->tooltip(__($text, ['item' => $item]));
 
         return $repeater
             ->cloneAction($tooltip('Duplicate this :item'))
@@ -582,12 +1072,10 @@ abstract class PageBlock
         return is_string($position) && in_array($position, $positions, true) ? $position : $positions[0];
     }
 
-    private static function buttonColorField(string $name, string $label): ColorPicker
+    private static function buttonColorField(string $name, string $label): SiteColour
     {
-        return ColorPicker::make($name)
-            ->label($label)
-            ->regex('/^#[0-9a-fA-F]{6}$/')
-            ->validationMessages(['regex' => __('Enter a 6-digit hex colour, for example #1d41d5.')]);
+        return SiteColour::make($name)
+            ->label($label);
     }
 
     /**
@@ -615,15 +1103,24 @@ abstract class PageBlock
      */
     public static function buttonLook(array $button, bool $isDark): array
     {
-        $color = fn (string $key): ?string => Colour::isValidHex($button[$key] ?? null) ? $button[$key] : null;
-        $isCustom = ($button['style'] ?? null) === self::CUSTOM_BUTTON_STYLE && $color('bg_color') !== null && $color('text_color') !== null;
+        $color = fn (string $key): ?string => Colour::css($button[$key] ?? null);
+        // A blank background is see-through: an outline (ghost) button, e.g. white text and border on a banner.
+        // Custom with a background or a text colour. Without a text colour: white or dark, whichever reads on the
+        // background (or on the area around it, for an outline button).
+        $isCustom = ($button['style'] ?? null) === self::CUSTOM_BUTTON_STYLE && ($color('text_color') !== null || $color('bg_color') !== null);
+        $background = $color('bg_color') ?? 'transparent';
+        $backgroundHex = Colour::hex($button['bg_color'] ?? null);
+        $text = $color('text_color') ?? match (true) {
+            $backgroundHex !== null => Colour::isReadableTextOn('#ffffff', $backgroundHex) ? '#ffffff' : '#111827',
+            default => $isDark ? '#ffffff' : '#111827',
+        };
         $width = self::BUTTON_WIDTHS[static::pick($button['width'] ?? null, self::BUTTON_WIDTHS, 'auto')][1];
 
         $style = '';
 
         if ($isCustom) {
-            $style = "--site-button-bg: {$color('bg_color')}; --site-button-text: {$color('text_color')};"
-                .' --site-button-bg-hover: '.($color('hover_bg_color') ?? "color-mix(in oklab, {$color('bg_color')} 85%, black)").';'
+            $style = "--site-button-bg: {$background}; --site-button-text: {$text};"
+                .' --site-button-bg-hover: '.($color('hover_bg_color') ?? ($color('bg_color') !== null ? "color-mix(in oklab, {$background} 85%, black)" : 'color-mix(in oklab, currentColor 12%, transparent)')).';'
                 .($color('hover_text_color') ? " --site-button-text-hover: {$color('hover_text_color')};" : '')
                 .self::customButtonBorder($button, $color('border_color'));
         }
@@ -675,7 +1172,8 @@ abstract class PageBlock
             return '';
         }
 
-        return RichContentRenderer::make($content)->toHtml();
+        // Dynamic content (merge tags) stays as its tag, filled in by DynamicContent::replace() with the page.
+        return RichContentRenderer::make($content)->mergeTags(DynamicContent::placeholders())->toHtml();
     }
 
     /**
@@ -686,6 +1184,10 @@ abstract class PageBlock
         // A single-file upload may arrive as a one-item array.
         if (is_array($path)) {
             $path = array_values($path)[0] ?? null;
+        }
+
+        if (is_string($path) && isset(self::$previewImages[$path])) {
+            return self::$previewImages[$path];
         }
 
         $pages = app(PageService::class);

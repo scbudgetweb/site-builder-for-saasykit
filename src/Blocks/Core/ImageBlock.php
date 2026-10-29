@@ -24,16 +24,6 @@ class ImageBlock extends PageBlock
         return Heroicon::OutlinedPhoto;
     }
 
-    public static function headingSettings(): array
-    {
-        return [];
-    }
-
-    public static function hasBodyText(): bool
-    {
-        return false;
-    }
-
     protected static function fields(): array
     {
         return [
@@ -59,6 +49,11 @@ class ImageBlock extends PageBlock
         return [
             static::buttonPositionSelect(['below_image', 'above_image']),
         ];
+    }
+
+    protected static function styleToggleTitle(): string
+    {
+        return __('Image');
     }
 
     protected static function styleFields(): array

@@ -1,0 +1,62 @@
+/*
+ * Layout › Spacing & size (Design\Spacing): padding, margin, max width and min height, each of which can differ by
+ * screen size, desktop first (Design\DesignValue): .sb-d-x for every screen, .sb-d-x-t for tablets and phones, and
+ * .sb-d-x-p for phones, each only present when its value is set. Unlayered, so they win over the blocks' utilities.
+ */
+.sb-d-pt { padding-top: var(--sb-pt); }
+.sb-d-pr { padding-right: var(--sb-pr); }
+.sb-d-pb { padding-bottom: var(--sb-pb); }
+.sb-d-pl { padding-left: var(--sb-pl); }
+.sb-d-mt { margin-top: var(--sb-mt); }
+.sb-d-mr { margin-right: var(--sb-mr); }
+.sb-d-mb { margin-bottom: var(--sb-mb); }
+.sb-d-ml { margin-left: var(--sb-ml); }
+.sb-d-maxw { max-width: var(--sb-maxw); }
+.sb-d-w { width: var(--sb-w); }
+.sb-d-h { height: var(--sb-h); }
+.sb-d-maxh { max-height: var(--sb-maxh); }
+.sb-d-minh { min-height: var(--sb-minh); }
+
+@media (max-width: 63.99rem) {
+    .sb-d-pt-t { padding-top: var(--sb-pt-t); }
+    .sb-d-pr-t { padding-right: var(--sb-pr-t); }
+    .sb-d-pb-t { padding-bottom: var(--sb-pb-t); }
+    .sb-d-pl-t { padding-left: var(--sb-pl-t); }
+    .sb-d-mt-t { margin-top: var(--sb-mt-t); }
+    .sb-d-mr-t { margin-right: var(--sb-mr-t); }
+    .sb-d-mb-t { margin-bottom: var(--sb-mb-t); }
+    .sb-d-ml-t { margin-left: var(--sb-ml-t); }
+    .sb-d-maxw-t { max-width: var(--sb-maxw-t); }
+    .sb-d-w-t { width: var(--sb-w-t); }
+    .sb-d-h-t { height: var(--sb-h-t); }
+    .sb-d-maxh-t { max-height: var(--sb-maxh-t); }
+    .sb-d-minh-t { min-height: var(--sb-minh-t); }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-d-pt-p { padding-top: var(--sb-pt-p); }
+    .sb-d-pr-p { padding-right: var(--sb-pr-p); }
+    .sb-d-pb-p { padding-bottom: var(--sb-pb-p); }
+    .sb-d-pl-p { padding-left: var(--sb-pl-p); }
+    .sb-d-mt-p { margin-top: var(--sb-mt-p); }
+    .sb-d-mr-p { margin-right: var(--sb-mr-p); }
+    .sb-d-mb-p { margin-bottom: var(--sb-mb-p); }
+    .sb-d-ml-p { margin-left: var(--sb-ml-p); }
+    .sb-d-maxw-p { max-width: var(--sb-maxw-p); }
+    .sb-d-w-p { width: var(--sb-w-p); }
+    .sb-d-h-p { height: var(--sb-h-p); }
+    .sb-d-maxh-p { max-height: var(--sb-maxh-p); }
+    .sb-d-minh-p { min-height: var(--sb-minh-p); }
+}
+
+/* The content, narrower than its container, lined up (left by default would hug the edge; the containers centre). */
+.sb-d-align-left { margin-left: 0; margin-right: auto; }
+.sb-d-align-center { margin-left: auto; margin-right: auto; }
+.sb-d-align-right { margin-left: auto; margin-right: 0; }
+
+/* Where the content sits in a block taller than it (Min height). */
+:is(.sb-d-valign-top, .sb-d-valign-center, .sb-d-valign-bottom) { display: flex; flex-direction: column; }
+:is(.sb-d-valign-top, .sb-d-valign-center, .sb-d-valign-bottom) > * { width: 100%; }
+.sb-d-valign-top { justify-content: flex-start; }
+.sb-d-valign-center { justify-content: center; }
+.sb-d-valign-bottom { justify-content: flex-end; }

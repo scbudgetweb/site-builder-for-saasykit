@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
 use ScBudgetWeb\SiteBuilder\Blocks\StoredBlocks;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
 
 /**
  * A block (or Section) in the block library (Admin › Website › Block library), reused on pages through linked
@@ -85,5 +86,22 @@ class SavedBlock extends Model
         return is_array($block) && is_string($block['type'] ?? null) && is_array($block['data'] ?? null)
             ? ['type' => $block['type'], 'data' => $block['data']]
             : null;
+    }
+
+    /**
+     * An unsaved page showing just this item (or $blocks, e.g. a draft of it), for the visual builder's canvas.
+     *
+     * @param  array<int|string, mixed>|null  $blocks
+     */
+    public function previewPage(?array $blocks = null): Page
+    {
+        return (new Page)->forceFill([
+            'title' => $this->name,
+            'slug' => 'block-library-preview',
+            'status' => PageStatus::Draft,
+            'show_page_banner' => false,
+            'noindex' => true,
+            'blocks' => $blocks ?? $this->blocks ?? [],
+        ]);
     }
 }

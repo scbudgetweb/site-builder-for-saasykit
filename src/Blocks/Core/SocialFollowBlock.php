@@ -44,11 +44,6 @@ class SocialFollowBlock extends PageBlock
         return ['decoration', 'size'];
     }
 
-    public static function hasBodyText(): bool
-    {
-        return false;
-    }
-
     protected static function fields(): array
     {
         return [

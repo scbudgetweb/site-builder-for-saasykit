@@ -15,7 +15,7 @@
     @foreach ($block['items'] ?? [] as $item)
         @php($icon = \ScBudgetWeb\SiteBuilder\Support\IconLibrary::render($item['icon'] ?? null, $style['iconSize']))
 
-        <div class="{{ $style['card'] }}" @if ($style['cardStyle'] !== '') style="{{ $style['cardStyle'] }}" @endif @if ($style['textScheme']) data-text-scheme="{{ $style['textScheme'] }}" @endif>
+        <div class="sb-item {{ $style['card'] }}" @if ($style['cardStyle'] !== '') style="{{ $style['cardStyle'] }}" @endif @if ($style['textScheme']) data-text-scheme="{{ $style['textScheme'] }}" @endif>
             @if ($icon->toHtml() !== '')
                 <span class="{{ $style['iconWrap'] }}" @if ($style['iconStyle'] !== '') style="{{ $style['iconStyle'] }}" @endif>{{ $icon }}</span>
             @endif

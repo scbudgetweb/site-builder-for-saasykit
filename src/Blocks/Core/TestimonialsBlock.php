@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Blocks\Core;
 
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
@@ -34,6 +35,10 @@ class TestimonialsBlock extends PageBlock
                 ->label(__('Testimonials'))
                 ->schema([
                     Textarea::make('quote')->label(__('Quote'))->required()->rows(3)->maxLength(800),
+                    Select::make('stars')
+                        ->label(__('Star rating (optional)'))
+                        ->options([5 => '★★★★★', 4 => '★★★★', 3 => '★★★', 2 => '★★', 1 => '★'])
+                        ->placeholder(__('None')),
                     Grid::make(2)->schema([
                         TextInput::make('name')->label(__('Name'))->required()->maxLength(100),
                         TextInput::make('role')->label(__('Role or company'))->maxLength(150),
@@ -51,7 +56,7 @@ class TestimonialsBlock extends PageBlock
     protected static function layoutFields(): array
     {
         return [
-            static::columnsSelect(2, [1, 2, 3]),
+            static::columnsSelect(2, [1, 2, 3, 4]),
         ];
     }
 }

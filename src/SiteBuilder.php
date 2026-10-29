@@ -9,6 +9,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
 use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
+use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Navigation\Link;
 use ScBudgetWeb\SiteBuilder\Pages\Slot;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
@@ -25,6 +26,9 @@ class SiteBuilder
 
     /** @var array<int, class-string<PageBlock>> */
     private array $blocks = [];
+
+    /** @var array<string, string> */
+    private array $templateTypes = [];
 
     /** @var array<string, Link> */
     private array $links = [];
@@ -47,14 +51,16 @@ class SiteBuilder
     /** @var array<string, array{0: string, 1: Closure(): (int|float)}> */
     private array $stats = [];
 
+    /** @var array<string, array{0: string, 1: Closure(Page): mixed, 2: bool}> */
+    private array $dynamicContent = [];
+
     /** @var (Closure(string): bool)|null */
     private ?Closure $consentChecker = null;
 
-    public function __construct(private Settings $settings) {}
-
     public function settings(): Settings
     {
-        return $this->settings;
+        // From the container each time: this service lives for the whole app, but Settings is scoped (one request).
+        return app(Settings::class);
     }
 
     public function navigationGroup(): string
@@ -290,6 +296,60 @@ class SiteBuilder
     public function registeredBrandingColours(): array
     {
         return $this->brandingColours;
+    }
+
+    /**
+     * A dynamic content tag of the app's own, e.g. SiteBuilder::dynamicContent('venue_name', 'Venue name',
+     * fn (Page $page) => ...), used in blocks as {{ venue_name }} (DynamicContent). The value is given the page being
+     * viewed and shown as plain text. $isPerRequest: whether it differs by visitor, time or page (then a block using it
+     * is drawn on each request); false only for a value that's the same everywhere until a setting is saved.
+     *
+     * @param  Closure(Page): mixed  $value
+     */
+    public function dynamicContent(string $name, string $label, Closure $value, bool $isPerRequest = true): static
+    {
+        if (preg_match('/^[a-z][a-z0-9_]{0,39}$/', $name) !== 1) {
+            throw new InvalidArgumentException("A dynamic content tag must be lower-case letters, numbers and _ (got \"{$name}\").");
+        }
+
+        $this->dynamicContent[$name] = [$label, $value, $isPerRequest];
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, array{0: string, 1: Closure(Page): mixed, 2: bool}>
+     */
+    public function registeredDynamicContent(): array
+    {
+        return $this->dynamicContent;
+    }
+
+    /**
+     * Theme Builder template types of the app's own (e.g. ['job' => 'Job page']), offered beside Header and Footer.
+     * The app shows a template where it belongs with Templates::render($type).
+     *
+     * @param  array<string, string>  $types  key => label
+     */
+    public function templateTypes(array $types): static
+    {
+        foreach ($types as $key => $label) {
+            if (preg_match('/^[a-z][a-z0-9_]{0,39}$/', (string) $key) !== 1) {
+                throw new InvalidArgumentException("A template type key must be lower-case letters, numbers and _ (got \"{$key}\").");
+            }
+
+            $this->templateTypes[(string) $key] = $label;
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function registeredTemplateTypes(): array
+    {
+        return $this->templateTypes;
     }
 
     /**

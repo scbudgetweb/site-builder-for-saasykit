@@ -1,0 +1,46 @@
+/*
+ * Design › Dividers (Design\Dividers): a shape along a block's top (::before) or bottom (::after) edge, a coloured
+ * layer masked by one of the package's own shapes. Behind the content unless "In front of the content" is on. Each
+ * shape fills from the edge inwards in a 1000 x 100 box; the bottom divider is the same shape turned upside down.
+ */
+.sb-d-div { position: relative; }
+.sb-d-div > .relative { z-index: 2; }
+.sb-d-divt::before, .sb-d-divb::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    pointer-events: none;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+    -webkit-mask-position: left top;
+    mask-position: left top;
+}
+.sb-d-divt::before {
+    top: -1px;
+    height: var(--sb-divt-h, 100px);
+    background-color: var(--sb-divt-c, #ffffff);
+    -webkit-mask-size: calc(100% / var(--sb-divt-r, 1)) 100%;
+    mask-size: calc(100% / var(--sb-divt-r, 1)) 100%;
+}
+.sb-d-divb::after {
+    bottom: -1px;
+    height: var(--sb-divb-h, 100px);
+    background-color: var(--sb-divb-c, #ffffff);
+    -webkit-mask-size: calc(100% / var(--sb-divb-r, 1)) 100%;
+    mask-size: calc(100% / var(--sb-divb-r, 1)) 100%;
+    scale: 1 -1;
+}
+.sb-d-divt-flip::before { scale: -1 1; }
+.sb-d-divb-flip::after { scale: -1 -1; }
+.sb-d-divt-above::before, .sb-d-divb-above::after { z-index: 3; }
+
+.sb-d-divt-slant::before, .sb-d-divb-slant::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v15L0%20100z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v15L0%20100z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-curve::before, .sb-d-divb-curve::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v0C750%20100%20250%20100%200%200z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v0C750%20100%20250%20100%200%200z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-wave::before, .sb-d-divb-wave::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v45c-125%2035-250%2035-375%200S375%2010%20250%2045%200%2080%200%2045z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v45c-125%2035-250%2035-375%200S375%2010%20250%2045%200%2080%200%2045z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-waves::before, .sb-d-divb-waves::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill-opacity%3D%22.35%22%20d%3D%22M0%200h1000v75c-160-40-330%2030-500-5S160%2025%200%2070z%22%2F%3E%3Cpath%20fill-opacity%3D%22.6%22%20d%3D%22M0%200h1000v55c-170%2030-330-30-500%200S170%2085%200%2050z%22%2F%3E%3Cpath%20d%3D%22M0%200h1000v30c-170%2035-330-25-500%205S170%2060%200%2030z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill-opacity%3D%22.35%22%20d%3D%22M0%200h1000v75c-160-40-330%2030-500-5S160%2025%200%2070z%22%2F%3E%3Cpath%20fill-opacity%3D%22.6%22%20d%3D%22M0%200h1000v55c-170%2030-330-30-500%200S170%2085%200%2050z%22%2F%3E%3Cpath%20d%3D%22M0%200h1000v30c-170%2035-330-25-500%205S170%2060%200%2030z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-triangle::before, .sb-d-divb-triangle::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000L500%20100z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000L500%20100z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-arrow::before, .sb-d-divb-arrow::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v40H550l-50%2060-50-60H0z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v40H550l-50%2060-50-60H0z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-mountains::before, .sb-d-divb-mountains::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill-opacity%3D%22.5%22%20d%3D%22M0%200h1000v70l-110-45-130%2060-140-50-150%2040-130-55-160%2050-180-40z%22%2F%3E%3Cpath%20d%3D%22M0%200h1000v40l-120-30-140%2045-150-50-160%2055-140-40-150%2035L0%2020z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20fill-opacity%3D%22.5%22%20d%3D%22M0%200h1000v70l-110-45-130%2060-140-50-150%2040-130-55-160%2050-180-40z%22%2F%3E%3Cpath%20d%3D%22M0%200h1000v40l-120-30-140%2045-150-50-160%2055-140-40-150%2035L0%2020z%22%2F%3E%3C%2Fsvg%3E"); }
+.sb-d-divt-zigzag::before, .sb-d-divb-zigzag::after { -webkit-mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v60l-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040L0%2060z%22%2F%3E%3C%2Fsvg%3E"); mask-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%201000%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%200h1000v60l-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040-50-40-50%2040L0%2060z%22%2F%3E%3C%2Fsvg%3E"); }

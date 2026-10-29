@@ -1,5 +1,125 @@
 # Changelog
 
+## 1.6.0 - 2026-10-29
+
+**Upgrading:** run your migrations (`php artisan migrate`: page drafts, Theme Builder templates and mailing list providers) and rebuild your CSS (`npm run build`). Then check the changes listed under *Changes to existing pages and settings* below.
+
+### Visual builder
+
+- **Pages › Visual builder** shows the page in the site's own look, at desktop, tablet or phone width. Pages open in it, and *Edit as a form* is one click away. Library items and Theme Builder templates have one too.
+- **Drafts:** changes are saved as you go into your own draft. Visitors see nothing until you press **Publish** (or **Save** for a page that's still a draft), and *Discard changes* goes back to the page as it is. If someone else saves the page meanwhile, Publish asks before replacing their changes.
+- **Settings open in a floating panel** that can be dragged by its title and resized from its corner, and opens where it was last left. The page stays visible and clickable around it. Opening another part saves the open panel first.
+- **Live preview:** the page updates as settings change, before they're saved. *Cancel* puts it back. A new image shows once the panel is saved.
+- **Sections, rows and columns each have their own panel.** Click a Section or a block to open its settings. A row's settings open from the **⚙** beside its *Row* handle or the right-click menu, and list its columns, each of which opens that column's settings in the row's place, with a back arrow to the row.
+- **Add** blocks with the **+** above and below the hovered block, from the right-click menu, or by clicking an empty column or an empty page.
+- **Drag and drop** blocks (by their *Move* handle) and rows (by their *Row* handle), within and between columns and Sections. Every move is checked on the server (no Section, Hero or Banner inside a column).
+- **Right-click menu:** duplicate, delete, move up or down, move to the next column, row and column settings, add, duplicate, move or delete a row, and add a row to a Section.
+- **Undo and redo** in the toolbar, with **Ctrl+Z** / **Ctrl+Y** (**⌘Z** / **⇧⌘Z** on a Mac), not while typing in a panel.
+- **Revisions** in the toolbar: preview one, or restore it into your draft (undoable).
+- **Copy and paste styles:** right-click a block to copy all of its style or one part (background, spacing, heading text, body text, links, borders, buttons, effects), then paste it on another block or on every block of that type on the page. The clipboard lasts for your session, across pages.
+- **Colours show the level:** Sections are blue, rows green, columns purple and blocks grey, along the top of their cards and panels in both the visual builder and the form, and on the canvas outlines, labels and handles.
+
+### Block settings
+
+- **Every block's panel has three tabs, Content, Design and Advanced**, each a list of collapsible groups:
+  - **Content:** the block's content, Background, Link (the whole block links somewhere, while its own buttons and links still work) and Admin label.
+  - **Design:** the block's layout and look, Text, Heading text, Body text, Link text, Lists & quotes, Buttons, Sizing, Spacing, Border, Box shadow, Filters, Transform, Animation and Dividers.
+  - **Advanced:** CSS ID & classes, Visibility, Position, Transitions, Scroll effects and Conditions.
+- **At the top of each panel:** search across every tab, show only changed settings, and in the visual builder snap to the left or right or expand. A group with changes has a dot and a **Reset** button for that group.
+- **Desktop, Tablet, Phone and Hover:** sizes and spacing can differ by screen size. In **Hover**, settings take the value they have while the block is pointed at: padding, margin, sizes, corners, border widths, text sizes and spacing, offsets, colours, shadow, scale, lift, rotate, opacity and filters. A hover change can apply to the whole block or to the item being pointed at (cards, features, testimonials, steps, team, stats, FAQs, gallery images, logos).
+- **Each panel shows only the settings that apply.** Design › Buttons appears for a block with buttons, and the heading and text settings for a block with a heading or body text. Sections, rows and columns have no text settings, since the blocks inside them do.
+- **Presets:** saved styles per block type, with an optional default, chosen at the top of a block's panel. A preset fills in the style settings a block leaves unchanged. Managing presets needs the `site-builder.permissions.presets` permission (*update settings* by default).
+- **Admin labels** name blocks, rows and columns in the builders.
+
+### Design options
+
+- **Sizing:** width, max width, height, min height and max height, and where the content sits.
+- **Spacing:** padding and margin for each side. *Overlap the block above* now works on any block, up to *Huge*.
+- **Text:** font (any Branding font, loaded only on pages that use it), weight, style, size, line height, letter spacing, alignment, colour and shadow, for headings and body text; link colours, hover colour, weight and underline; bullet and number styles, list indent and a quote's line.
+- **Background:** colour, gradient (straight, round or sweep) or image, with the image's size, position, repeat, *Stay still when scrolling* and an overlay; patterns and shapes.
+- **Border and Box shadow:** a width and colour for each side, line styles (including groove, ridge, inset and outset), a radius for each corner, and inner shadows.
+- **Filters:** greyscale, brightness, contrast, colour strength, blur, opacity, hue shift, invert and sepia, and a blend mode.
+- **Transform:** scale, rotate, skew and move, for each screen size, from a chosen point.
+- **Animation:** entrance animations (fade, slide, zoom, bounce, flip, fold, roll and more) with duration, delay, intensity, starting opacity, speed curve and repeat. They play when the block comes into view, one item at a time if chosen, and not at all for visitors who prefer less motion.
+- **Dividers:** a shape along a block's or Section's top or bottom edge (slant, curve, wave, layered waves, triangle, arrow, mountains, zigzag), with colour, height, repeat, flip, and in front of or behind the content.
+- **Advanced:** hide on phones, tablets or desktops; overflow; relative or absolute position with offsets and layer (never fixed); transition timing; sticky, and move, fade, scale, turn or blur while scrolling; and **Conditions** (signed in or out, role, dates, days, times of day, a web address parameter or a cookie, matching all or any).
+- Every value is checked and becomes a CSS custom property and a class from a fixed list, so nothing typed into a setting reaches a style sheet, and pages stay cacheable. A block without design settings renders as before.
+
+### Sections, rows and columns
+
+- **Rows and columns have the full settings:** Background (colour, gradient or image, with an overlay), Link, Admin label, CSS ID & classes, and the Design options. A row's background sets its blocks' text colour unless a column has its own.
+- **Row settings:** column structure, alignment, gap between columns, last column first on phones, sizing, spacing, border, shadow and the other design options (no dividers).
+- **Column settings:** background, alignment, padding, border, shadow and the other design options. Columns have no sizing or margin, as they fill their share of the row.
+- A one-column row's column has its own settings too.
+- **The same panels in every editor.** In *Edit as a form* (pages, library items and templates), each row and column has a **⚙** that opens the same Row settings and Column settings as the visual builder. The row's layout stays in the form.
+
+### Colours and dynamic content
+
+- **Global colours** (Branding › Brand › Colours): named colours offered as swatches in every block colour setting, alongside the site and secondary colours. Blocks save a reference, so changing a global colour changes every block using it; **Unlink** swaps the reference for its current value.
+- **See-through colours** in every block colour setting, from the picker's transparency slider.
+- A custom-colour button no longer needs a text colour: left blank, it's white or dark, whichever reads best on its background.
+- **Dynamic content:** `{{ page_title }}`, `{{ site_name }}`, `{{ current_date }}`, `{{ current_year }}` and `{{ user_name }}`, with an optional fallback (`{{ user_name | there }}`), from the panel's tag button or rich text's merge tags. Values are escaped. Apps can add their own tags.
+
+### Theme Builder
+
+- **Website › Theme builder:** build the site's **header** and **footer** from blocks, in the visual builder or as a form, and choose where each shows (every page, chosen pages, or every page except those). With no template, the standard header and footer show. See [the Theme builder guide](docs/theme-builder.md).
+- **Template blocks**, offered only in templates: Logo, Menu (the Navigation header links with dropdowns, mega menus and its own mobile menu and colours), Account links, Footer links and Copyright. Every ordinary block works in templates too.
+- A template's HTML is cached until it, a page, the library, Branding or Navigation is saved. Parts that differ per visitor are rendered on each request. A template that fails is skipped and the standard one shows.
+
+### Mailing lists
+
+- **Website › Mailing lists**, **Branding › Mailing list** and the **Mailing list sign-up** block. Connect Brevo with an API key (checked on save and stored encrypted), choose the default list, and optionally turn on double opt-in.
+- The block can have its own wording, send sign-ups to another list, ask for a name, require a tick for the small print, and go to a page afterwards. Visitors can't change its choices.
+- Spam protection (a honeypot, a minimum time and 5 an hour per visitor), a polite message on failure (the reason is logged), and an optional email to an admin (`SITE_BUILDER_MAILING_LIST_NOTIFY_EMAIL`). See [the mailing lists guide](docs/mailing-lists.md).
+
+### Blocks
+
+- A **small heading** above any block heading, as small capitals or a **pill** badge (e.g. *Most popular*).
+- **Outline buttons:** a custom-colour button with no background is see-through.
+- **Hero and Banner:** a social proof row (up to five faces, a star rating and a line of text) and an image under the text.
+- **Testimonials:** 4 columns, and a star rating on each.
+- **Tabs:** an image under each tab's text.
+- **Logo strip:** a still row can line up left, centre or right.
+- **Rich text:** inline code, code blocks, and left, centre or right alignment.
+- **AVIF** images can be uploaded.
+
+### Performance
+
+- **Less memory:** a block's settings form is built only when it's needed. On a page with three Sections, the form editor uses about 38 MB instead of 117 MB, and opening a Section about 15 MB instead of 82 MB. After a change in the visual builder, only the changed block is re-rendered.
+- **Fewer cache reads:** settings are read from the cache once per request. A cached page view now reads the cache about 6 times instead of about 220, which matters on hosts using a file or database cache.
+- A page's fonts are cached with its HTML, and a block with conditions or per-visitor content is rendered on each request while the rest of the page stays cached.
+
+### Changes to existing pages and settings
+
+- **Buttons:** a button's look (style, width, colours, border, shadow) is now set for all of a block's buttons in Design › Buttons. A button that should look different turns on *This button looks different*. Buttons saved with a look of their own keep it.
+- **Sections no longer have text settings.** A heading decoration, heading size or text size saved on a Section no longer applies; its blocks use their own or the Branding style. Set them on the blocks instead.
+- **Rows and columns in the form:** the inline *Row style* and *Column settings* have moved into each row's and column's ⚙ panel. Saved values are unchanged.
+- Text settings on a Section, row or column, dividers on a row or column, and a column's sizing or margin no longer apply, as those settings aren't offered there.
+
+### For developers
+
+- **Blocks:**
+  - A block's panel finds its settings from its fields: `buttonsRepeater()` gives Design › Buttons, `headingFields()` the heading and text size settings, and `richText()` the text size (the fields are `ButtonsRepeater`, `HeadingInput` and `SiteRichEditor`; see `PageBlock::uses()`). Override `hasButtons()`, `headingSettings()` or `hasBodyText()` only for a block that draws its own. `BlockFeaturesTest` checks every registered block's view against its panel.
+  - New: `PageBlock::editorSchema()`, `blockToggles()`, `styleToggleTitle()`, `toggles()`, `designWithout()`, `shownAppearance()`, `structureLevel()`, `fieldDefaults()` and `ownStyleKeys()`, plus `withLook()`, `hasOwnLook()` and `BUTTON_LOOK_KEYS`. A block's button look is saved under `button_design`, and a button's switch as `own_style`.
+  - `PageBlock::make()` builds its form lazily (a closure passed to `schema()`).
+  - `BlockAppearance::toggles()` replaces `layoutGroup()`, `styleGroup()` and `advancedGroup()`. `CardStyle::fieldset()`, `PageBlock::imageStyleFieldset()` and `buttonDesignFields()` return a `Group` or `Grid` without a title.
+- **Panels and design:** `Blocks\Panel\PanelToggle`, `SettingsPanel` (with `LEVEL_COLOURS`), `HoverMode`, `BlockDesign` (`toggles()`, `without()`, `resolve()`), the `Design\*` groups (`DesignGroup`, `DesignOutput`, `DesignValue`), and the `DeviceValue`, `BoxSides` and `SiteColour` form fields. Use `SiteColour` instead of Filament's `ColorPicker` for block colours, and read values with `Colour::css()`, `Colour::hex()` or `Colour::withOpacity()`. Design CSS is in `resources/css/design/*.css`, imported by `site-builder.css`.
+- **Sections:** `SectionBlock::rowSettingsPanel()`, `columnSettingsPanel()`, `visualPanelSchema()` and `columnsView()`.
+- **Visual builder:**
+  - `VisualDrafts`, the `PageDraft` model, `VisualEditor` (with `goToNode()`), `LibraryVisualEditor` and `TemplateVisualEditor`.
+  - `BlockTree` (`find()`, `locate()`, `trail()`, `insert()`, `remove()`, `duplicate()`, `move()`, `step()`, `map()`), `StyleClipboard` and `SavedBlock::previewPage()`.
+  - The signed `site-builder.pages.canvas` and `site-builder.library.canvas` routes.
+- **Rendering:**
+  - `PageRenderer::render()` and `renderBlocks()` take `marksNodes` (adds `data-sb-node` and `data-sb-uid`; pages render as before without it), `onlyIndex` and `holes`, and `PageRenderer::fillHoles()`. A page's cache entry holds its HTML and holes.
+  - `RenderCache::remember()`; `BlockConditions`; `Design\Motion` and `blocks/partials/motion-script`.
+- **Presets and content:** `BlockPresets`, `DynamicContent`, `SiteBuilder::dynamicContent()` and `Branding::globalColours()`.
+- **Theme Builder:**
+  - `SiteBuilder::templateTypes()` and `PageBlock::templateTypes()`; `BlockRegistry::offered()` and `editingTemplate()`; `Templates`, `TemplateRenderer`, the `Template` model and `TemplatePolicy`.
+  - The standard header's desktop links and mobile menu moved to `theme/partials/desktop-links` and `theme/partials/mobile-menu` (same HTML).
+- **Mailing lists:** `<livewire:site-builder.mailing-list-signup />`, `MailingLists\MailingListClient`, `BrevoClient` and `MailingListService`, the `MailingListProvider` model, and config `site-builder.permissions.mailing_lists` and `site-builder.mailing_lists.notify_email`.
+- **Settings:** `Settings` is now a scoped service (one per request or queue job). Long-lived services should resolve it when used rather than keep it.
+- Images in a draft or its undo history count as in use.
+
 ## 1.5.0 - 2026-10-28
 
 - **Columns hold their own blocks.** In a Section's row, each column now has its own blocks, one under another, so a column can hold a heading, text and an image beside one large image in the next. The row editor shows a box per column (*Column 1*, *Column 2*…), each with its own *Add block to column…* button. A block card has left and right arrows to move it to the next column, and columns can be swapped. Changing a row's layout keeps every block: with fewer columns, the extra columns' blocks move to the end of the last one.

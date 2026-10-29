@@ -2,12 +2,12 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Schemas\Components\Fieldset;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
 /**
@@ -66,13 +66,13 @@ class CardStyle
     /**
      * For the block's Style tab. Blank colours keep the standard look.
      */
-    public static function fieldset(): Fieldset
+    public static function fieldset(): Group
     {
         $hasBackground = fn (Get $get): bool => (bool) $get('background');
         $hasBorder = fn (Get $get): bool => (bool) $get('border');
         $hasTile = fn (Get $get): bool => $get('icon_background') !== 'none';
 
-        return Fieldset::make(__('Cards'))
+        return Group::make()
             ->statePath('card')
             ->columns(2)
             ->schema([
@@ -147,7 +147,7 @@ class CardStyle
         $position = array_key_exists($card['icon_position'] ?? '', self::ICON_POSITIONS) ? $card['icon_position'] : 'top';
         $hasTile = ($card['icon_background'] ?? 'tile') !== 'none';
 
-        $color = fn (string $key): ?string => Colour::isValidHex($card[$key] ?? null) ? $card[$key] : null;
+        $color = fn (string $key): ?string => Colour::css($card[$key] ?? null);
         $iconSize = self::ICON_SIZES[self::pick($card['icon_size'] ?? null, self::ICON_SIZES, 'medium')];
         $titleSize = self::TITLE_SIZES[self::pick($card['title_size'] ?? null, self::TITLE_SIZES, 'standard')][1];
         $textSize = self::TEXT_SIZES[self::pick($card['text_size'] ?? null, self::TEXT_SIZES, 'standard')][1];
@@ -157,7 +157,7 @@ class CardStyle
         // takes the block's text colour (so it reads on dark sections too).
         $cardText = match (true) {
             ! $hasBackground => '',
-            $backgroundColor !== null && ! Colour::isReadableTextOn('#111827', $backgroundColor) => 'text-white',
+            $backgroundColor !== null && ! Colour::isReadableTextOn('#111827', (string) $card['background_color']) => 'text-white',
             default => 'text-gray-900',
         };
 
@@ -254,11 +254,9 @@ class CardStyle
             });
     }
 
-    private static function colorField(string $name, string $label): ColorPicker
+    private static function colorField(string $name, string $label): SiteColour
     {
-        return ColorPicker::make($name)
-            ->label($label)
-            ->regex('/^#[0-9a-fA-F]{6}$/')
-            ->validationMessages(['regex' => __('Enter a 6-digit hex colour, for example #1d41d5.')]);
+        return SiteColour::make($name)
+            ->label($label);
     }
 }

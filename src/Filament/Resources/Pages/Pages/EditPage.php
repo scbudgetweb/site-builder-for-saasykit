@@ -15,6 +15,7 @@ use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageRevisions;
+use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
 
 /**
  * @method Page getRecord()
@@ -31,6 +32,14 @@ class EditPage extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('visual')
+                ->label(fn (Page $record): string => ($draft = app(VisualDrafts::class)->find($record, auth()->user())) && app(VisualDrafts::class)->hasChanges($draft, $record)
+                    ? __('Visual builder (unpublished changes)')
+                    : __('Visual builder'))
+                ->tooltip(__('Change the page as it looks: click a block to edit it'))
+                ->icon(Heroicon::OutlinedPaintBrush)
+                ->url(fn (Page $record): string => PageResource::getUrl('visual', ['record' => $record]))
+                ->hidden(fn (Page $record): bool => $record->trashed()),
             Action::make('preview')
                 ->label(__('Preview'))
                 ->icon(Heroicon::OutlinedEye)

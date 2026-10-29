@@ -2,7 +2,18 @@
     Site builder theme: shadows SaaSykit's components/layouts/app/footer.blade.php.
     Colours come from Branding › Header & footer; social links from SaaSykit's General Settings; the tagline, link
     columns (one to four, beside the logo) and copyright line from Website › Navigation › Footer.
+
+    A Theme Builder footer template (Website › Theme builder) that applies to this page takes its place.
 --}}
+@php
+    $footerTemplate = app(\ScBudgetWeb\SiteBuilder\Templates\Templates::class)->render('footer');
+@endphp
+
+@if ($footerTemplate !== null)
+    <footer {{ $attributes }}>
+        {{ $footerTemplate }}
+    </footer>
+@else
 @php
     $socialLinks = array_filter([
         'facebook' => [__('Facebook'), config('app.social_links.facebook')],
@@ -75,3 +86,4 @@
         </div>
     </div>
 </footer>
+@endif

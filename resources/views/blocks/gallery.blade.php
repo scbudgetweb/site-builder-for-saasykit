@@ -11,7 +11,7 @@
         'md:grid-cols-4' => $columns === 4,
     ])>
         @foreach ($images as $image)
-            <figure>
+            <figure class="sb-item">
                 <button type="button" @click="open = {{ $loop->index }}" class="block w-full overflow-hidden rounded-sb-image focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600" @if ($imageStyle !== '') style="{{ $imageStyle }}" @endif>
                     <img src="{{ $image['url'] }}" alt="{{ $image['alt'] }}" loading="lazy" decoding="async" class="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-105">
                 </button>

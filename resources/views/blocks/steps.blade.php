@@ -8,7 +8,7 @@
     'lg:grid-cols-4' => count($steps) === 4,
 ])>
     @foreach ($steps as $step)
-        <li class="text-center">
+        <li class="sb-item text-center">
             @php($icon = \ScBudgetWeb\SiteBuilder\Support\IconLibrary::render($step['icon'] ?? null, 'h-6 w-6'))
             <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary-600 text-lg font-bold text-white">
                 @if ($icon->toHtml() !== '')

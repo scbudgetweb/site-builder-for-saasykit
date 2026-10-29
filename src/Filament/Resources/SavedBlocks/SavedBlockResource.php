@@ -7,6 +7,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\CreateSavedBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\LibraryVisualEditor;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\ListSavedBlocks;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Schemas\SavedBlockForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Tables\SavedBlocksTable;
@@ -43,6 +44,7 @@ class SavedBlockResource extends Resource
             'index' => ListSavedBlocks::route('/'),
             'create' => CreateSavedBlock::route('/create'),
             'edit' => EditSavedBlock::route('/{record}/edit'),
+            'visual' => LibraryVisualEditor::route('/{record}/visual'),
         ];
     }
 

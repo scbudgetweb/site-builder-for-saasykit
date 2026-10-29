@@ -35,14 +35,10 @@ class TextBlock extends PageBlock
         return 'narrow';
     }
 
-    public static function headingSettings(): array
-    {
-        return [];
-    }
-
     protected static function fields(): array
     {
         return [
+            static::eyebrowFields(),
             static::richText('content', __('Text'))->required(),
             static::buttonsRepeater(2),
         ];

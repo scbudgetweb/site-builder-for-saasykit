@@ -1,7 +1,7 @@
 # Writing a custom block
 
 An app adds its own blocks, such as a booking search or a list of live venues, by extending `ScBudgetWeb\SiteBuilder\Blocks\PageBlock` and registering the class. A custom block gets everything a core block gets:
-- the slide-over editor with Content, Layout, Style and Advanced tabs;
+- the slide-over editor with Content, Design and Advanced tabs, each a list of toggles;
 - the shared background, panel, spacing, border and shadow settings;
 - previews on the block cards;
 - named validation errors ("Block 2 (Opening hours): …");
@@ -117,9 +117,9 @@ Conventions that make a block fit in:
 
 | Use | So that |
 |---|---|
-| `site-builder::blocks.partials.heading` | The heading and intro follow Layout › Heading alignment, Style › Heading decoration and Heading size |
-| `sb-h2 block-heading` on a heading of your own | Style › Heading size applies to it |
-| `block-text` on body text | Style › Text size applies to it |
+| `site-builder::blocks.partials.heading` | The heading and intro follow Design › Text: heading alignment, decoration and size |
+| `sb-h2 block-heading` on a heading of your own | Design › Text › Heading size applies to it |
+| `block-text` on body text | Design › Text › Text size applies to it |
 | `site-builder::blocks.partials.buttons` with `PageBlock::validButtons()` | Buttons look and behave like everywhere else (see `buttonsRepeater()`) |
 | `sb-block-buttons` on the element holding bottom buttons | *Same height* rows line the buttons up at the bottom |
 | Theme tokens (`text-primary-600`, `rounded-sb-card`, `shadow-sb-card`) | Branding changes reach the block |
@@ -137,11 +137,25 @@ Tailwind only builds classes it finds in its sources. Make sure your app's CSS s
 
 ## 5. Optional hooks
 
+**Your panel finds most of its settings from your fields**, so build them with the shared helpers and there's nothing to declare:
+
+| You use | Your panel gets |
+|---|---|
+| `buttonsRepeater()` (any number of buttons, anywhere in your settings) | Design › Buttons |
+| `headingFields()` | the heading settings (alignment, decoration, size) and the text size |
+| `richText()` | the text size |
+
+Sections, rows and columns have no text settings; only blocks do. A test checks every registered block, yours included: if your view draws buttons (`partials.buttons`), the shared heading (`.section-heading`) or body text (`.block-text`) and the panel doesn't offer their settings, it fails and names the block.
+
+Override these only when your block draws its own:
+
 | Method | Default | Use it to |
 |---|---|---|
 | `hasAppearance()` | `true` | Return `false` for a block that draws its own full-width section (like Banner). It then gets no shared settings or wrapper |
-| `headingSettings()` | `['align', 'decoration', 'size']` | List only the heading settings that do something, or `[]` for a block with no heading |
-| `hasBodyText()` | `true` | Return `false` to hide Style › Text size |
+| `hasButtons()` | found from your fields | Return `true` when your view draws buttons without `buttonsRepeater()` |
+| `headingSettings()` | found from your fields | List the heading settings your own heading supports, e.g. `['size']` for a `.block-heading` |
+| `hasBodyText()` | found from your fields | Return `true` when your view draws `.block-text` from a plain text field |
+| `designWithout()` | `[]` | Leave design options out of your panel (a group's key such as `typography`, or `spacing.margin`); saved values for them stop applying too |
 | `layoutFields()` / `styleFields()` / `advancedFields()` | `[]` | Add your own settings to those tabs, above the shared ones |
 | `contentTabLabel()` | *Content* | Rename the first tab |
 | `defaultWidth()` / `defaultBackground()` | contained / none | Change the starting look |
@@ -149,6 +163,10 @@ Tailwind only builds classes it finds in its sources. Make sure your app's CSS s
 | `isVisible($data)` | `true` | Hide the block, with no wrapper or spacing, for example when a live list is empty |
 | `isCacheable($data)` | `true` | Return `false` when the HTML depends on the visitor or changes by itself: live figures, signed-in state, cookie consent, a form's CSRF token, any Livewire component. A page is cached only when all its blocks are |
 | `itemLabel($state)` / `editorTitle($data)` | label plus heading | The card and panel titles |
+
+Colours, presets and dynamic content:
+- Use `SiteColour::make()` (not Filament's `ColorPicker`) for a colour setting, and read it with `Colour::css()` (hex, see-through hex or a global colour's `var()`), or `Colour::hex()` when you need its value, e.g. for contrast.
+- Presets (`BlockPresets`) and dynamic content (`DynamicContent`) work on every block: the preset is merged in before `viewData()` and the view see the data, and tags are filled in the finished HTML. Add your own tag with `SiteBuilder::dynamicContent('venue_name', 'Venue name', fn (Page $page) => ..., isPerRequest: false)`.
 
 Helpers for fields:
 - `headingFields()`;
@@ -164,7 +182,7 @@ To match the core blocks for people new to the editor:
 
 - explain a setting that isn't obvious with `->hintIcon(PageBlock::HELP_ICON, __('…'))`, which shows a **?** with a tooltip;
 - give a list's buttons tooltips with `PageBlock::itemTooltips($repeater, 'card')`, e.g. *Duplicate this card*;
-- put settings most pages don't need in `BlockAppearance::moreOptions(__('…'), [...])`, a collapsed *More options* that keeps the fields' saved keys.
+- `layoutFields()` shows as the **Layout** toggle and `styleFields()` as a toggle named by `styleToggleTitle()` (e.g. *Image*), both first on the Design tab. To name or split your settings, override `blockToggles()` and return `PanelToggle`s: `PanelToggle::content('background', __('Background'), [...], 80)`, `PanelToggle::design('icon', __('Icon'), [...])`, `PanelToggle::advanced(...)`. A toggle with a key the shared settings use (`background`, `text`, `sizing`, `spacing`, `border`, `box_shadow`, …) joins that toggle. Where a setting shows never changes the key it's saved under.
 
 ## 6. Extending a core block
 

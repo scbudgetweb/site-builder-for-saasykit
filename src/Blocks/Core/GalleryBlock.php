@@ -46,6 +46,11 @@ class GalleryBlock extends PageBlock
         ];
     }
 
+    protected static function styleToggleTitle(): string
+    {
+        return __('Image');
+    }
+
     protected static function styleFields(): array
     {
         return [

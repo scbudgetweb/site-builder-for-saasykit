@@ -5,12 +5,12 @@ namespace ScBudgetWeb\SiteBuilder\Blocks\Core;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
+use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
@@ -136,50 +136,88 @@ class BannerBlock extends PageBlock
         ];
     }
 
-    protected static function styleFields(): array
+    /**
+     * Its background on the Content tab, its layout and text sizes on Design, and its CSS classes on Advanced.
+     */
+    protected static function blockToggles(): array
     {
         $isImage = fn (Get $get): bool => $get('style') === 'image';
         $sizeOptions = fn (array $sizes): array => array_map(fn (array $size): string => __($size[0]), $sizes);
 
         return [
-            Fieldset::make(__('Background'))
-                ->columns(2)
-                ->schema([
-                    Select::make('style')
-                        ->label(__('Background'))
-                        ->hintIcon(self::HELP_ICON, __('Use the banner style from Branding, so it matches the rest of the site, or your own image.'))
-                        ->options(array_map(fn (string $label): string => __($label), self::STYLES))
-                        ->default('hero')
-                        ->selectablePlaceholder(false)
-                        ->live(),
-                    Select::make('image_position')
-                        ->label(__('Keep in view when cropped'))
-                        ->hintIcon(self::HELP_ICON, __('On narrower screens the picture is trimmed to fit. Choose the part that must stay in view, e.g. a face on the left.'))
-                        ->options(array_map(fn (string $label): string => __($label), Colour::IMAGE_POSITIONS))
-                        ->default('center')
-                        ->selectablePlaceholder(false)
-                        ->visible($isImage),
-                    static::imageUpload('image', __('Background image'))
-                        ->helperText(__('JPG, PNG or WebP, up to 2 MB. A wide image around 1920 × 800 pixels works best.'))
-                        ->required($isImage)
-                        ->visible($isImage)
+            PanelToggle::content('background', __('Background'), [
+                Grid::make(['default' => 1, 'sm' => 2])
+                    ->schema([
+                        Select::make('style')
+                            ->label(__('Background'))
+                            ->hintIcon(self::HELP_ICON, __('Use the banner style from Branding, so it matches the rest of the site, or your own image.'))
+                            ->options(array_map(fn (string $label): string => __($label), self::STYLES))
+                            ->default('hero')
+                            ->selectablePlaceholder(false)
+                            ->live(),
+                        Select::make('image_position')
+                            ->label(__('Keep in view when cropped'))
+                            ->hintIcon(self::HELP_ICON, __('On narrower screens the picture is trimmed to fit. Choose the part that must stay in view, e.g. a face on the left.'))
+                            ->options(array_map(fn (string $label): string => __($label), Colour::IMAGE_POSITIONS))
+                            ->default('center')
+                            ->selectablePlaceholder(false)
+                            ->visible($isImage),
+                        static::imageUpload('image', __('Background image'))
+                            ->helperText(__('JPG, PNG, WebP or AVIF, up to 2 MB. A wide image around 1920 × 800 pixels works best.'))
+                            ->required($isImage)
+                            ->visible($isImage)
+                            ->columnSpanFull(),
+                        ...BlockAppearance::overlayFields($isImage, opacityHelperText: __('Text is easier to read on a busy image with an overlay of 40% or more.')),
+                    ]),
+            ], 80),
+            PanelToggle::content('social_proof', __('Social proof'), [
+                Grid::make(['default' => 1, 'sm' => 2])->schema([
+                    static::imageUpload('proof_avatars', __('Faces'))
+                        ->multiple()
+                        ->maxFiles(5)
+                        ->reorderable()
+                        ->helperText(__('Up to 5 small photos, shown overlapping, e.g. of happy customers.'))
                         ->columnSpanFull(),
-                    ...BlockAppearance::overlayFields($isImage, opacityHelperText: __('Text is easier to read on a busy image with an overlay of 40% or more.')),
+                    Select::make('proof_stars')
+                        ->label(__('Star rating'))
+                        ->options([5 => '★★★★★', 4 => '★★★★', 3 => '★★★', 2 => '★★', 1 => '★'])
+                        ->placeholder(__('None')),
+                    TextInput::make('proof_text')
+                        ->label(__('Text'))
+                        ->placeholder(__('e.g. Join 900+ happy customers'))
+                        ->maxLength(120),
                 ]),
-            Fieldset::make(__('Text'))
-                ->columns(2)
-                ->schema([
-                    Select::make('heading_size')
-                        ->label(__('Heading size'))
-                        ->options($sizeOptions(self::HEADING_SIZES))
-                        ->default(static::defaultHeadingSize())
-                        ->selectablePlaceholder(false),
-                    Select::make('subtitle_size')
-                        ->label(__('Subtitle size'))
-                        ->options($sizeOptions(self::SUBTITLE_SIZES))
-                        ->default(static::defaultSubtitleSize())
-                        ->selectablePlaceholder(false),
+            ]),
+            PanelToggle::content('feature_image', __('Image'), [
+                Grid::make(['default' => 1, 'sm' => 2])->schema([
+                    static::imageUpload('feature_image', __('Image under the text'))
+                        ->helperText(__('Optional, e.g. a screenshot of your product. Shown below the buttons, as wide as the text area.'))
+                        ->columnSpanFull(),
+                    TextInput::make('feature_image_alt')
+                        ->label(__('Alternative text'))
+                        ->helperText(__('Describes the image for people who can\'t see it.'))
+                        ->requiredWith('feature_image')
+                        ->maxLength(200)
+                        ->columnSpanFull(),
                 ]),
+            ]),
+            PanelToggle::design('layout', __('Layout'), static::layoutFields()),
+            PanelToggle::design('text', __('Text'), [
+                Grid::make(['default' => 1, 'sm' => 2])
+                    ->schema([
+                        Select::make('heading_size')
+                            ->label(__('Heading size'))
+                            ->options($sizeOptions(self::HEADING_SIZES))
+                            ->default(static::defaultHeadingSize())
+                            ->selectablePlaceholder(false),
+                        Select::make('subtitle_size')
+                            ->label(__('Subtitle size'))
+                            ->options($sizeOptions(self::SUBTITLE_SIZES))
+                            ->default(static::defaultSubtitleSize())
+                            ->selectablePlaceholder(false),
+                    ]),
+            ], 49),
+            PanelToggle::advanced('classes', __('CSS ID & classes'), static::advancedFields()),
         ];
     }
 
@@ -226,6 +264,13 @@ class BannerBlock extends PageBlock
             'cssClass' => BlockAppearance::cssClasses($data['css_class'] ?? null),
             'isLeftAligned' => ($data['align'] ?? 'center') === 'left',
             'buttons' => static::validButtons($data['buttons'] ?? null),
+            'proofAvatars' => collect(is_array($data['proof_avatars'] ?? null) ? $data['proof_avatars'] : [])
+                ->map(fn (mixed $path): ?string => static::imageUrl($path))
+                ->filter()
+                ->take(5)
+                ->values()
+                ->all(),
+            'featureImageUrl' => static::imageUrl($data['feature_image'] ?? null),
             'blockName' => static::name(),
             'extraContentView' => $extraContentView,
             'isExtraContentBeside' => $extraContentView !== null

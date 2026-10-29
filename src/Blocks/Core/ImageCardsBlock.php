@@ -97,6 +97,11 @@ class ImageCardsBlock extends PageBlock
         ];
     }
 
+    protected static function styleToggleTitle(): string
+    {
+        return __('Cards');
+    }
+
     protected static function styleFields(): array
     {
         return [

@@ -29,19 +29,32 @@ class CallToActionBlock extends PageBlock
         return Heroicon::OutlinedMegaphone;
     }
 
+    public static function hasButtons(): bool
+    {
+        return true;
+    }
+
     public static function defaultBackground(): string
     {
         return 'brand_dark';
     }
 
+    /** Its own heading (.block-heading), so only its size. */
     public static function headingSettings(): array
     {
         return ['size'];
     }
 
+    /** Its own text (.block-text), not the shared heading's intro or rich text. */
+    public static function hasBodyText(): bool
+    {
+        return true;
+    }
+
     protected static function fields(): array
     {
         return [
+            static::eyebrowFields(),
             TextInput::make('heading')->label(__('Heading'))->required()->maxLength(150)->live(onBlur: true),
             Textarea::make('text')->label(__('Text'))->rows(3)->maxLength(500),
             static::buttonsRepeater(2),

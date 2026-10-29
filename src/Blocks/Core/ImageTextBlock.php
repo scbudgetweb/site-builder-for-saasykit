@@ -47,16 +47,22 @@ class ImageTextBlock extends PageBlock
     {
         return [
             static::imageUpload('image', __('Image'))
-                ->helperText(__('Optional. JPG, PNG or WebP, up to 2 MB.')),
+                ->helperText(__('Optional. JPG, PNG, WebP or AVIF, up to 2 MB.')),
             TextInput::make('alt')
                 ->label(__('Alternative text'))
                 ->helperText(__('Describes the image for people who can\'t see it.'))
                 ->requiredWith('image')
                 ->maxLength(200),
+            static::eyebrowFields(),
             TextInput::make('heading')->label(__('Heading'))->maxLength(150)->live(onBlur: true),
             static::richText('content', __('Text')),
             static::buttonsRepeater(2),
         ];
+    }
+
+    protected static function styleToggleTitle(): string
+    {
+        return __('Image');
     }
 
     protected static function styleFields(): array

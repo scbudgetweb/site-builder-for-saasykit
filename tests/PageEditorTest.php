@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
@@ -234,18 +235,32 @@ class PageEditorTest extends PageTestCase
             ->assertFormFieldExists('css_class');
     }
 
-    public function test_block_panels_put_layout_before_style(): void
+    public function test_block_panels_have_three_tabs_and_toggles_in_order(): void
     {
         $block = SectionBlock::make();
         $tabs = collect($block->getDefaultChildComponents())->first(fn ($component): bool => $component instanceof Tabs);
 
-        $this->assertSame(['Rows', 'Layout', 'Style', 'Advanced'], array_map(fn ($tab): string => (string) $tab->getLabel(), $tabs->getDefaultChildComponents()));
+        $this->assertSame(['Rows', 'Design', 'Advanced'], array_map(fn ($tab): string => (string) $tab->getLabel(), $tabs->getDefaultChildComponents()));
+
+        $toggles = fn (string $type, int $tab): array => array_map(
+            fn ($section): string => (string) $section->getHeading(),
+            array_values(array_filter(
+                collect(app(BlockRegistry::class)->find($type)::make()->getDefaultChildComponents())->first(fn ($component): bool => $component instanceof Tabs)->getDefaultChildComponents()[$tab]->getDefaultChildComponents(),
+                fn ($component): bool => $component instanceof Section,
+            )),
+        );
+
+        $this->assertSame(['Image + text', 'Link', 'Background', 'Admin label'], $toggles('image_text', 0));
+        $this->assertSame(['Layout', 'Image', 'Text', 'Heading text', 'Body text', 'Link text', 'Lists & quotes', 'Dividers', 'Buttons', 'Sizing', 'Spacing', 'Border', 'Box shadow', 'Filters', 'Transform', 'Animation'], $toggles('image_text', 1), 'No Hover toggle: hover values sit with their settings.');
+        $this->assertSame(['CSS ID & classes', 'Conditions', 'Visibility', 'Transitions', 'Position', 'Scroll effects'], $toggles('image_text', 2));
+        $this->assertSame(['Banner', 'Social proof', 'Image', 'Background', 'Admin label'], $toggles('banner', 0), 'A Banner\'s own background is on the Content tab too.');
     }
 
     public function test_every_blocks_panel_opens(): void
     {
         $registry = app(BlockRegistry::class);
-        $page = $this->page(['blocks' => array_map(fn (string $type): array => self::block($type), array_keys($registry->all()))]);
+        // Every block a page offers (Theme Builder blocks are only offered in templates).
+        $page = $this->page(['blocks' => array_map(fn (string $type): array => self::block($type), array_keys($registry->offered()))]);
         $component = Livewire::test(EditPage::class, ['record' => $page->getRouteKey()]);
 
         foreach ($component->get('data.blocks') as $key => $item) {

@@ -2,13 +2,14 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Slider;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
 /**
@@ -27,6 +28,10 @@ class BorderShadow
         'dashed' => 'Dashed',
         'dotted' => 'Dotted',
         'double' => 'Double',
+        'groove' => 'Groove',
+        'ridge' => 'Ridge',
+        'inset' => 'Inset',
+        'outset' => 'Outset',
     ];
 
     /** Sides => [label, CSS sides]. */
@@ -47,6 +52,8 @@ class BorderShadow
         'soft' => ['Soft', '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)'],
         'medium' => ['Medium', '0 4px 12px -2px rgb(0 0 0 / 0.12), 0 2px 4px -2px rgb(0 0 0 / 0.08)'],
         'strong' => ['Strong', '0 10px 25px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1)'],
+        'inner_soft' => ['Inner, soft', 'inset 0 2px 6px 0 rgb(0 0 0 / 0.12)'],
+        'inner_strong' => ['Inner, strong', 'inset 0 4px 14px 0 rgb(0 0 0 / 0.25)'],
         'custom' => ['Custom', null],
     ];
 
@@ -74,7 +81,7 @@ class BorderShadow
     }
 
     /**
-     * @return array<int, Select|TextInput|ColorPicker>
+     * @return array<int, Select|TextInput|SiteColour>
      */
     public static function borderFields(string $prefix = '', bool $withSides = true): array
     {
@@ -97,7 +104,7 @@ class BorderShadow
                 ->suffix('px')
                 ->default(1)
                 ->visible($hasBorder),
-            ColorPicker::make($prefix.'border_color')
+            SiteColour::make($prefix.'border_color')
                 ->label(__('Border colour'))
                 ->regex(self::HEX)
                 ->helperText(__('Blank: a soft line in the text colour.'))
@@ -143,10 +150,15 @@ class BorderShadow
                     $pixels('shadow_y', __('Down'), 8)->hintIcon(PageBlock::HELP_ICON, __('How far the shadow falls downwards. Below 0: upwards.')),
                     $pixels('shadow_blur', __('Blur'), 24, 0)->hintIcon(PageBlock::HELP_ICON, __('How soft the shadow\'s edge is. 0 is a sharp edge.')),
                     $pixels('shadow_spread', __('Spread'), 0)->hintIcon(PageBlock::HELP_ICON, __('How much bigger (or, below 0, smaller) the shadow is than the thing it\'s under.')),
-                    ColorPicker::make($prefix.'shadow_color')
+                    SiteColour::make($prefix.'shadow_color')
                         ->label(__('Shadow colour'))
                         ->regex(self::HEX)
                         ->placeholder('#000000')
+                        ->columnSpan(2),
+                    Toggle::make($prefix.'shadow_inset')
+                        ->label(__('Inner shadow'))
+                        ->hintIcon(PageBlock::HELP_ICON, __('Inside the edge, so it looks pressed in, rather than lifted off the page.'))
+                        ->inline(false)
                         ->columnSpan(2),
                     Slider::make($prefix.'shadow_opacity')
                         ->label(__('Shadow strength (%)'))
@@ -197,9 +209,7 @@ class BorderShadow
         }
 
         $width = self::clamp($values[$prefix.'border_width'] ?? null, 1, self::MAX_BORDER_WIDTH, 1);
-        $color = Colour::isValidHex($values[$prefix.'border_color'] ?? null)
-            ? $values[$prefix.'border_color']
-            : 'color-mix(in oklab, currentColor 20%, transparent)';
+        $color = Colour::css($values[$prefix.'border_color'] ?? null) ?? 'color-mix(in oklab, currentColor 20%, transparent)';
         $sides = self::SIDES[self::pick($values[$prefix.'border_sides'] ?? null, self::SIDES, 'all')][1];
 
         if (count($sides) === 4) {
@@ -227,18 +237,17 @@ class BorderShadow
         }
 
         $max = self::MAX_SHADOW_PIXELS;
-        $color = Colour::isValidHex($values[$prefix.'shadow_color'] ?? null) ? $values[$prefix.'shadow_color'] : '#000000';
-        [$red, $green, $blue] = sscanf($color, '#%02x%02x%02x');
+        $color = Colour::isValidBlockColour($values[$prefix.'shadow_color'] ?? null) ? $values[$prefix.'shadow_color'] : '#000000';
         $opacity = self::clamp($values[$prefix.'shadow_opacity'] ?? null, 0, 100, 20) / 100;
 
         return sprintf(
-            'box-shadow: %dpx %dpx %dpx %dpx rgba(%d, %d, %d, %s);',
+            'box-shadow: %s%dpx %dpx %dpx %dpx %s;',
+            ($values[$prefix.'shadow_inset'] ?? false) === true ? 'inset ' : '',
             self::clamp($values[$prefix.'shadow_x'] ?? null, -$max, $max, 0),
             self::clamp($values[$prefix.'shadow_y'] ?? null, -$max, $max, 8),
             self::clamp($values[$prefix.'shadow_blur'] ?? null, 0, $max, 24),
             self::clamp($values[$prefix.'shadow_spread'] ?? null, -$max, $max, 0),
-            $red, $green, $blue,
-            rtrim(rtrim(number_format($opacity, 2, '.', ''), '0'), '.') ?: '0',
+            Colour::withOpacity($color, $opacity),
         );
     }
 

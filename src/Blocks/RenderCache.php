@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
+use Closure;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 
@@ -41,6 +42,39 @@ class RenderCache
     public static function flush(): void
     {
         VersionedCache::newVersion(cache()->store(), self::VERSION_KEY);
+    }
+
+    /**
+     * A Theme Builder template's cache key: the shared version (so a page, library, Branding or Navigation save, which
+     * a menu or logo shows, makes it stale), the template and when it was saved, and the language.
+     */
+    public static function templateKey(int $id, int $updatedAt): string
+    {
+        return implode('.', ['site-builder.template-html', self::version(), $id, $updatedAt, app()->getLocale()]);
+    }
+
+    /**
+     * Something worked out from blocks (e.g. their fonts), kept under the shared version so any save makes it stale.
+     * Keyed by the blocks themselves, so a preview or a draft never shares a page's entry. Worked out every time when
+     * the cache is off.
+     *
+     * @param  array<int|string, mixed>  $blocks
+     * @param  Closure(): array<int|string, mixed>  $callback
+     * @return array<int|string, mixed>
+     */
+    public static function remember(string $name, array $blocks, Closure $callback): array
+    {
+        if (! self::isEnabled()) {
+            return $callback();
+        }
+
+        $value = cache()->remember(
+            implode('.', ['site-builder.block-data', $name, self::version(), md5((string) json_encode($blocks)), app()->getLocale()]),
+            now()->addDay(),
+            $callback,
+        );
+
+        return is_array($value) ? $value : $callback();
     }
 
     private static function version(): string

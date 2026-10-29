@@ -69,7 +69,7 @@ class BrandingSectionsTest extends TestCase
 
         // Registering the same section again replaces it.
         SiteBuilderFacade::brandingSection('signup', 'Sign-up box', [BrandingField::text('signup_title', 'Heading')]);
-        $this->assertSame(['signup_title'], array_keys(app(Branding::class)->appFields()));
+        $this->assertSame(['signup_title'], array_values(array_filter(array_keys(app(Branding::class)->appFields()), fn (string $key): bool => ! str_starts_with($key, 'newsletter'))), 'The package\'s own Mailing list section aside.');
     }
 
     public function test_the_section_is_a_tab_after_the_packages_and_opens_on_its_defaults(): void
@@ -91,7 +91,7 @@ class BrandingSectionsTest extends TestCase
             ->first(fn ($component): bool => $component instanceof Tabs);
         $labels = array_map(fn (Tab $tab): string => (string) $tab->getLabel(), $tabs->getChildSchema()->getComponents());
 
-        $this->assertSame(['Custom CSS', 'Sign-up box'], array_slice($labels, -2));
+        $this->assertSame(['Custom CSS', 'Mailing list', 'Sign-up box'], array_slice($labels, -3), 'After the package\'s tabs, including its Mailing list section.');
     }
 
     public function test_it_saves_and_the_values_reach_the_site(): void

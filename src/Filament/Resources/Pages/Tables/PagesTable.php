@@ -19,6 +19,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
@@ -29,6 +30,10 @@ class PagesTable
     {
         return $table
             ->defaultSort('updated_at', 'desc')
+            // Pages open in the visual builder; a page in the bin opens as a form, where it can be restored.
+            ->recordUrl(fn (Page $record): ?string => PageResource::canEdit($record)
+                ? PageResource::getUrl($record->trashed() ? 'edit' : 'visual', ['record' => $record])
+                : null)
             ->emptyStateHeading(__('No pages yet'))
             ->emptyStateDescription(__('Build a page from blocks: banners, text, images and calls to action. It can live at its own address or replace the home page.'))
             ->emptyStateIcon(Heroicon::OutlinedDocumentText)
@@ -67,7 +72,15 @@ class PagesTable
                     ->color('gray')
                     ->url(fn (Page $record): string => $record->previewUrl(), shouldOpenInNewTab: true)
                     ->hidden(fn (Page $record): bool => $record->trashed()),
-                EditAction::make(),
+                Action::make('visual')
+                    ->label(__('Visual builder'))
+                    ->tooltip(__('Change the page as it looks: click a block to edit it'))
+                    ->icon(Heroicon::OutlinedPaintBrush)
+                    ->url(fn (Page $record): string => PageResource::getUrl('visual', ['record' => $record]))
+                    ->visible(fn (Page $record): bool => ! $record->trashed() && PageResource::canEdit($record)),
+                EditAction::make()
+                    ->label(__('Edit as a form'))
+                    ->tooltip(__('The page\'s settings, and its blocks as a list')),
                 Action::make('duplicate')
                     ->label(__('Duplicate'))
                     ->tooltip(__('Make a draft copy of this page to start a new one from'))

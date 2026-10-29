@@ -5,11 +5,15 @@ namespace ScBudgetWeb\SiteBuilder;
 use Filament\Contracts\Plugin;
 use Filament\Navigation\NavigationGroup;
 use Filament\Panel;
+use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageBranding;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageLegalPages;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\MailingLists\MailingListProviderResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 
 /**
  * Adds the site builder to a Filament panel (the admin panel): `->plugin(SiteBuilderPlugin::make())`.
@@ -39,6 +43,8 @@ class SiteBuilderPlugin implements Plugin
         $panel->resources([
             PageResource::class,
             SavedBlockResource::class,
+            TemplateResource::class,
+            MailingListProviderResource::class,
         ]);
 
         $panel->pages([
@@ -46,6 +52,8 @@ class SiteBuilderPlugin implements Plugin
             ManageBranding::class,
             ManageLegalPages::class,
         ]);
+        // The design fields' Alpine code (DeviceValue, BoxSides), before Alpine starts.
+        $panel->renderHook(PanelsRenderHook::SCRIPTS_BEFORE, fn (): View => view('site-builder::filament.design-fields-script'));
     }
 
     public function boot(Panel $panel): void

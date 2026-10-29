@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\CreatePage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\ListPages;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Schemas\PageForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Tables\PagesTable;
 use ScBudgetWeb\SiteBuilder\Models\Page;
@@ -44,6 +45,7 @@ class PageResource extends Resource
             'index' => ListPages::route('/'),
             'create' => CreatePage::route('/create'),
             'edit' => EditPage::route('/{record}/edit'),
+            'visual' => VisualEditor::route('/{record}/visual'),
         ];
     }
 

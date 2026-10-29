@@ -1,0 +1,83 @@
+/*
+ * Style › Heading text, Body text and Links (Design\Typography). Every class is on the block's section; its rules
+ * reach the headings (h1–h6, .section-heading, .block-heading) or the body text (.block-text, p, li, blockquote)
+ * inside it. Each class is written twice, so a rule beats Style › Heading size and Text size (.has-heading-size,
+ * .has-text-size) and the text schemes' colours ([data-text-scheme]), which are also unlayered and come later. Sizes,
+ * line heights and letter spacing are desktop first, as in spacing.css: -t for tablets and phones, -p for phones.
+ */
+
+/* Font, weight and colour */
+.sb-d-hf.sb-d-hf :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-family: var(--sb-hf); }
+.sb-d-tf.sb-d-tf, .sb-d-tf.sb-d-tf :is(.block-text, p, li, blockquote) { font-family: var(--sb-tf); }
+.sb-d-hw.sb-d-hw :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-weight: var(--sb-hw); }
+.sb-d-tw.sb-d-tw :is(.block-text, p, li, blockquote) { font-weight: var(--sb-tw); }
+.sb-d-hc.sb-d-hc :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { color: var(--sb-hc); }
+.sb-d-tc.sb-d-tc, .sb-d-tc.sb-d-tc :is(.block-text, p, li, blockquote) { color: var(--sb-tc); }
+
+/* Size, line height and letter spacing */
+.sb-d-hs.sb-d-hs :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-size: var(--sb-hs); }
+.sb-d-hlh.sb-d-hlh :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { line-height: var(--sb-hlh); }
+.sb-d-hls.sb-d-hls :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { letter-spacing: var(--sb-hls); }
+.sb-d-ts.sb-d-ts :is(.block-text, p, li, blockquote) { font-size: var(--sb-ts); }
+.sb-d-tlh.sb-d-tlh :is(.block-text, p, li, blockquote) { line-height: var(--sb-tlh); }
+.sb-d-tls.sb-d-tls :is(.block-text, p, li, blockquote) { letter-spacing: var(--sb-tls); }
+
+@media (max-width: 63.99rem) {
+    .sb-d-hs-t.sb-d-hs-t :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-size: var(--sb-hs-t); }
+    .sb-d-hlh-t.sb-d-hlh-t :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { line-height: var(--sb-hlh-t); }
+    .sb-d-hls-t.sb-d-hls-t :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { letter-spacing: var(--sb-hls-t); }
+    .sb-d-ts-t.sb-d-ts-t :is(.block-text, p, li, blockquote) { font-size: var(--sb-ts-t); }
+    .sb-d-tlh-t.sb-d-tlh-t :is(.block-text, p, li, blockquote) { line-height: var(--sb-tlh-t); }
+    .sb-d-tls-t.sb-d-tls-t :is(.block-text, p, li, blockquote) { letter-spacing: var(--sb-tls-t); }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-d-hs-p.sb-d-hs-p :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-size: var(--sb-hs-p); }
+    .sb-d-hlh-p.sb-d-hlh-p :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { line-height: var(--sb-hlh-p); }
+    .sb-d-hls-p.sb-d-hls-p :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { letter-spacing: var(--sb-hls-p); }
+    .sb-d-ts-p.sb-d-ts-p :is(.block-text, p, li, blockquote) { font-size: var(--sb-ts-p); }
+    .sb-d-tlh-p.sb-d-tlh-p :is(.block-text, p, li, blockquote) { line-height: var(--sb-tlh-p); }
+    .sb-d-tls-p.sb-d-tls-p :is(.block-text, p, li, blockquote) { letter-spacing: var(--sb-tls-p); }
+}
+
+/* Style, alignment and shadow */
+.sb-d-h-italic.sb-d-h-italic :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-style: italic; }
+.sb-d-h-upper.sb-d-h-upper :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-transform: uppercase; }
+.sb-d-h-underline.sb-d-h-underline :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-decoration-line: underline; }
+.sb-d-h-smallcaps.sb-d-h-smallcaps :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { font-variant-caps: small-caps; }
+.sb-d-h-align-left.sb-d-h-align-left :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-align: left; }
+.sb-d-h-align-center.sb-d-h-align-center :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-align: center; }
+.sb-d-h-align-right.sb-d-h-align-right :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-align: right; }
+.sb-d-h-align-justify.sb-d-h-align-justify :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-align: justify; }
+.sb-d-h-shadow-soft.sb-d-h-shadow-soft :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+.sb-d-h-shadow-medium.sb-d-h-shadow-medium :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-shadow: 0 2px 6px rgb(0 0 0 / 0.35); }
+.sb-d-h-shadow-strong.sb-d-h-shadow-strong :is(h1, h2, h3, h4, h5, h6, .section-heading, .block-heading) { text-shadow: 0 3px 12px rgb(0 0 0 / 0.55); }
+.sb-d-t-italic.sb-d-t-italic :is(.block-text, p, li, blockquote) { font-style: italic; }
+.sb-d-t-upper.sb-d-t-upper :is(.block-text, p, li, blockquote) { text-transform: uppercase; }
+.sb-d-t-underline.sb-d-t-underline :is(.block-text, p, li, blockquote) { text-decoration-line: underline; }
+.sb-d-t-smallcaps.sb-d-t-smallcaps :is(.block-text, p, li, blockquote) { font-variant-caps: small-caps; }
+.sb-d-t-align-left.sb-d-t-align-left :is(.block-text, p, li, blockquote) { text-align: left; }
+.sb-d-t-align-center.sb-d-t-align-center :is(.block-text, p, li, blockquote) { text-align: center; }
+.sb-d-t-align-right.sb-d-t-align-right :is(.block-text, p, li, blockquote) { text-align: right; }
+.sb-d-t-align-justify.sb-d-t-align-justify :is(.block-text, p, li, blockquote) { text-align: justify; }
+.sb-d-t-shadow-soft.sb-d-t-shadow-soft :is(.block-text, p, li, blockquote) { text-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+.sb-d-t-shadow-medium.sb-d-t-shadow-medium :is(.block-text, p, li, blockquote) { text-shadow: 0 2px 6px rgb(0 0 0 / 0.35); }
+.sb-d-t-shadow-strong.sb-d-t-shadow-strong :is(.block-text, p, li, blockquote) { text-shadow: 0 3px 12px rgb(0 0 0 / 0.55); }
+
+/* Links in the text (buttons keep their own style) */
+.sb-d-lc.sb-d-lc a:not(.site-button) { color: var(--sb-lc); }
+.sb-d-lch.sb-d-lch a:not(.site-button):hover { color: var(--sb-lch); }
+.sb-d-lw.sb-d-lw a:not(.site-button) { font-weight: var(--sb-lw); }
+.sb-d-l-underline-always.sb-d-l-underline-always a:not(.site-button) { text-decoration-line: underline; }
+.sb-d-l-underline-hover.sb-d-l-underline-hover a:not(.site-button) { text-decoration-line: none; }
+.sb-d-l-underline-hover.sb-d-l-underline-hover a:not(.site-button):hover { text-decoration-line: underline; }
+.sb-d-l-underline-never.sb-d-l-underline-never a:not(.site-button), .sb-d-l-underline-never.sb-d-l-underline-never a:not(.site-button):hover { text-decoration-line: none; }
+
+/* Design › Lists & quotes: bullet and number style, where they sit, the list indent, and a quote's line. */
+.sb-d-ul ul { list-style-type: var(--sb-ul); }
+.sb-d-ol ol { list-style-type: var(--sb-ol); }
+.sb-d-list-inside :is(ul, ol) { list-style-position: inside; }
+.sb-d-list-outside :is(ul, ol) { list-style-position: outside; }
+.sb-d-li-indent :is(ul, ol) { padding-left: var(--sb-li-indent); }
+.sb-d-quote-bw blockquote { border-left-width: var(--sb-quote-bw); border-left-style: solid; }
+.sb-d-quote-bc blockquote { border-left-color: var(--sb-quote-bc); }

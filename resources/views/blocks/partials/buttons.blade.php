@@ -1,7 +1,8 @@
 {{--
     Block buttons. $buttons: the saved buttons, re-checked here (text and an allowed link, lesson 11);
     $isDark: the background behind them is dark; $align: left / center / right.
-    Classes and colours come from PageBlock::buttonLook().
+    Each takes the block's button look (Style › Buttons, $block['button_design']) unless it has its own
+    (PageBlock::withLook()). Classes and colours come from PageBlock::buttonLook().
 --}}
 @php
     $align ??= 'center';
@@ -15,7 +16,7 @@
         'justify-end' => $align === 'right',
     ])>
         @foreach ($buttons as $button)
-            @php($look = \ScBudgetWeb\SiteBuilder\Blocks\PageBlock::buttonLook($button, $isDark ?? false))
+            @php($look = \ScBudgetWeb\SiteBuilder\Blocks\PageBlock::buttonLook(\ScBudgetWeb\SiteBuilder\Blocks\PageBlock::withLook($button, $block['button_design'] ?? null), $isDark ?? false))
             <a href="{{ $button['url'] }}"
                @if (! empty($button['new_tab'])) target="_blank" rel="noopener" @endif
                class="{{ $look['class'] }}"

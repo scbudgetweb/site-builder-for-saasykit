@@ -23,6 +23,13 @@ class LogoStripBlock extends PageBlock
         'carousel' => 'Carousel (arrows and swipe)',
     ];
 
+    /** Where a still row of logos lines up. */
+    public const ALIGNMENTS = [
+        'left' => 'Left',
+        'center' => 'Centre',
+        'right' => 'Right',
+    ];
+
     /** Logo size => [label, image classes, carousel slide width]. */
     public const SIZES = [
         'small' => ['Small', 'h-8 max-w-28', 'w-32'],
@@ -75,6 +82,11 @@ class LogoStripBlock extends PageBlock
         ];
     }
 
+    protected static function styleToggleTitle(): string
+    {
+        return __('Logos');
+    }
+
     protected static function styleFields(): array
     {
         return [
@@ -99,6 +111,12 @@ class LogoStripBlock extends PageBlock
                     ->options(array_map(fn (array $size): string => __($size[0]), self::SIZES))
                     ->default('medium')
                     ->selectablePlaceholder(false),
+                Select::make('align')
+                    ->label(__('Line up the logos'))
+                    ->options(array_map(fn (string $label): string => __($label), self::ALIGNMENTS))
+                    ->default('center')
+                    ->selectablePlaceholder(false)
+                    ->visible(fn (Get $get): bool => ($get('display') ?? 'row') === 'row'),
                 Select::make('speed')
                     ->label(__('Speed'))
                     ->options(array_map(fn (array $speed): string => __($speed[0]), self::SPEEDS))
@@ -122,6 +140,7 @@ class LogoStripBlock extends PageBlock
 
         return [
             'display' => $display,
+            'alignClass' => ['left' => 'justify-start', 'center' => 'justify-center', 'right' => 'justify-end'][static::pick($data['align'] ?? null, self::ALIGNMENTS, 'center')],
             'imageClass' => $size[1],
             'slideWidth' => $size[2],
             'secondsPerLogo' => self::SPEEDS[static::pick($data['speed'] ?? null, self::SPEEDS, 'normal')][1],

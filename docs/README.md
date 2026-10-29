@@ -10,6 +10,8 @@ Everything is in the admin panel under **Website**:
 | [Revisions](revisions.md) | Earlier versions of a page: previewing and restoring them |
 | [Block library](block-library.md) | Saving a block or section once and reusing it on many pages |
 | [Navigation](navigation.md) | The header links, dropdowns and mega menus, the mobile menu and the footer |
+| [Mailing lists](mailing-lists.md) | Connecting Brevo, the sign-up block, double opt-in and the form's Branding |
+| [Theme builder](theme-builder.md) | Building your own header and footer from blocks, and where each is shown |
 | [Branding](branding.md) | Logos, colours, fonts, buttons, corners and shadows, the header, footer and banners |
 | [Legal pages](legal-pages.md) | Your Privacy Policy and Terms of Service |
 

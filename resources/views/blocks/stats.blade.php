@@ -10,7 +10,7 @@
 ])>
     @foreach ($items as $item)
         @php($number = $item['number'] ?? 0)
-        <div>
+        <div class="sb-item">
             @if (($icon = \ScBudgetWeb\SiteBuilder\Support\IconLibrary::render($item['icon'] ?? null, 'h-8 w-8'))->toHtml() !== '')
                 <span class="mb-3 inline-flex text-primary-600" @if ($isDark) style="color: inherit" @endif>{{ $icon }}</span>
             @endif

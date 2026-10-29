@@ -1,0 +1,139 @@
+/*
+ * Style › Borders & corners, Hover and Pattern & shape (Design\BordersBackgrounds), and the background image's size,
+ * position, repeat and "stay still" (BlockAppearance::imageLook()). Every rule needs its class, which is only added
+ * when its value is set, so blocks without these settings look as before.
+ *
+ * The border, hover and layer rules sit on the box: the panel, or the section without one. A border chosen under More
+ * options › Border is an inline style, so it keeps its line and colour, and the widths here (!important) replace its
+ * width; without one, .sb-d-bw draws a solid line in --sb-bc.
+ */
+
+/* Border width per side. */
+.sb-d-bw {
+    border-width: 0;
+    border-style: var(--sb-bs, solid);
+    border-color: var(--sb-bc, color-mix(in oklab, currentColor 20%, transparent));
+}
+.sb-d-bwt { border-top-width: var(--sb-bwt) !important; }
+.sb-d-bwr { border-right-width: var(--sb-bwr) !important; }
+.sb-d-bwb { border-bottom-width: var(--sb-bwb) !important; }
+.sb-d-bwl { border-left-width: var(--sb-bwl) !important; }
+
+/* A colour for one side. */
+.sb-d-bct { border-top-color: var(--sb-bct) !important; }
+.sb-d-bcr { border-right-color: var(--sb-bcr) !important; }
+.sb-d-bcb { border-bottom-color: var(--sb-bcb) !important; }
+.sb-d-bcl { border-left-color: var(--sb-bcl) !important; }
+
+/* Corner radius per corner; the background image's layer follows it (rounded-[inherit]). */
+.sb-d-rtl { border-top-left-radius: var(--sb-rtl); }
+.sb-d-rtr { border-top-right-radius: var(--sb-rtr); }
+.sb-d-rbr { border-bottom-right-radius: var(--sb-rbr); }
+.sb-d-rbl { border-bottom-left-radius: var(--sb-rbl); }
+
+/* Hover colours, faded in. Buttons keep their own colours. */
+.sb-d-hover { transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease; }
+.sb-d-hbg:hover { background: var(--sb-hbg) !important; }
+.sb-d-htx:hover,
+.sb-d-htx:hover :where(:not(.site-button, .site-button *)) { color: var(--sb-htx) !important; }
+.sb-d-hbc:hover { border-color: var(--sb-hbc) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-d-hover { transition: none; }
+}
+
+/*
+ * Pattern (::after) and shape (::before): layers over the background and its image, behind the content, which is
+ * lifted above them. No isolation, so dropdowns still hang over the next block (lesson 8).
+ */
+.sb-d-layers::before,
+.sb-d-layers::after {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    border-radius: inherit;
+    pointer-events: none;
+}
+.sb-d-layers > :not([aria-hidden="true"]) {
+    position: relative;
+    z-index: 2;
+}
+
+[class*="sb-d-pattern-"]::after {
+    content: "";
+    color: var(--sb-pattern-color, currentColor);
+    opacity: var(--sb-pattern-opacity, 0.15);
+    background-size: var(--sb-pattern-size, 24px) var(--sb-pattern-size, 24px);
+}
+.sb-d-pattern-dots::after { background-image: radial-gradient(currentColor 15%, transparent 16%); }
+.sb-d-pattern-grid::after {
+    background-image: linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px);
+}
+.sb-d-pattern-lines::after {
+    background-size: auto;
+    background-image: repeating-linear-gradient(45deg, currentColor 0 1px, transparent 1px var(--sb-pattern-size, 16px));
+}
+.sb-d-pattern-stripes::after {
+    background-size: auto;
+    background-image: repeating-linear-gradient(0deg, currentColor 0 calc(var(--sb-pattern-size, 24px) / 2), transparent calc(var(--sb-pattern-size, 24px) / 2) var(--sb-pattern-size, 24px));
+}
+.sb-d-pattern-checks::after { background-image: conic-gradient(currentColor 25%, transparent 0 50%, currentColor 0 75%, transparent 0); }
+.sb-d-pattern-waves::after {
+    background-size: var(--sb-pattern-size, 24px) calc(var(--sb-pattern-size, 24px) / 2);
+    background-image: radial-gradient(circle at 50% 100%, transparent 45%, currentColor 46% 54%, transparent 55%);
+}
+
+[class*="sb-d-shape-"]::before {
+    content: "";
+    background-color: var(--sb-shape-color, currentColor);
+    opacity: var(--sb-shape-opacity, 0.2);
+}
+.sb-d-shape-blob::before { clip-path: ellipse(35% 45% at 100% 0%); }
+.sb-d-shape-arc::before { clip-path: ellipse(70% 25% at 50% 100%); }
+.sb-d-shape-slant::before { clip-path: polygon(0 80%, 100% 55%, 100% 100%, 0 100%); }
+.sb-d-shape-circle::before { clip-path: circle(28% at 88% 50%); }
+.sb-d-shape-triangle::before { clip-path: polygon(0 100%, 0 45%, 40% 100%); }
+
+/*
+ * The background image (BlockAppearance::imageLook()), on the element holding its layer: the layer is its
+ * [aria-hidden] child, holding the <img> and the overlay. Size and position move the <img>; repeating, actual size
+ * and "stay still" need a CSS background, so the layer draws --sb-bg-image and the <img> is hidden.
+ */
+.sb-bg-size-contain > [aria-hidden="true"] > img { object-fit: contain; }
+.sb-bg-size-auto > [aria-hidden="true"] > img { object-fit: none; }
+
+.sb-bg-pos-top > [aria-hidden="true"] > img { object-position: top; }
+.sb-bg-pos-bottom > [aria-hidden="true"] > img { object-position: bottom; }
+.sb-bg-pos-left > [aria-hidden="true"] > img { object-position: left; }
+.sb-bg-pos-right > [aria-hidden="true"] > img { object-position: right; }
+.sb-bg-pos-top-left > [aria-hidden="true"] > img { object-position: top left; }
+.sb-bg-pos-top-right > [aria-hidden="true"] > img { object-position: top right; }
+.sb-bg-pos-bottom-left > [aria-hidden="true"] > img { object-position: bottom left; }
+.sb-bg-pos-bottom-right > [aria-hidden="true"] > img { object-position: bottom right; }
+
+.sb-bg-css > [aria-hidden="true"] > img { display: none; }
+.sb-bg-css > [aria-hidden="true"] {
+    background-image: var(--sb-bg-image);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.sb-bg-css.sb-bg-size-contain > [aria-hidden="true"] { background-size: contain; }
+.sb-bg-css.sb-bg-size-auto > [aria-hidden="true"] { background-size: auto; }
+.sb-bg-css.sb-bg-pos-top > [aria-hidden="true"] { background-position: top; }
+.sb-bg-css.sb-bg-pos-bottom > [aria-hidden="true"] { background-position: bottom; }
+.sb-bg-css.sb-bg-pos-left > [aria-hidden="true"] { background-position: left; }
+.sb-bg-css.sb-bg-pos-right > [aria-hidden="true"] { background-position: right; }
+.sb-bg-css.sb-bg-pos-top-left > [aria-hidden="true"] { background-position: top left; }
+.sb-bg-css.sb-bg-pos-top-right > [aria-hidden="true"] { background-position: top right; }
+.sb-bg-css.sb-bg-pos-bottom-left > [aria-hidden="true"] { background-position: bottom left; }
+.sb-bg-css.sb-bg-pos-bottom-right > [aria-hidden="true"] { background-position: bottom right; }
+.sb-bg-css.sb-bg-repeat > [aria-hidden="true"] { background-repeat: repeat; }
+.sb-bg-css.sb-bg-repeat-x > [aria-hidden="true"] { background-repeat: repeat-x; }
+.sb-bg-css.sb-bg-repeat-y > [aria-hidden="true"] { background-repeat: repeat-y; }
+.sb-bg-css.sb-bg-fixed > [aria-hidden="true"] { background-attachment: fixed; }
+
+/* Fixed backgrounds jump or don't work on touch screens, and move for visitors who prefer less motion: scroll there. */
+@media (hover: none), (prefers-reduced-motion: reduce) {
+    .sb-bg-css.sb-bg-fixed > [aria-hidden="true"] { background-attachment: scroll; }
+}

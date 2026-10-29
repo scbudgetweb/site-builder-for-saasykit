@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -163,8 +164,8 @@ class PageService
     }
 
     /**
-     * Whether a page (including one in the bin), a library block or a kept revision uses the upload, leaving out the
-     * page or library block being changed.
+     * Whether a page (including one in the bin), a library block, a kept revision or a visual builder draft uses the
+     * upload, leaving out the page or library block being changed.
      */
     public function isUploadInUse(string $path, ?Page $exceptPage = null, ?SavedBlock $exceptSavedBlock = null): bool
     {
@@ -181,7 +182,13 @@ class PageService
                 ->when($exceptSavedBlock, fn ($query) => $query->whereKeyNot($exceptSavedBlock->getKey()))
                 ->where('blocks', 'like', $pattern)
                 ->exists()
-            || PageRevision::query()->where('snapshot', 'like', $pattern)->exists();
+            || PageRevision::query()->where('snapshot', 'like', $pattern)->exists()
+            // A visual builder draft, including what its undo and redo could bring back.
+            || PageDraft::query()->where(fn ($query) => $query
+                ->where('blocks', 'like', $pattern)
+                ->orWhere('history', 'like', $pattern)
+                ->orWhere('future', 'like', $pattern))
+                ->exists();
     }
 
     /**

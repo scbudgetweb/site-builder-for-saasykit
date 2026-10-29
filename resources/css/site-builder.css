@@ -9,6 +9,29 @@
  */
 
 /*
+ * Blocks' design options (BlockDesign), one file per group. Their rules only apply to a block that sets a value.
+ */
+@import './design/typography.css';
+@import './design/spacing.css';
+@import './design/borders-backgrounds.css';
+@import './design/effects.css';
+@import './design/position.css';
+@import './design/dividers.css';
+@import './design/motion.css';
+@import './design/hover.css';
+
+/* Content › Link: a link over the whole block, under the block's own links and buttons. */
+.sb-block-link { position: absolute; inset: 0; z-index: 1; }
+.sb-has-link :is(a, button, input, select, textarea, summary, label):not(.sb-block-link) { position: relative; z-index: 2; }
+
+/*
+ * A Section's row or column with a background image or a link (section view): a layer of its own, so the image sits
+ * over its background colour but behind its blocks. :where() keeps it below a Position design option.
+ */
+:where(.sb-node-layered) { position: relative; isolation: isolate; }
+.sb-node-layered > [aria-hidden="true"] { z-index: -1; }
+
+/*
  * Header, footer and page text colour tokens. Used by the theme's header, footer and blocks as utilities
  * such as bg-sb-header-bg and text-sb-footer-link.
  */
@@ -188,6 +211,33 @@
     .text-white .section-heading::before, .text-white .section-heading::after {
         background-color: var(--heading-decoration-color-dark, currentColor);
     }
+
+    /* A block's small heading (eyebrow) above its heading: small capitals in the site colour, or a pill. */
+    .sb-eyebrow {
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--sb-eyebrow-color, var(--color-primary-600));
+    }
+
+    .sb-eyebrow-pill {
+        display: inline-block;
+        margin-bottom: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        background-color: var(--sb-eyebrow-bg, color-mix(in oklab, var(--color-primary-500) 12%, transparent));
+    }
+
+    .text-white .sb-eyebrow {
+        color: var(--sb-eyebrow-color-dark, var(--color-primary-100));
+    }
+
+    .text-white .sb-eyebrow-pill {
+        background-color: var(--sb-eyebrow-bg-dark, rgb(255 255 255 / 0.15));
+    }
 }
 
 /*
@@ -239,6 +289,17 @@
             padding-left: 1.5em;
         }
 
+        /* Centred text: bullets and numbers sit with their line, not at the far left. */
+        &.text-center ul, &.text-center ol, .text-center & ul, .text-center & ol {
+            list-style-position: inside;
+            padding-left: 0;
+        }
+
+        /* The editor wraps each item's text in a paragraph; inline, it stays on the bullet's line. */
+        &.text-center li > p, .text-center & li > p {
+            display: inline;
+        }
+
         & ol {
             list-style: decimal;
             padding-left: 1.5em;
@@ -252,6 +313,37 @@
             border-left: 4px solid color-mix(in oklab, currentColor 25%, transparent);
             padding-left: 1em;
             font-style: italic;
+        }
+
+        /* Code: inline, and blocks such as a terminal command. Shown as text, never run. */
+        & code {
+            padding: 0.125em 0.375em;
+            border-radius: 0.375rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.9em;
+            background-color: color-mix(in oklab, currentColor 8%, transparent);
+        }
+
+        & pre {
+            overflow-x: auto;
+            padding: 1em 1.25em;
+            border-radius: var(--radius-sb-card, 0.75rem);
+            border: 1px solid color-mix(in oklab, currentColor 15%, transparent);
+            background-color: color-mix(in oklab, currentColor 6%, transparent);
+            text-align: start;
+
+            & code {
+                padding: 0;
+                background: none;
+                font-size: 0.9em;
+            }
+        }
+
+        /* A centred code block sits in the middle at its own width, e.g. one command. */
+        &.text-center pre, .text-center & pre, & pre[style*="center"] {
+            width: fit-content;
+            max-width: 100%;
+            margin-inline: auto;
         }
 
         & hr {

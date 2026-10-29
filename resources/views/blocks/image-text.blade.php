@@ -35,6 +35,7 @@
             </div>
         @endif
 
+        @include('site-builder::blocks.partials.eyebrow')
         @if (filled($block['heading'] ?? null))
             <h2 class="sb-h2 section-heading">{{ $block['heading'] }}</h2>
         @endif

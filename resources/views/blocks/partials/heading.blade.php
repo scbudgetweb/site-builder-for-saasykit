@@ -3,8 +3,9 @@
     Layout › Heading alignment ($headingAlign) wins when set.
 --}}
 @php($align = in_array($headingAlign ?? null, ['left', 'center'], true) ? $headingAlign : ($align ?? 'center'))
-@if (filled($block['heading'] ?? null) || filled($block['intro'] ?? null))
+@if (filled($block['heading'] ?? null) || filled($block['intro'] ?? null) || filled($block['eyebrow'] ?? null))
     <div @class(['mb-8 sm:mb-10 max-w-3xl', 'mx-auto text-center' => $align === 'center'])>
+        @include('site-builder::blocks.partials.eyebrow')
         @if (filled($block['heading'] ?? null))
             <h2 class="sb-h2 section-heading">{{ $block['heading'] }}</h2>
         @endif

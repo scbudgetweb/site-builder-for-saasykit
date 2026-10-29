@@ -17,6 +17,27 @@ A page can also be shown **in place of** a built-in page, such as the home page.
 
 **Preview**, at the top of the editor, shows the page as visitors will see it, including drafts. The preview link works for an hour, and only for people who have it.
 
+## The visual builder
+
+Clicking a page in the list opens the **visual builder**: the page as visitors see it, full screen, at **Phone**, **Tablet** or **Desktop** width.
+
+- **Point at a block** to outline it, and **click** it to open its settings. They appear in a floating panel that you can drag by its title and resize from its corner, and it opens where you left it.
+- **The page updates as you edit**, before you save. *Cancel* puts it back. A newly uploaded image shows once you save.
+- **Your changes are saved as you go** into your own draft, and visitors see nothing until you press **Publish** (**Save** for a page that's still a draft). **Discard changes** goes back to the page as it is. If someone else saves the page while you're working, Publish asks before replacing their changes.
+- **Add blocks** with the round **+** at the top and bottom of the block you're pointing at, or **Add a block above / below** in its right-click menu. Choose the block, and its settings open. Inside a Section's column, only blocks that fit in one are offered. Click an empty column, or an empty page, to add the first block there.
+- **Move things** by dragging: point at a block and drag its **Move** handle, or a row's **Row** handle. A blue line shows where it'll land: above or below a block, or into a column (a row: into a Section). The page scrolls when you drag near its top or bottom. Or use the right-click menu: **Move up / down** and **Move to the column on the left / right**.
+- **The right-click menu** also has **Duplicate** and **Delete** (no question asked: Ctrl+Z puts it back). Inside a Section, it has **Row settings** (layout, line-up, row style), **Add a row below**, **Duplicate row**, **Move row up / down**, **Delete row**, and **Column … settings** (background, line-up, space, border). On a Section itself: **Add a row**.
+- A block with nothing to show yet (just added, say) shows as a dashed box on the canvas, so you can click it and fill it in. Visitors never see it.
+- **Undo and redo** with the arrows in the toolbar, or **Ctrl+Z** and **Ctrl+Y** (**⌘Z** and **⇧⌘Z** on a Mac). The last 30 changes are kept, until you publish or discard. While you're typing in a panel, those keys undo your typing instead.
+- **Revisions** (the clock in the toolbar) lists each saved version, with Preview and Restore. Restore puts that version's blocks into your draft, so you can check it before publishing, and undo takes it back. Its title and search settings are restored in *Edit as a form*.
+- **Right-click a block** for its menu:
+  - **Copy style** copies all of its style, or one part: background, spacing & size, heading text, body text, links, borders, buttons or effects.
+  - **Paste style** puts it on another block (on this page or another), replacing that part of its style. Its content stays as it is.
+  - **Give all … blocks this style** copies this block's style, or one part of it, to every other block of the same type on the page, including those in Sections. Handy after restyling one heading.
+
+  Each paste is one change, so Ctrl+Z (⌘Z) takes it back. "All styles" includes a block's own settings (such as its cards' look) only between blocks of the same type. A linked library block is styled in the block library.
+- **Edit as a form** opens the same page in the form editor below, where the page's settings (address, status, search and sharing) are. Your draft stays in the visual builder until you publish or discard it.
+
 ## The editor
 
 ### Content tab
@@ -67,9 +88,9 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | Block | Use it for |
 |---|---|
 | **Section (rows of blocks)** | One styled area holding **rows** of blocks, each row stacked or in columns. See [Sections and rows](#sections-and-rows) |
-| **Hero** | The big opening banner of a landing page, taller than a Banner, with a larger heading |
+| **Hero** | The big opening banner of a landing page, taller than a Banner, with a larger heading. Its **Social proof** toggle adds up to five overlapping faces, a star rating and a line such as *Join 900+ happy customers*, and its **Image** toggle shows a picture (e.g. a screenshot) under the text. A Banner has the same |
 | **Banner** | A full-width banner with an optional small label, a heading, a subtitle and up to two buttons. Its background can match the site's banners or use your own image with an overlay of one colour or a gradient |
-| **Text** | Formatted text: headings, lists, links, quotes and tables, with up to two buttons above or below it |
+| **Text** | Formatted text: headings, lists, links, quotes, tables, inline code and code blocks, aligned left, centre or right, with up to two buttons above or below it |
 | **Image + text** | A heading, text and buttons with an image on the left or right (side by side on larger screens), or above or below them. The image is optional |
 | **Image** | One image with a caption, an optional link, and up to two buttons |
 | **Features** | A grid of features or benefits, each with an [icon](#icons), title, text and link |
@@ -78,10 +99,10 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | **Stats** | Big numbers with labels. Type your own, or show live figures from the app. They can count up as visitors scroll to them |
 | **Call to action** | A heading, a line of text and buttons |
 | **Buttons** | One to three buttons |
-| **Testimonials** | Quotes with the person's name, role and photo |
+| **Testimonials** | Quotes with the person's name, role, photo and an optional star rating, in 1 to 4 columns |
 | **Team** | People with a photo, role, short bio and links |
 | **FAQ** | Questions that open to show their answers. Search engines are told the page has FAQs |
-| **Tabs** | Content split into tabs |
+| **Tabs** | Content split into tabs, each with an optional image under its text |
 | **Saved block (library)** | A block or section from the [block library](block-library.md), linked so it updates whenever the library block changes |
 
 ### Media
@@ -90,15 +111,34 @@ Some built-in pages need a particular block to keep working. If yours is missing
 |---|---|
 | **Gallery** | A grid of images that open larger when clicked |
 | **Video** | A YouTube, Vimeo or Adilo video. See [Videos and privacy](#videos-and-privacy) |
-| **Logo strip** | Partner or sponsor logos: a still row, a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
+| **Logo strip** | Partner or sponsor logos: a still row (lined up left, centre or right), a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
 | **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |
 | **Divider / spacer** | A line (with an optional label) or empty space between blocks |
 
 Your app may add blocks of its own. They appear at the end of the block picker.
 
+## The block library in the visual builder
+
+A block library item opens in the visual builder too: **Visual builder** on its row in the library, or at the top of its form. It shows on its own, in the site's look, and works like a page's, except:
+
+- an item is one block (often a Section), so you add and move blocks inside it, not around it;
+- **Save** replaces Publish, and says first how many pages use the item: they all change when you save;
+- there are no revisions.
+
 ## Sections and rows
 
 A **Section** is one styled area, such as a grey band or a coloured panel, holding one or more **rows** of blocks.
+
+**In the visual builder, each part has its own panel.** One is open at a time: opening another from the canvas saves the open one first (Undo takes it back).
+
+- **Click a Section** to open its own settings (background, spacing, design options). Its rows are edited on the canvas.
+- **A row:** hover over it and click **⚙** beside its *Row* handle, or right-click › Row settings. Its panel has the **Column structure**, a list of its **Columns**, and a **Background** (colour or gradient, and text colour), plus every design option.
+- **A column:** click it in its row's Columns list (the row is saved first), or right-click › Column settings. A one-column row has one column, with its own settings too. Its panel has a back arrow to the row.
+- **A block:** click it.
+- **Rows and columns have a block's settings:** Background (colour, gradient or image, with an overlay), Link (the whole row or column clickable; its own buttons and links still work), Admin label, and on Advanced, CSS ID & classes. Each panel shows only what suits it: text settings (fonts, sizes, colours, heading decoration) are on blocks only; Dividers are on Sections only; and a column has no Sizing or margin, only padding, as it fills its share of the row.
+- A row's background colours its text too, unless a column has its own.
+
+**In Edit as a form**, the Section holds its rows in the form itself:
 
 - **Each row has its own layout**, grouped in the list by how many columns it has: one column (blocks one under another), two to five equal columns, or uneven columns, such as *Narrow left, wide right (⅓ + ⅔)*, ¼ + ¾, 40% + 60%, or *Wide middle, thin sides (¼ + ½ + ¼)*. Columns sit side by side on tablets and computers, and stack on phones.
 - **Each column holds its own blocks**, one under another. The row shows a box per column (*Column 1*, *Column 2*…), each with its own **Add block to column…** button. For example, put two Text blocks and an Image in column 1 and one large Image in column 2.
@@ -108,52 +148,69 @@ A **Section** is one styled area, such as a grey band or a coloured panel, holdi
 - **Space between columns** sets this row's own gap, from *None* (columns touch, e.g. two coloured halves) to *Large*. *Same as the section* uses the section's setting.
 - **Last column first on phones** shows the row's last column on top on phones, for example so an image on the right appears above its text.
 - **Column settings** (collapsed in each column) give that column its own background (a preset, a custom colour or a gradient), text colour and vertical alignment (*Line up at the*). Its **More options** add space inside, rounded corners, a border and a shadow. A column with a background, border or shadow gets some space inside automatically, and a dark background makes the column's text light. Column settings apply when the row has columns side by side; a stacked row ignores them.
-- **Row style** (collapsed under each row) adds a border, shadow, rounded corners and space inside around just that row.
+- **Colours show where you are**, in both builders: Sections are blue, rows green, columns purple and blocks grey, along the top of their cards and panels and on the canvas outlines.
+- **Each row and column has a ⚙** (next to its move and delete buttons) that opens its settings: the same Row and Column settings panels as the visual builder, with Background, Link, Admin label, CSS ID & classes and the Design tab. The row's layout stays in the form.
 - **Add row** adds another row; rows can be reordered, copied and collapsed. Each row is numbered (*Row 1 · Two equal columns: Text | Image*), and a block's panel is titled with where it is, e.g. *Section › Row 1 › Column 2 › Text*.
-- The section's **Layout** tab sets the space between rows and columns.
+- The section's **Design › Layout** toggle sets the space between rows and columns.
 
 Blocks inside a section take its text colour and heading decoration, unless you give them their own. Sections can't contain a Hero, a Banner or another Section.
 
 ## Block settings
 
-Each block's panel is split into tabs, always in this order:
+Each block's panel has three tabs, **Content**, **Design** and **Advanced** (a Section's first tab is **Rows**). Each tab is a list of **toggles**, groups of settings that open with a click. Only the block's own content starts open.
 
-| Tab | What's in it |
+| Tab | Toggles, in order |
 |---|---|
-| **Content** (**Rows** for a section) | The words, images, items and buttons |
-| **Layout** | How it sits on the page: columns or alignment, content width, space above and below, heading alignment, and the background area (full width or a panel) |
-| **Style** | How it looks: the block's own look (for example its cards or images), its background and text colour, heading decoration and sizes, and its border and shadow |
-| **Advanced** | Anchor ID and CSS classes |
+| **Content** | The block's content (words, images, items and buttons) · **Link** · **Background** · **Admin label** |
+| **Design** | The block's own settings (**Layout**, then its look, such as **Image** or **Cards**) · **Text** · **Heading text**, **Body text**, **Link text** · **Lists & quotes** · **Dividers** · **Buttons** · **Sizing** · **Spacing** · **Border** · **Box shadow** · **Filters** · **Transform** · **Animation** |
+| **Advanced** | **CSS ID & classes** · **Conditions** · **Visibility** · **Transitions** · **Position** · **Scroll effects** |
 
-Only settings that do something for that block are shown. For example, heading settings don't appear on a Text block, and a Divider has nothing to style. Settings most pages don't need (border and shadow, and the background panel) are under a collapsed **More options**. A **?** beside a setting explains it when you hover over it, and every button on a block card has a tooltip.
+Only settings that do something for that block are shown. For example, heading settings don't appear on a Text block, and a Banner has no Sizing. A **?** beside a setting explains it when you hover over it, and every button on a block card has a tooltip.
 
-### Layout
+At the top of the panel:
+
+- **Search options** finds a setting by name on every tab, and opens the toggles that have it.
+- **Desktop, Tablet, Phone and Hover** choose which values the panel edits. In **Hover**, every setting that can change while the block is pointed at shows its hover value: sizes and spacing, corners and border widths, colours (text, headings, background, border), the shadow, transform (scale, lift, rotate, move), filters and opacity. Settings that can't change on hover are dimmed. Size fields also have their own Desktop, Tablet, Phone and Hover buttons, and a dot marks the ones with a value. Under **Transform**, *Hover changes* applies them to the whole block or to each item (the card, feature or testimonial being pointed at).
+- **Preset** picks a saved style for this kind of block. A preset fills in every style setting the block leaves as it is, so the block's own settings always win, and changing a preset changes every block using it. A block with no choice uses the type's **default preset**, or pick *No preset*. People with the presets permission (*update settings* by default) can **Save as preset** (the block's style moves into the new preset), **Update preset** from this block, **Make default** and **Delete preset**. Content is never part of a preset.
+- **Dynamic content** (the `{x}` button) puts a tag into the text setting you last clicked: `{{ page_title }}`, `{{ site_name }}`, `{{ current_date }}`, `{{ current_year }}` and `{{ user_name }}` (the signed-in visitor's name). Add a fallback for when there's no value: `{{ user_name | there }}`. Rich text has its own tags button, or type `{{`. Blocks with tags that change by visitor, time or page are drawn on each visit; the rest of the page stays cached.
+- **Colours** can be see-through (drag the picker's transparency slider) or one of the **global colours** from Branding › Brand › Colours, shown as swatches under the picker.
+- **Show only modified settings** (the funnel) hides the toggles you haven't changed. A toggle with changes has a dot by its name, and a **Reset** button that puts just that toggle back to its defaults.
+- In the visual builder, **Snap to the left** and **Snap to the right** move the floating panel to the edge of the window, and **Expand** makes it almost full screen. Click Expand again to shrink it.
+
+Row and column settings in the visual builder use the same layout: a row's **Column structure** on Content, a column's Background on Content, and on Design and Advanced the same design options a block has (fonts, sizing, spacing, borders, filters, transform, dividers, position…), applied to just that row or column.
+
+### Content › Background and Admin label
 
 | Setting | Choices |
 |---|---|
-| **Content width** | Narrow (for reading), Contained, Wide or Full width |
-| **Space above and below** | None, Small, Medium or Large |
-| **Heading alignment** | The block's usual alignment, Left or Centre |
-| **Background area** (More options) | *Full width*, or *Behind the content, as a panel*: a box with its own corners, which can **overlap the block above** |
-
-### Style
-
-| Setting | Choices |
-|---|---|
-| **Background** | None, Light grey, Site colour (light tint, normal or dark), Dark, a custom colour, a gradient of two or three colours, or an image with a one-colour or gradient overlay |
+| **Background** | None, Light grey, Site colour (light tint, normal or dark), Dark, a custom colour, a gradient of two or three colours (straight, round or a sweep around a point), or an image with a one-colour or gradient overlay. For a gradient: straight or round. For an image: its size, which part stays in view, repeating, and *Stay still* |
 | **Text colour** | Automatic (from the background), Dark or Light |
-| **Heading decoration** | Site style (from Branding), None, a short bar under the heading, a full-width line under it, or a short bar above it |
-| **Heading size** / **Text size** | From Small to Huge, or Standard |
-| **Border & shadow** (More options) | See below |
+| **Background area** | *Full width*, or *Behind the content, as a panel*: a box with its own corners, border and shadow |
+| **Pattern & shape** | A pattern over the background (dots, grid, lines, stripes, checks or waves) and a decorative shape (blob, arc, slant, circle or triangle), each with a colour and strength |
+| **Link** | Link the whole block to a page, a part of a page or a web address, optionally in a new tab. Its own buttons and links still go to theirs |
+| **Admin label** | Your own name for the block in the builder. Visitors never see it |
 
-#### Borders and shadows
+### Design
 
-The same border and shadow settings appear on blocks, section rows, images, cards and buttons:
+| Toggle | Settings |
+|---|---|
+| **Text** | Heading alignment, heading decoration (site style, none, a short bar under the heading, a full-width line under it, or a short bar above it), heading size and text size |
+| **Heading text**, **Body text** | Font (any Branding font), weight, italic, capitals, underline, small capitals, size, line height, letter spacing, alignment, colour and a text shadow |
+| **Link text** | Colour, colour when pointed at, weight, and underline (always, when pointed at, or never). Buttons keep their own style |
+| **Buttons** | The look of all the block's buttons (see [Buttons](#buttons)) |
+| **Lists & quotes** | Bullets (dots, circles, squares or none), numbers (1, 01, a, A, i, I or none), whether they sit inside or outside the text, the list indent, and a quote's line width and colour |
+| **Dividers** | A shape along the top or bottom edge (slant, curve, wave, layered waves, triangle, arrow, mountains or zigzag), with its colour (usually the next block's), height, how often it repeats, flipped, and in front of or behind the content |
+| **Sizing** | Content width (narrow, contained, wide or full width), an exact width, max width and how the content lines up, height, min and max height (100 vh fills the screen) and where the content sits in it |
+| **Spacing** | Space above and below, **overlap the block above** (from Small to Huge, e.g. a screenshot over a banner), and exact space inside (padding) and outside (margin) for each side, in px, rem or %. Margin can be below 0, so blocks overlap |
+| **Border** | A border line (none, solid, dashed, dotted, double, groove, ridge, inset or outset), width, colour and sides; a width and a colour for each side; and a rounded size for each corner |
+| **Box shadow** | None, *Site style* (from Branding), Soft, Medium, Strong, Inner soft, Inner strong, or **Custom**: how far it falls across and down, the blur, the spread, the colour, its strength, and inside or outside |
+| **Filters** | For the pictures in the block: greyscale, brightness, contrast, saturation, blur, opacity, hue shift, invert and sepia, optionally back to full colour on hover; and how the whole block blends with what's behind it (multiply, screen, overlay…) |
+| **Transform** | Scale across and down, rotate, skew, move across and down (each move can differ on tablets and phones), and the point it transforms from |
+| **Animation** | The whole block, or **each item** one after another (its cards, features, testimonials, steps…). An entrance animation as the block comes into view (once it's a fifth of the way up the window) (fade, slide up, down, left or right, zoom, bounce, flip, fold or roll), its speed or exact duration, a delay (e.g. to bring cards in one after another), intensity, starting opacity, speed curve, and repeat for ever. None for visitors who prefer less motion |
 
-- **Border:** none, solid, dashed, dotted or double, with a **width** in pixels, a **colour** (blank gives a soft line in the text colour) and which **sides** (all, top, bottom, top and bottom, left, right, or left and right).
-- **Shadow:** none, *Site style* (from Branding), Soft, Medium, Strong, or **Custom**, where you set how far it falls across and down, the blur, the spread, the colour and its strength.
+On a block, the border and shadow go round its panel when it has one, and round the whole block otherwise. *Automatic* gives a panel the site's shadow and leaves other blocks without one. Images (in Image, Image + text, Image cards and Gallery) have their own corners, border and shadow in their **Image** toggle. Cards have a border line and width as well as their colours. Buttons with custom colours can have a border line and width, and any button can have a shadow.
 
-On a block, the border and shadow go round its panel when it has one, and round the whole block otherwise. *Automatic* gives a panel the site's shadow and leaves other blocks without one. Images (in Image, Image + text, Image cards and Gallery) have their own corners, border and shadow on the Style tab. Cards have a border line and width as well as their colours. Buttons with custom colours can have a border line and width, and any button can have a shadow.
+**Different on tablets and phones.** Sizes and spacing can have their own value on each screen size. Use the desktop, tablet and phone buttons beside the setting; in the visual builder they follow the Phone, Tablet and Desktop tabs. A dot marks a screen size with its own value, and an empty one shows the value it uses. A desktop value applies on every screen unless tablets have their own; a tablet value also applies on phones unless phones have their own.
 
 ### Advanced
 
@@ -161,12 +218,23 @@ On a block, the border and shadow go round its panel when it has one, and round 
 |---|---|
 | **Anchor ID** | A name for linking straight to the block, for example `pricing` for `/about-us#pricing` |
 | **CSS classes** | Extra classes for a developer's custom CSS (Branding › Custom CSS). `fixed` and `sticky` aren't allowed, so a block can't pin itself over the page |
+| **Visibility** | Hide on phones, tablets or desktops (in the visual builder a hidden block still shows, faded, so you can select it), and what happens to content wider or taller than the block (visible, hidden or scrolling) |
+| **Conditions** | Show the block only when the visitor is signed in or out, has a role, between dates, on days of the week, between times of day, when the web address has a parameter (e.g. `?utm_source=newsletter`), or when they have a cookie. All or any of them. The page is still cached; the block is checked on every visit. In the visual builder it always shows |
+| **Transitions** | How long hover changes take, a delay, and the speed curve |
+| **Position** | *Relative* (nudged by the offsets, keeping its space) or *Absolute* (placed in a corner, edge or the centre of the section or column around it, e.g. a badge), its offsets, and its layer (z-index) where blocks overlap. A block can't be fixed to the screen |
+| **Scroll effects** | **Stick** to the top or bottom of the window (with a gap, e.g. for a header) while its section, or the page, scrolls past. And as the block scrolls through the window: move up, down or across, fade, scale, turn or blur, from its value as it comes in, through normal in the middle, to its value as it leaves. In browsers without scroll-driven animations, and for visitors who prefer less motion, it stays still |
+
+## Small headings
+
+Blocks with a heading (and Text, which has none of its own) can show a **Small heading** above it, such as *A solid SaaS* or *Most popular*. It **looks like** small capitals in the site colour, or a **pill** (a badge). On a dark background it turns light.
 
 ## Buttons
 
-Buttons appear in many blocks. Each one has a **label**, a **link** (a full web address, a page on this site starting with `/`, a part of the page starting with `#`, an email address or a phone number), an optional [icon](#icons), whether it **opens in a new tab**, a **style**, a **width** and its position in the block.
+Buttons appear in many blocks. On the **Content** tab, each one has a **label**, a **link** (a full web address, a page on this site starting with `/`, a part of the page starting with `#`, an email address or a phone number), an optional [icon](#icons) and whether it **opens in a new tab**.
 
-**Style** is one of the four button styles from Branding, *Automatic* (the right style for the background the button sits on), or **custom colours** for this button only.
+Their look is on the **Design** tab, under **Buttons**, for all the block's buttons: a **style**, a **width**, and a **shadow**. **Style** is one of the four button styles from Branding, *Automatic* (the right style for the background the buttons sit on), or **custom colours** (background, text, colours on hover, and a border). Leave the background blank for a see-through **outline button**, e.g. white text and border on a banner.
+
+For a button that should look different, such as a plainer second button, turn on **This button looks different** under it and give it its own look. Buttons saved before this keep the look they had.
 
 ## Icons
 
@@ -178,7 +246,7 @@ Until a visitor accepts marketing cookies, a video shows a still picture with a 
 
 ## Images
 
-Images can be JPG, PNG, WebP or SVG, up to 2 MB. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
+Images can be JPG, PNG, WebP, AVIF or SVG, up to 2 MB. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
 
 An image you remove from a page is deleted from storage once nothing uses it any more. That includes other pages, the block library and the page's kept [revisions](revisions.md).
 

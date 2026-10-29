@@ -50,12 +50,30 @@ return [
     'permissions' => [
         'branding' => 'update settings',
         'legal' => 'update settings',
+        'mailing_lists' => 'update settings',
+        // Making, changing and deleting block presets (anyone who can edit a page can pick one).
+        'presets' => 'update settings',
         'pages' => [
             'view' => 'view pages',
             'create' => 'create pages',
             'update' => 'update pages',
             'delete' => 'delete pages',
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mailing lists
+    |--------------------------------------------------------------------------
+    |
+    | Website › Mailing lists connects a mailing list service (Brevo first);
+    | sign-up forms add people to it. An address here is emailed each time
+    | someone signs up (blank: nobody is).
+    |
+    */
+
+    'mailing_lists' => [
+        'notify_email' => env('SITE_BUILDER_MAILING_LIST_NOTIFY_EMAIL'),
     ],
 
     /*

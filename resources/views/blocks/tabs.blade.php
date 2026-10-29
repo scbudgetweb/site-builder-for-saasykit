@@ -1,7 +1,7 @@
 @include('site-builder::blocks.partials.heading')
 
 <div x-data="{ active: 0 }">
-    <div class="flex flex-wrap gap-2 border-b border-current/15" role="tablist">
+    <div class="flex flex-wrap {{ $tabsAlignClass }} gap-2 border-b border-current/15" role="tablist">
         @foreach ($items as $item)
             <button type="button" role="tab" id="tab-{{ $index }}-{{ $loop->index }}"
                     :aria-selected="(active === {{ $loop->index }}).toString()"
@@ -16,8 +16,12 @@
 
     @foreach ($items as $item)
         <div id="tabpanel-{{ $index }}-{{ $loop->index }}" role="tabpanel" aria-labelledby="tab-{{ $index }}-{{ $loop->index }}"
-             x-show="active === {{ $loop->index }}" @if (! $loop->first) x-cloak @endif class="block-text sb-prose pt-6">
-            {!! $item['html'] !!}
+             x-show="active === {{ $loop->index }}" @if (! $loop->first) x-cloak @endif class="pt-6">
+            <div class="block-text sb-prose">{!! $item['html'] !!}</div>
+            @if ($item['imageUrl'])
+                <img src="{{ $item['imageUrl'] }}" alt="{{ $item['alt'] }}" loading="lazy" decoding="async"
+                     class="mt-8 h-auto w-full rounded-sb-image" @if ($imageStyle !== '') style="{{ $imageStyle }}" @endif>
+            @endif
         </div>
     @endforeach
 </div>

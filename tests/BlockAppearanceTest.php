@@ -98,7 +98,8 @@ class BlockAppearanceTest extends TestCase
 
         $noPanel = BlockAppearance::resolve(['background' => 'none', 'background_area' => 'panel', 'overlap' => 'large']);
         $this->assertNull($noPanel['panel']);
-        $this->assertStringNotContainsString('-mt-', $noPanel['class'], 'Only a panel can overlap the block above.');
+        $this->assertStringContainsString('-mt-24', $noPanel['class'], 'A block without a background overlaps too, e.g. a screenshot over a banner.');
+        $this->assertStringContainsString('sm:-mt-72', BlockAppearance::resolve(['overlap' => 'huge'])['class']);
     }
 
     public function test_a_full_width_block_takes_the_border_and_shadow_itself(): void

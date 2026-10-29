@@ -45,7 +45,11 @@ If a place's chosen logo isn't uploaded, the website header and footer show the 
 | **Site colour** | The main colour of the public website: buttons, links, highlights, and the blog, pricing and sign-in pages. Lighter and darker shades are worked out from it, and the header and footer follow it unless they have their own colours |
 | **Site secondary colour** | Highlights and accents on the public site |
 
+| **Global colours** | Your own named colours (for example *Sunrise orange*), offered in every block's colour settings beside the site colours. A block saves which global colour it uses, so changing one here changes every block using it. A colour can be see-through (8-digit hex, such as `#ffffff80`) |
+
 A warning appears if white text on buttons in your site colour would be hard to read.
+
+Deleting a global colour puts the blocks using it back to their standard look. In a block, **Unlink** swaps a global colour for its current value, so that block no longer follows it.
 
 ## Typography
 
@@ -69,7 +73,7 @@ The headings that introduce a part of a page, such as a block's heading.
 | **Decoration colour** | On light backgrounds. Blank uses the site colour |
 | **Decoration colour on dark backgrounds** | In blocks with a dark background. Blank matches the heading text, usually white |
 
-Each block can choose a different decoration, or none, on its Style tab.
+Each block can choose a different decoration, or none, on its Design tab (Text toggle).
 
 ### Text colours
 
@@ -113,7 +117,7 @@ Most public pages open with a full-width banner holding the page title:
 
 Both have the same settings. Left blank, a banner is a gradient in shades of the site colour with a white heading.
 
-**Background:** *Gradient* (start, end and optional middle colour, and the direction), *Colour* (one solid colour) or *Image* (JPG, PNG or WebP, up to 2 MB; around 1920 × 600 pixels works best). For an image, choose which part stays in view when it's cropped on narrow screens, and **Add a colour overlay** so the text stands out. The overlay is *One colour* (its colour and **Overlay opacity**) or a *Gradient* that fades from a start colour and strength to an end colour and strength, top to bottom, bottom to top, left to right or right to left. A gradient lets part of the picture show clearly while the text sits on the darker end. A warning appears if text may be hard to read on a busy image: an overlay should be 40% or more (for a gradient, at its stronger end). Settings for the other background types are kept, so you can switch back.
+**Background:** *Gradient* (start, end and optional middle colour, and the direction), *Colour* (one solid colour) or *Image* (JPG, PNG, WebP or AVIF, up to 2 MB; around 1920 × 600 pixels works best). For an image, choose which part stays in view when it's cropped on narrow screens, and **Add a colour overlay** so the text stands out. The overlay is *One colour* (its colour and **Overlay opacity**) or a *Gradient* that fades from a start colour and strength to an end colour and strength, top to bottom, bottom to top, left to right or right to left. A gradient lets part of the picture show clearly while the text sits on the darker end. A warning appears if text may be hard to read on a busy image: an overlay should be 40% or more (for a gradient, at its stronger end). Settings for the other background types are kept, so you can switch back.
 
 **Text:** the heading colour and the subtitle colour.
 
@@ -127,7 +131,7 @@ Your own CSS for the public website, added last so it wins over everything else.
 
 Mistakes that don't make the CSS unsafe are saved but listed, each with its line: a property CSS doesn't have (for example `colour` instead of `color`), an extra or missing `{ }` or `( )`, a string or comment that's never closed, and a declaration outside any `{ }`. An extra `}` matters most: the browser can skip the rules after it. Custom properties (`--name`) and vendor-prefixed ones (`-webkit-…`) are always accepted.
 
-Blocks have a **CSS classes** setting (Advanced tab) for styling one block with your CSS. `fixed` and `sticky` aren't allowed there: they could pin a block over the rest of the page.
+Blocks have a **CSS classes** setting (Advanced › CSS ID & classes) for styling one block with your CSS. `fixed` and `sticky` aren't allowed there: they could pin a block over the rest of the page.
 
 ## Your app's own tabs
 

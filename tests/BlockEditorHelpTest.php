@@ -86,6 +86,7 @@ class BlockEditorHelpTest extends PageTestCase
             ->assertFormFieldExists("buttons.{$buttonKey}.style", 'mountedActionSchema0', self::tooltip('Automatic picks the button style'))
             ->assertFormFieldExists("buttons.{$buttonKey}.new_tab", 'mountedActionSchema0', self::tooltip('Best for links to other websites'))
             ->assertFormFieldExists('buttons', 'mountedActionSchema0', fn (Repeater $field): bool => $field->getDeleteAction()->getTooltip() === 'Delete this button')
+            ->set("mountedActions.0.data.buttons.{$buttonKey}.own_style", true)
             ->set("mountedActions.0.data.buttons.{$buttonKey}.shadow", 'medium')
             ->set("mountedActions.0.data.buttons.{$buttonKey}.new_tab", true)
             ->callMountedAction()
@@ -112,13 +113,13 @@ class BlockEditorHelpTest extends PageTestCase
         $tabs = collect(TextBlock::make()->getDefaultChildComponents())->first(fn (mixed $component): bool => $component instanceof Tabs);
         $byLabel = collect($tabs->getDefaultChildComponents())->mapWithKeys(fn (Tab $tab): array => [$tab->getLabel() => $tab]);
 
-        $this->assertSame(['Content', 'Layout', 'Style', 'Advanced'], $byLabel->keys()->all());
+        $this->assertSame(['Content', 'Design', 'Advanced'], $byLabel->keys()->all(), 'The three tabs.');
         $this->assertSame(Heroicon::OutlinedPencilSquare, $byLabel['Content']->getIcon());
         $this->assertSame(Heroicon::OutlinedCog6Tooth, $byLabel['Advanced']->getIcon());
         $this->assertInstanceOf(Text::class, $byLabel['Advanced']->getDefaultChildComponents()[0], 'The Advanced tab starts with a note.');
 
-        // A block without Advanced settings has no Advanced tab, note or not.
+        // Every block has an Advanced tab now, for its display conditions at least.
         $dividerTabs = collect(DividerBlock::make()->getDefaultChildComponents())->first(fn (mixed $component): bool => $component instanceof Tabs);
-        $this->assertNotContains('Advanced', collect($dividerTabs?->getDefaultChildComponents() ?? [])->map(fn (Tab $tab): string => (string) $tab->getLabel())->all());
+        $this->assertContains('Advanced', collect($dividerTabs?->getDefaultChildComponents() ?? [])->map(fn (Tab $tab): string => (string) $tab->getLabel())->all());
     }
 }

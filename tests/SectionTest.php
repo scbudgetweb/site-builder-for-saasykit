@@ -80,7 +80,7 @@ class SectionTest extends PageTestCase
         }
     }
 
-    public function test_blocks_in_a_section_take_its_text_colour_and_decoration_and_fill_their_column(): void
+    public function test_blocks_in_a_section_take_its_text_colour_but_not_an_old_decoration_and_fill_their_column(): void
     {
         $this->page(['blocks' => [self::section([
             ['layout' => '2', 'blocks' => [
@@ -91,8 +91,10 @@ class SectionTest extends PageTestCase
 
         $html = $this->get('/about-us')->getContent();
 
-        // The inner block: no spacing or width of its own, no text colour (it inherits), the section's decoration.
-        $this->assertMatchesRegularExpression('/<section\s+class="relative heading-decoration-short-above scroll-mt-24"\s+data-block="image_text"\s*>/', $html);
+        // The inner block: no spacing or width of its own, no text colour (it inherits). A Section has no text settings
+        // , so a decoration saved on one before doesn't reach its blocks.
+        $this->assertMatchesRegularExpression('/<section\s+class="relative scroll-mt-24"\s+data-block="image_text"\s*>/', $html);
+        $this->assertStringNotContainsString('heading-decoration-short-above', $html);
         $this->assertStringContainsString('no-heading-decoration', $html);
         $this->assertStringContainsString('bg-gray-50', $html);
         $this->assertSame(0, substr_count($html, '<h1 class="sb-h1 text-sb-banner-heading">About us</h1>') - 1, 'The page title is the only h1.');
@@ -243,10 +245,9 @@ class SectionTest extends PageTestCase
         $component
             ->assertFormFieldExists('rows', 'mountedActionSchema0', fn (Repeater $field): bool => $field->getItemLabel($rowKey) === 'Row 1 · Two equal columns: Text | Call to action')
             ->assertFormFieldExists("rows.{$rowKey}.layout", 'mountedActionSchema0', $tooltip('How the row is split into columns'))
-            ->assertFormFieldExists("rows.{$rowKey}.align", 'mountedActionSchema0', $tooltip('Where a shorter column sits next to a taller one'))
-            ->assertFormFieldExists("rows.{$rowKey}.gap", 'mountedActionSchema0', $tooltip('The gap between this row'))
-            ->assertFormFieldExists("rows.{$rowKey}.columns.{$columnKey}.background", 'mountedActionSchema0', $tooltip('The colour or picture behind it'))
-            ->assertFormFieldExists("rows.{$rowKey}.columns.{$columnKey}.border_style", 'mountedActionSchema0', $tooltip('A line around the edge'))
+            // Every other row and column setting is in its own panel (⚙), the visual builder's.
+            ->assertFormFieldExists('rows', 'mountedActionSchema0', fn (Repeater $field): bool => ($field->getExtraItemActions()['rowSettings'] ?? null)?->getTooltip() === 'Row settings')
+            ->assertFormFieldExists("rows.{$rowKey}.columns", 'mountedActionSchema0', fn (Repeater $field): bool => ($field->getExtraItemActions()['columnSettings'] ?? null)?->getTooltip() === 'Column settings')
             ->assertFormFieldExists("rows.{$rowKey}.columns", 'mountedActionSchema0', fn (Repeater $field): bool => $field->getMoveDownAction()->getTooltip() === 'Swap with the column on the right')
             ->assertFormFieldExists('rows', 'mountedActionSchema0', fn (Repeater $field): bool => $field->getCloneAction()->getTooltip() === 'Duplicate this row')
             ->assertFormFieldExists("rows.{$rowKey}.columns.{$columnKey}.blocks", 'mountedActionSchema0', fn (Builder $field): bool => $field->getDeleteAction()->getTooltip() === 'Delete this block'
@@ -417,8 +418,7 @@ class SectionTest extends PageTestCase
         $this->assertCount(1, $columns);
         $this->assertSame(['text', 'call_to_action'], array_column(array_values(array_values($columns)[0]['blocks']), 'type'));
         $component
-            ->assertFormFieldExists("rows.{$rowKey}.columns.{$left}.blocks", 'mountedActionSchema0', fn (Builder $field): bool => $field->getAddActionLabel() === 'Add block to this row')
-            ->assertFormFieldHidden("rows.{$rowKey}.reverse_on_phones", 'mountedActionSchema0');
+            ->assertFormFieldExists("rows.{$rowKey}.columns.{$left}.blocks", 'mountedActionSchema0', fn (Builder $field): bool => $field->getAddActionLabel() === 'Add block to this row');
     }
 
     public function test_a_block_can_move_to_the_next_column_and_back(): void
@@ -489,7 +489,7 @@ class SectionTest extends PageTestCase
 
         $this->assertMatchesRegularExpression('/<div class="min-w-0 bg-gray-900 text-white p-6 sm:p-8 self-center"\s+data-column="1"\s+data-text-scheme="light"><section\s+class="relative scroll-mt-24"\s+data-block="text"\s*>.*On dark/s', $html, 'A dark column pads itself, and its blocks take its light text.');
         $this->assertMatchesRegularExpression('/<div class="min-w-0 p-8 sm:p-12 rounded-xl"\s+data-column="2"\s+style="border: 1px solid #336699;"\s*>.*Framed/s', $html);
-        $this->assertMatchesRegularExpression('/<div class="min-w-0"\s*><section[^>]*>.*Stacked/s', $html, 'Column settings only apply side by side.');
+        $this->assertMatchesRegularExpression('/<div class="min-w-0 bg-gray-900 text-white p-6 sm:p-8"\s+data-text-scheme="light"><section[^>]*>.*Stacked/s', $html, 'A one-column row\'s column has its settings too.');
     }
 
     public function test_a_column_with_a_light_background_in_a_dark_section_has_dark_text(): void
@@ -532,7 +532,7 @@ class SectionTest extends PageTestCase
         $this->assertSame(5, substr_count($html, 'Fifth'));
     }
 
-    public function test_column_settings_are_offered_side_by_side_and_saved_from_the_editor(): void
+    public function test_rows_and_columns_in_the_form_open_the_visual_builders_panels_and_save_from_them(): void
     {
         $page = $this->page(['blocks' => [self::section([['layout' => '2', 'columns' => [
             ['blocks' => [self::block('text', ['content' => '<p>Left</p>'])]],
@@ -545,27 +545,50 @@ class SectionTest extends PageTestCase
         $rowKey = array_key_first($component->get('mountedActions.0.data.rows'));
         $left = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns"));
 
-        $component
-            ->assertFormFieldVisible("rows.{$rowKey}.columns.{$left}.background", 'mountedActionSchema0')
-            ->assertFormFieldVisible("rows.{$rowKey}.gap", 'mountedActionSchema0')
-            ->set("mountedActions.0.data.rows.{$rowKey}.gap", 'small')
-            ->set("mountedActions.0.data.rows.{$rowKey}.columns.{$left}.background", 'brand')
-            ->set("mountedActions.0.data.rows.{$rowKey}.columns.{$left}.align", 'end')
+        // The row's panel: the visual builder's, less the layout and columns (in the form itself).
+        $component->mountAction(TestAction::make('rowSettings')->schemaComponent('rows', 'mountedActionSchema0')->arguments(['item' => $rowKey]))
+            ->assertFormFieldExists('gap', 'mountedActionSchema1')
+            ->assertFormFieldExists('background', 'mountedActionSchema1')
+            ->assertFormFieldExists('link_url', 'mountedActionSchema1')
+            ->assertFormFieldExists('admin_label', 'mountedActionSchema1')
+            ->assertFormFieldExists('css_class', 'mountedActionSchema1')
+            ->assertFormFieldExists('design.spacing.margin', 'mountedActionSchema1')
+            ->assertFormFieldExists('design.position.rotate', 'mountedActionSchema1')
+            ->assertFormFieldDoesNotExist('design.typography.body.size', 'mountedActionSchema1')
+            ->set('mountedActions.1.data.gap', 'small')
+            ->set('mountedActions.1.data.admin_label', 'Opening times')
+            ->set('mountedActions.1.data.design.spacing.margin', ['desktop' => ['top' => '24px']])
             ->callMountedAction()
+            ->assertHasNoActionErrors();
+
+        // The column's: the visual builder's, as it is (no Sizing or margin).
+        $component->mountAction(TestAction::make('columnSettings')->schemaComponent("rows.{$rowKey}.columns", 'mountedActionSchema0')->arguments(['item' => $left]))
+            ->assertFormFieldExists('background', 'mountedActionSchema1')
+            ->assertFormFieldExists('align', 'mountedActionSchema1')
+            ->assertFormFieldExists('anchor', 'mountedActionSchema1')
+            ->assertFormFieldExists('design.spacing.padding', 'mountedActionSchema1')
+            ->assertFormFieldDoesNotExist('design.spacing.margin', 'mountedActionSchema1')
+            ->set('mountedActions.1.data.background', 'brand')
+            ->set('mountedActions.1.data.align', 'end')
+            ->callMountedAction()
+            ->assertHasNoActionErrors();
+
+        $this->assertSame('Opening times', $component->get("mountedActions.0.data.rows.{$rowKey}.admin_label"), 'Saved into the row in the form.');
+
+        $component->callMountedAction()
             ->assertHasNoFormErrors()
             ->call('save')
             ->assertHasNoFormErrors();
 
         $row = $page->fresh()->blocks[0]['data']['rows'][0];
-        $this->assertSame(['small', 'brand', 'end'], [$row['gap'], $row['columns'][0]['background'], $row['columns'][0]['align']]);
+        $this->assertSame(['small', 'Opening times', '24px'], [$row['gap'], $row['admin_label'], $row['design']['spacing']['margin']['desktop']['top'] ?? null]);
+        $this->assertSame(['brand', 'end'], [$row['columns'][0]['background'], $row['columns'][0]['align']]);
+        $this->assertSame('text', $row['columns'][0]['blocks'][0]['type'], 'The column\'s blocks are left alone.');
 
+        // A one-column row's column has its settings too.
         $component->mountAction(TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => array_key_first($component->get('data.blocks'))]));
         $rowKey = array_key_first($component->get('mountedActions.0.data.rows'));
         $component->set("mountedActions.0.data.rows.{$rowKey}.layout", 'stacked');
-        $left = array_key_first($component->get("mountedActions.0.data.rows.{$rowKey}.columns"));
-
-        $component
-            ->assertFormFieldHidden("rows.{$rowKey}.columns.{$left}.background", 'mountedActionSchema0')
-            ->assertFormFieldHidden("rows.{$rowKey}.gap", 'mountedActionSchema0');
+        $component->assertFormFieldExists("rows.{$rowKey}.columns", 'mountedActionSchema0', fn (Repeater $field): bool => isset($field->getExtraItemActions()['columnSettings']));
     }
 }

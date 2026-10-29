@@ -125,7 +125,7 @@ See the [developer guides](docs/README.md#for-developers-and-agents).
 
 ## Documentation
 
-- **For people running the site:** [pages](docs/pages.md), [revisions](docs/revisions.md), [the block library](docs/block-library.md), [navigation](docs/navigation.md), [Branding](docs/branding.md) and [legal pages](docs/legal-pages.md).
+- **For people running the site:** [pages](docs/pages.md), [revisions](docs/revisions.md), [the block library](docs/block-library.md), [navigation](docs/navigation.md), [the Theme builder](docs/theme-builder.md), [mailing lists](docs/mailing-lists.md), [Branding](docs/branding.md) and [legal pages](docs/legal-pages.md).
 - **For developers:** [writing a custom block](docs/developers/custom-blocks.md), [extending the site builder](docs/developers/extending.md), [building tenant micro-sites](docs/developers/tenant-micro-sites.md) and [publishing a release](docs/developers/releasing.md).
 
 ## Testing

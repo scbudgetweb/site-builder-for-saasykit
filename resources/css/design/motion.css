@@ -1,0 +1,77 @@
+/*
+ * Design › Hover (grow, lift, turn, shadow, opacity), and Advanced › Scroll effects (sticky, and moving, fading,
+ * scaling, turning and blurring as the block scrolls through the window) (Design\Motion). Each rule only applies when
+ * its class is on the block. Hover changes play over Advanced › Transitions when set, otherwise 300 ms.
+ */
+.sb-d-hov:not(.sb-d-hover-items) {
+    transition-property: scale, translate, rotate, opacity, box-shadow;
+    transition-duration: var(--sb-transition-duration, 300ms);
+    transition-delay: var(--sb-transition-delay, 0ms);
+    transition-timing-function: var(--sb-transition-curve, ease);
+}
+
+/* The whole block… */
+.sb-d-hover-scale:not(.sb-d-hover-items):hover { scale: var(--sb-h-scale); }
+.sb-d-hover-lift:not(.sb-d-hover-items):hover { translate: 0 var(--sb-h-lift); }
+.sb-d-hover-rotate:not(.sb-d-hover-items):hover { rotate: var(--sb-h-rotate); }
+.sb-d-hover-opacity:not(.sb-d-hover-items):hover { opacity: var(--sb-h-opacity); }
+/* On the block, or on its panel (section > container > panel) while the block is pointed at. */
+.sb-d-hover-shadow:not(.sb-d-hover-items):hover, [data-block]:hover > * > .sb-d-hover-shadow { box-shadow: var(--sb-h-shadow) !important; }
+
+/* …or each item (.sb-item: a card, feature, testimonial…) as it's pointed at. */
+.sb-d-hover-items .sb-item {
+    transition-property: scale, translate, rotate, opacity, box-shadow;
+    transition-duration: var(--sb-transition-duration, 300ms);
+    transition-timing-function: var(--sb-transition-curve, ease);
+}
+.sb-d-hover-items.sb-d-hover-scale .sb-item:hover { scale: var(--sb-h-scale); }
+.sb-d-hover-items.sb-d-hover-lift .sb-item:hover { translate: 0 var(--sb-h-lift); }
+.sb-d-hover-items.sb-d-hover-rotate .sb-item:hover { rotate: var(--sb-h-rotate); }
+.sb-d-hover-items.sb-d-hover-opacity .sb-item:hover { opacity: var(--sb-h-opacity); }
+.sb-d-hover-items.sb-d-hover-shadow .sb-item:hover { box-shadow: var(--sb-h-shadow) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-d-hov, .sb-d-hover-items .sb-item { transition: none; }
+}
+
+/* Sticky: within its section (or the page, for a block on its own). Not on the canvas, where it would get in the way. */
+.sb-d-sticky-top:not([data-sb-node] > *) { position: sticky; top: var(--sb-sticky-offset, 0px); z-index: 20; }
+.sb-d-sticky-bottom:not([data-sb-node] > *) { position: sticky; bottom: var(--sb-sticky-offset, 0px); z-index: 20; }
+
+/*
+ * Scroll effects: its "coming in" values as it enters the window, normal in the middle, its "leaving" values as it
+ * goes. The browser's scroll-driven animations; elsewhere, and for visitors who ask for less motion, it stays still.
+ */
+@media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+        .sb-d-scroll:not([data-sb-node] > *) {
+            animation: sb-d-scroll linear both;
+            animation-timeline: view();
+            animation-range: cover 0% cover 100%;
+        }
+    }
+}
+
+@keyframes sb-d-scroll {
+    0% {
+        translate: var(--sb-s-move-x-in, 0px) var(--sb-s-move-y-in, 0px);
+        opacity: var(--sb-s-fade-in, 1);
+        scale: var(--sb-s-scale-in, 1);
+        rotate: var(--sb-s-rotate-in, 0deg);
+        filter: blur(var(--sb-s-blur-in, 0px));
+    }
+    50% {
+        translate: 0 0;
+        opacity: 1;
+        scale: 1;
+        rotate: 0deg;
+        filter: blur(0);
+    }
+    100% {
+        translate: var(--sb-s-move-x-out, 0px) var(--sb-s-move-y-out, 0px);
+        opacity: var(--sb-s-fade-out, 1);
+        scale: var(--sb-s-scale-out, 1);
+        rotate: var(--sb-s-rotate-out, 0deg);
+        filter: blur(var(--sb-s-blur-out, 0px));
+    }
+}

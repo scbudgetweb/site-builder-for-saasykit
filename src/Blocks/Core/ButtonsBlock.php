@@ -23,16 +23,6 @@ class ButtonsBlock extends PageBlock
         return Heroicon::OutlinedCursorArrowRays;
     }
 
-    public static function headingSettings(): array
-    {
-        return [];
-    }
-
-    public static function hasBodyText(): bool
-    {
-        return false;
-    }
-
     protected static function fields(): array
     {
         return [

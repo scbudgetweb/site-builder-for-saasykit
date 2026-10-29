@@ -1,5 +1,5 @@
 {{--
-    Logos as a centred row, an endless scrolling loop (the list twice, slid by half its width), or a
+    Logos as a row (left, centred or right), an endless scrolling loop (the list twice, slid by half its width), or a
     carousel (a scroll-snap strip with arrows, swipe and optional autoplay). Moving logos stay still for
     visitors who prefer reduced motion, and otherwise have a pause button (WCAG 2.2.2). Sizes, speed and display come from LogoStripBlock::viewData().
 --}}
@@ -101,9 +101,9 @@
         @endif
     </div>
 @else
-    <ul class="flex flex-wrap items-center justify-center gap-x-10 gap-y-8">
+    <ul class="flex flex-wrap items-center {{ $alignClass }} gap-x-10 gap-y-8">
         @foreach ($logos as $logo)
-            <li>{!! $logoHtml($logo) !!}</li>
+            <li class="sb-item">{!! $logoHtml($logo) !!}</li>
         @endforeach
     </ul>
 @endif

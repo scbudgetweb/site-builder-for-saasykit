@@ -22,6 +22,24 @@ Route::middleware(config('site-builder.pages.middleware', ['web']))->group(funct
         ->scopeBindings()
         ->name('site-builder.pages.revision-preview');
 
+    // The visual builder's canvas: the page with someone's draft, marked up for editing.
+    Route::get($previewPath.'/{page}/canvas/{user}', [PageController::class, 'canvas'])
+        ->middleware('signed')
+        ->whereNumber(['page', 'user'])
+        ->name('site-builder.pages.canvas');
+
+    // The same for a block library item: its block on its own, in the theme.
+    Route::get($previewPath.'/library/{savedBlock}/canvas/{user}', [PageController::class, 'libraryCanvas'])
+        ->middleware('signed')
+        ->whereNumber(['savedBlock', 'user'])
+        ->name('site-builder.library.canvas');
+
+    // A Theme Builder template's canvas: its blocks on their own, the site's header and footer hidden.
+    Route::get($previewPath.'/templates/{template}/canvas/{user}', [PageController::class, 'templateCanvas'])
+        ->middleware('signed')
+        ->whereNumber(['template', 'user'])
+        ->name('site-builder.templates.canvas');
+
     Route::fallback([PageController::class, 'show'])
         ->name('site-builder.pages.show');
 });

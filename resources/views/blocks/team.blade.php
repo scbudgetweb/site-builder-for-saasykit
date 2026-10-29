@@ -10,7 +10,7 @@
 ])>
     @foreach ($block['members'] ?? [] as $member)
         @php($photoUrl = \ScBudgetWeb\SiteBuilder\Blocks\PageBlock::imageUrl($member['photo'] ?? null))
-        <div class="text-center">
+        <div class="sb-item text-center">
             @if ($photoUrl)
                 <img src="{{ $photoUrl }}" alt="{{ $member['name'] ?? '' }}" loading="lazy" class="mx-auto h-40 w-40 rounded-full object-cover shadow-sm">
             @else

@@ -2,9 +2,11 @@
 
 namespace ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages;
 
+use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
@@ -22,6 +24,11 @@ class EditSavedBlock extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('visual')
+                ->label(__('Visual builder'))
+                ->tooltip(__('Change this block as it looks: click a part to edit it'))
+                ->icon(Heroicon::OutlinedPaintBrush)
+                ->url(fn (SavedBlock $record): string => SavedBlockResource::getUrl('visual', ['record' => $record])),
             self::refuseDeleteWhileInUse(DeleteAction::make()),
         ];
     }

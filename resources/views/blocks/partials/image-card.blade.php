@@ -4,7 +4,7 @@
     $hasIcon = $icon !== null && $icon->toHtml() !== '';
 @endphp
 
-<article class="{{ $cardClass }}" @if ($style['cardStyle'] !== '') style="{{ $style['cardStyle'] }}" @endif @if ($style['textScheme']) data-text-scheme="{{ $style['textScheme'] }}" @endif>
+<article class="sb-item {{ $cardClass }}" @if ($style['cardStyle'] !== '') style="{{ $style['cardStyle'] }}" @endif @if ($style['textScheme']) data-text-scheme="{{ $style['textScheme'] }}" @endif>
     @if ($card['imageUrl'])
         <img src="{{ $card['imageUrl'] }}" alt="{{ $card['alt'] }}" loading="lazy" decoding="async"
              @class(['w-full object-cover', $imageShape, 'rounded-sb-image' => ! $style['hasBox']])

@@ -156,6 +156,16 @@ class Page extends Model
     }
 
     /**
+     * Visual builder drafts of this page, one per person working on it.
+     *
+     * @return HasMany<PageDraft, $this>
+     */
+    public function drafts(): HasMany
+    {
+        return $this->hasMany(PageDraft::class);
+    }
+
+    /**
      * @param  Builder<Page>  $query
      */
     public function scopePublished(Builder $query): void

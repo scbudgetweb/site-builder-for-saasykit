@@ -16,6 +16,15 @@ use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
  */
 class Settings
 {
+    /**
+     * Every setting, once read in this request: a page reads settings a hundred times or more (Branding, colours,
+     * presets), and on a shared host's file or database cache each cache read is a file or a query. The service is
+     * scoped (SiteBuilderServiceProvider), so a queue job or an Octane request starts afresh.
+     *
+     * @var array<string, mixed>|null
+     */
+    private ?array $values = null;
+
     public function __construct(private Cache $cache) {}
 
     public function get(string $key, mixed $default = null): mixed
@@ -71,6 +80,8 @@ class Settings
      */
     public function clearCache(): void
     {
+        $this->values = null;
+
         VersionedCache::newVersion($this->cache, $this->cacheKey().'.version');
 
         RenderCache::flush();
@@ -81,6 +92,10 @@ class Settings
      */
     public function all(): array
     {
+        if ($this->values !== null) {
+            return $this->values;
+        }
+
         $values = VersionedCache::remember(
             $this->cache,
             $this->cacheKey(),
@@ -88,7 +103,7 @@ class Settings
             fn (): array => Setting::query()->pluck('value', 'key')->all(),
         );
 
-        return is_array($values) ? $values : [];
+        return $this->values = is_array($values) ? $values : [];
     }
 
     private function cacheKey(): string

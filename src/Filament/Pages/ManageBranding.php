@@ -9,6 +9,8 @@ use Filament\Forms\Components\CodeEditor;
 use Filament\Forms\Components\CodeEditor\Enums\Language;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Hidden;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -37,6 +39,7 @@ use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\CustomCss;
@@ -263,6 +266,7 @@ class ManageBranding extends Page
                                             $this->colorField('site_secondary_color', __('Site secondary colour'))
                                                 ->hintIcon(PageBlock::HELP_ICON, __('An optional second brand colour for small touches, such as icons and highlights. Leave it blank if your brand has one main colour.'))
                                                 ->helperText(__('Used for highlights and accents on the public site.')),
+                                            $this->globalColoursField(),
                                         ]),
                                 ]),
                             Tab::make(__('Typography'))
@@ -749,7 +753,7 @@ class ManageBranding extends Page
 
                 $this->uploadField("{$banner}_image", __('Background image'), self::BANNER_IMAGE_FILE_TYPES, 2048)
                     ->live()
-                    ->helperText(__('JPG, PNG or WebP, up to 2 MB. A wide image around 1920 × 600 pixels works best.'))
+                    ->helperText(__('JPG, PNG, WebP or AVIF, up to 2 MB. A wide image around 1920 × 600 pixels works best.'))
                     ->visible($isImage),
                 Select::make("{$banner}_image_position")
                     ->label(__('Keep in view when cropped'))
@@ -1029,6 +1033,39 @@ class ManageBranding extends Page
                 array_keys($fields),
                 $fields,
             ));
+    }
+
+    /**
+     * Named colours for blocks (Colour::REFERENCE_PREFIX), as Global colours. Each keeps its id when renamed or
+     * moved, so blocks using it follow; a deleted one leaves those blocks on their standard look.
+     */
+    private function globalColoursField(): Repeater
+    {
+        return Repeater::make('global_colours')
+            ->label(__('Global colours'))
+            ->hintIcon(PageBlock::HELP_ICON, __('Pick one in any block\'s colour setting. Change it here and every block using it changes too.'))
+            ->helperText(__('The site colours above are global colours too. Deleting one here puts the blocks using it back to their standard look.'))
+            ->schema([
+                Hidden::make('id')
+                    ->default(fn (): string => Str::lower(Str::random(8))),
+                TextInput::make('name')
+                    ->label(__('Name'))
+                    ->placeholder(__('e.g. Sunrise orange'))
+                    ->required()
+                    ->maxLength(40),
+                SiteColour::make('colour')
+                    ->label(__('Colour'))
+                    ->globals(false)
+                    ->required(),
+            ])
+            ->columns(2)
+            ->columnSpanFull()
+            ->itemLabel(fn (array $state): ?string => filled($state['name'] ?? null) ? (string) $state['name'] : null)
+            ->collapsible()
+            ->reorderable()
+            ->defaultItems(0)
+            ->maxItems(40)
+            ->addActionLabel(__('Add a global colour'));
     }
 
     private function colorField(string $name, string $label): ColorPicker

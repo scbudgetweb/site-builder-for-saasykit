@@ -12,6 +12,7 @@
  * Blocks' design options (BlockDesign), one file per group. Their rules only apply to a block that sets a value.
  */
 @import './design/typography.css';
+@import './design/headings.css';
 @import './design/spacing.css';
 @import './design/borders-backgrounds.css';
 @import './design/effects.css';

@@ -40,7 +40,7 @@ final class StyleClipboard
         'background' => ['appearance.background', 'appearance.text', 'appearance.background_color', 'appearance.gradient_*', 'appearance.background_image', 'appearance.overlay_*', 'appearance.image_*', 'design.dividers'],
         'spacing' => ['appearance.width', 'appearance.spacing', 'appearance.background_area', 'appearance.corners', 'appearance.overlap', 'design.spacing'],
         'eyebrow' => ['eyebrow_style', 'design.eyebrow'],
-        'heading' => ['appearance.heading_size', 'appearance.heading_decoration', 'appearance.heading_align', 'design.typography.heading'],
+        'heading' => ['appearance.heading_size', 'appearance.heading_decoration', 'appearance.heading_align', 'design.typography.heading', 'design.typography.h1', 'design.typography.h2', 'design.typography.h3', 'design.typography.h4', 'design.typography.h5', 'design.typography.h6'],
         'body' => ['appearance.text_size', 'design.typography.body'],
         'links' => ['design.typography.links'],
         'borders' => ['appearance.border_*', 'appearance.shadow*', 'design.borders'],

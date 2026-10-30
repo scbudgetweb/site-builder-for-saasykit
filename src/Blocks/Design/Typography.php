@@ -6,6 +6,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\HoverMode;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
@@ -26,6 +28,9 @@ final class Typography implements DesignGroup
 {
     /** Text => the short name in its classes and properties (sb-d-hf, --sb-hf…). */
     private const TEXTS = ['heading' => 'h', 'body' => 't'];
+
+    /** Heading level => the short name in its classes and properties (sb-d-hl2c, --sb-hl2c…), as Divi's H1–H6 tabs. */
+    public const LEVELS = ['h1' => 'hl1', 'h2' => 'hl2', 'h3' => 'hl3', 'h4' => 'hl4', 'h5' => 'hl5', 'h6' => 'hl6'];
 
     public const WEIGHTS = [
         '100' => 'Thin (100)',
@@ -83,7 +88,7 @@ final class Typography implements DesignGroup
         $path = 'design.'.self::key();
 
         return [
-            PanelToggle::design('heading_text', __('Heading text'), [self::textFields('heading')], 50, "{$path}.heading"),
+            PanelToggle::design('heading_text', __('Heading text'), [self::headingTabs()], 50, $path),
             PanelToggle::design('body_text', __('Body text'), [self::textFields('body')], 51, "{$path}.body"),
             PanelToggle::design('link_text', __('Link text'), [
                 Grid::make(['default' => 1, 'sm' => 2])->schema([
@@ -134,6 +139,25 @@ final class Typography implements DesignGroup
     }
 
     /**
+     * Heading text, as Divi has it: every heading at once (All headings, saved as "heading"), then each level on its own
+     * (H1 to H6, saved as "h1"…"h6"), which wins over All headings for that level. Headings typed in rich text count.
+     */
+    private static function headingTabs(): Tabs
+    {
+        return Tabs::make()
+            ->contained(false)
+            ->tabs([
+                Tab::make(__('All'))
+                    ->schema([Group::make()->statePath('heading')->schema([self::textFields('heading')])]),
+                ...array_map(
+                    fn (string $level): Tab => Tab::make(strtoupper($level))
+                        ->schema([Group::make()->statePath($level)->schema([self::textFields($level)])]),
+                    array_keys(self::LEVELS),
+                ),
+            ]);
+    }
+
+    /**
      * A text's settings: font, weight, size, line height, letter spacing, alignment, style, colour (and its hover
      * colour) and shadow. Also each text part of a block's items (Items).
      */
@@ -155,23 +179,29 @@ final class Typography implements DesignGroup
                     ->label(__('Size'))
                     ->hintIcon(PageBlock::HELP_ICON, __('Replaces Heading size or Text size when set. Can be smaller on tablets and phones.'))
                     ->units(self::SIZE_UNITS)
-                    ->range(0, 200),
+                    ->range(0, 200)
+                    ->columnSpanFull(),
                 DeviceValue::make('line_height')
                     ->label(__('Line height'))
                     ->hintIcon(PageBlock::HELP_ICON, __('The space between lines. A plain number is times the text size: 1.5 is roomy, 1.1 is tight.'))
                     ->units(self::LINE_HEIGHT_UNITS)
-                    ->range(0, 200, 0.05),
+                    ->range(0, 200, 0.05)
+                    ->columnSpanFull(),
                 DeviceValue::make('letter_spacing')
                     ->label(__('Letter spacing'))
                     ->hintIcon(PageBlock::HELP_ICON, __('Extra space between letters. Below 0 squeezes them together.'))
                     ->units(self::LETTER_SPACING_UNITS)
-                    ->range(-20, 50, 0.1),
+                    ->range(-20, 50, 0.1)
+                    ->columnSpanFull(),
                 ToggleButtons::make('align')
                     ->label(__('Alignment'))
                     ->options(self::translated(self::ALIGNMENTS))
                     ->icons(['left' => 'heroicon-m-bars-3-bottom-left', 'center' => 'heroicon-m-bars-3', 'right' => 'heroicon-m-bars-3-bottom-right', 'justify' => 'heroicon-m-bars-4'])
                     ->inline()
-                    ->grouped(),
+                    ->grouped()
+                    // Icons only: four labelled buttons don't fit the panel.
+                    ->hiddenButtonLabels()
+                    ->columnSpanFull(),
                 ToggleButtons::make('style')
                     ->label(__('Style'))
                     ->options(self::translated(self::STYLES))
@@ -198,7 +228,7 @@ final class Typography implements DesignGroup
     {
         $output = new DesignOutput;
 
-        foreach (self::TEXTS as $text => $short) {
+        foreach ([...self::TEXTS, ...self::LEVELS] as $text => $short) {
             self::addText($output, $values[$text] ?? null, $short);
         }
 

@@ -48,6 +48,7 @@ class BlockRegistry
         Core\TestimonialsBlock::class,
         Core\TeamBlock::class,
         Core\FaqBlock::class,
+        Core\ToggleBlock::class,
         Core\TabsBlock::class,
         // Media
         Core\GalleryBlock::class,

@@ -516,6 +516,11 @@
     margin-inline: auto 0;
 }
 
+/* Toggle blocks touching one another (spacing None) share the line between them, as an FAQ's questions do. */
+[data-block="toggle"]:not([class*="py-"]) + [data-block="toggle"]:not([class*="py-"]) .sb-toggle {
+    border-top-width: 0;
+}
+
 /*
  * Style › Heading size and Text size. Unlayered, so they beat the blocks' own size utilities; the variables inherit,
  * so a Section's sizes reach its blocks and a block's own choice wins inside it (lesson 7). Block views mark body

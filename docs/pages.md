@@ -104,6 +104,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | **Testimonials** | Quotes with the person's name, role, photo and an optional star rating, in 1 to 4 columns |
 | **Team** | People with a photo, role, short bio and links |
 | **FAQ** | Questions that open to show their answers. Search engines are told the page has FAQs |
+| **Toggle** | A title that opens and closes its content (formatted text), like one FAQ question on its own. **Open at first** shows the content until a visitor closes it. Layout › Open and close marker: a plus that turns into a cross, an arrow that turns over, or none. Design › Title text and Content text style it. Toggles placed one under another with spacing *None* share the line between them |
 | **Tabs** | Content split into tabs, each with an optional image under its text |
 | **Saved block (library)** | A block or section from the [block library](block-library.md), linked so it updates whenever the library block changes |
 

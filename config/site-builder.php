@@ -125,4 +125,19 @@ return [
 
     'cache_key' => 'site-builder.settings',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Livewire nesting depth
+    |--------------------------------------------------------------------------
+    |
+    | Livewire refuses updates whose property path is deeper than
+    | livewire.payload.max_nesting_depth (10 by default), and rich text in the
+    | builder's panels (lists, tables, quotes) goes deeper. The package raises
+    | that limit to this many levels, never lowers it, and never goes past 128.
+    | Set it to false to leave Livewire's own setting as it is.
+    |
+    */
+
+    'livewire_nesting_depth' => 48,
+
 ];

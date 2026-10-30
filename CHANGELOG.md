@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.4 - 2026-10-30
+
+**Upgrading:** nothing to do. The package now raises Livewire's `payload.max_nesting_depth` from its standard 10 to 48 for the whole app, if it's lower. That's a limit on how deep an update's property path can be, kept as a guard against very deep payloads, so it stays bounded. An app that already allows more keeps its own value. To keep Livewire's setting as it is, set `livewire_nesting_depth` to `false` in `config/site-builder.php` (add the key if your copy is older).
+
+- **Fixed:** editing rich text in a block's panel failed with "error loading content" (`MaxNestingDepthExceededException` in the log) once the text held a list, table or quote, or for any rich text in an FAQ answer or a tab. The rich editor sends each change at its place in the document, two path parts per level, and Livewire refused paths over 10 parts. This affected the visual builder and the form, for pages, library items and Theme Builder templates, and the legal pages' editor. Filament's documentation for its rich editor gives the same fix.
+- New: config `site-builder.livewire_nesting_depth` (default 48, at most 128, `false` to turn off) and `Support\LivewireLimits`.
+
 ## 1.6.3 - 2026-10-30
 
 - **Fixed:** on the mailing list sign-up form, the Privacy Policy and Terms of Service links in the small print used the site's link colour, which can barely show on the form's background. They now take the small print's colour, and stay underlined.

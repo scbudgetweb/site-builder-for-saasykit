@@ -173,6 +173,7 @@ Your copy doesn't update with the package. After each package update, check the 
 | `pages.revisions` | `30` | Revisions kept per page |
 | `pages.cache` | `true` (`SITE_BUILDER_PAGE_CACHE`) | Cache the HTML of pages whose blocks are all cacheable |
 | `uploads.disk` / `directory` | `public` / `site-builder` | Where logos and page images are stored |
+| `livewire_nesting_depth` | `48` | Raises Livewire's `payload.max_nesting_depth` to this (never lowers it, at most 128), so lists, tables and quotes in rich text can be edited in the builder's panels. `false` leaves Livewire's setting alone |
 
 ## Extending it
 

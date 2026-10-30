@@ -33,6 +33,7 @@ use ScBudgetWeb\SiteBuilder\Pages\SavedBlockPolicy;
 use ScBudgetWeb\SiteBuilder\Pages\Slot;
 use ScBudgetWeb\SiteBuilder\Pages\TemplatePolicy;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
+use ScBudgetWeb\SiteBuilder\Support\LivewireLimits;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 use Throwable;
 
@@ -74,6 +75,9 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadViewsFrom(__DIR__.'/../resources/views', 'site-builder');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'site-builder');
+
+        // Room for rich text's nested updates in the builder's panels (Livewire allows 10 path parts by default).
+        LivewireLimits::apply();
 
         if (config('site-builder.pages.routes', true)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/web.php');

@@ -1,4 +1,4 @@
-{{-- Formatted text, with optional buttons above or below it ($buttonPosition). --}}
+{{-- Formatted text, with optional buttons above or below it ($buttonPosition), in a text style ($textStyle: .sb-text-lead…). --}}
 @if ($buttons !== [] && $buttonPosition === 'before_text')
     <div class="mb-6">
         @include('site-builder::blocks.partials.buttons', ['buttons' => $buttons, 'align' => $isCentered ? 'center' : 'left'])
@@ -9,7 +9,8 @@
     @include('site-builder::blocks.partials.eyebrow')
 </div>
 
-<div @class(['block-text sb-prose', 'text-center' => $isCentered])>
+<div @class(['block-text sb-prose', "sb-text-{$textStyle}" => $textStyle !== 'standard', 'text-center' => $isCentered])
+     @if ($textStyle === 'statement' && $accentColour) style="--sb-text-accent: {{ $accentColour }}" @endif>
     {!! $html !!}
 </div>
 

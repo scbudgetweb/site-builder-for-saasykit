@@ -90,7 +90,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | **Section (rows of blocks)** | One styled area holding **rows** of blocks, each row stacked or in columns. See [Sections and rows](#sections-and-rows) |
 | **Hero** | The big opening banner of a landing page, taller than a Banner, with a larger heading. Its **Social proof** toggle adds up to five overlapping faces, a star rating and a line such as *Join 900+ happy customers*, and its **Image** toggle shows a picture (e.g. a screenshot) under the text. A Banner has the same |
 | **Banner** | A full-width banner with an optional small label, a heading, a subtitle and up to two buttons. Its background can match the site's banners or use your own image with an overlay of one colour or a gradient |
-| **Text** | Formatted text: headings, lists, links, quotes, tables, inline code and code blocks, aligned left, centre or right, with up to two buttons above or below it |
+| **Text** | Formatted text: headings, lists, links, quotes, tables, inline code and code blocks, aligned left, centre or right, with up to two buttons above or below it. Design › Text style gives it a ready-made look: **Lead** (a larger introduction), **Statement** (large, in the heading font, with an accent line in a colour you choose; a short bar above it when centred) or **Note** (small and muted) |
 | **Image + text** | A heading, text and buttons with an image on the left or right (side by side on larger screens), or above or below them. The image is optional |
 | **Image** | One image with a caption, an optional link, and up to two buttons |
 | **Features** | A grid of features or benefits, each with an [icon](#icons), title, text and link |

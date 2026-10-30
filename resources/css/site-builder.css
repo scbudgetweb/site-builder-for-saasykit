@@ -253,6 +253,52 @@
  * Rich text in blocks (Text, Image + text). Colours follow the block's text colour (currentColor), so the same rules
  * work on light and dark backgrounds. Not Tailwind Typography's "prose": SaaSykit doesn't load that plugin publicly.
  */
+/*
+ * The Text block's text styles (TextBlock::TEXT_STYLES). In the components layer, so Design › Body text and Text size
+ * (unlayered) still change them.
+ */
+@layer components {
+    .sb-prose.sb-text-lead {
+        font-size: 1.25rem;
+        line-height: 1.6;
+    }
+
+    @media (min-width: 40rem) {
+        .sb-prose.sb-text-lead {
+            font-size: 1.375rem;
+        }
+    }
+
+    .sb-prose.sb-text-statement {
+        font-family: var(--font-sb-heading, inherit);
+        font-size: 1.5rem;
+        font-style: italic;
+        line-height: 1.45;
+        padding-left: 1.5rem;
+        border-left: 4px solid var(--sb-text-accent, var(--color-primary-600));
+    }
+
+    /* Centred, the accent line is a short bar above it. */
+    .sb-prose.sb-text-statement.text-center {
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    .sb-prose.sb-text-statement.text-center::before {
+        content: '';
+        display: block;
+        width: 3rem;
+        height: 4px;
+        margin: 0 auto 1.25rem;
+        background-color: var(--sb-text-accent, var(--color-primary-600));
+    }
+
+    .sb-prose.sb-text-note {
+        font-size: 0.875rem;
+        opacity: 0.75;
+    }
+}
+
 @layer components {
     .sb-prose {
         line-height: 1.7;

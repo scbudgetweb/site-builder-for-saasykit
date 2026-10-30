@@ -366,6 +366,8 @@ class BlockAppearance
                 ->selectablePlaceholder(false),
             SiteColour::make('background_color')
                 ->label(__('Background colour'))
+                // So text colours can warn about contrast as it changes (Design › Heading text, Body text).
+                ->live()
                 ->required()
                 ->visible(fn (Get $get): bool => $background($get) === 'custom'),
             SiteColour::make('gradient_start')

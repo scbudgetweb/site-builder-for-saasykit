@@ -167,7 +167,7 @@ Override these only when your block draws its own:
 | `itemLabel($state)` / `editorTitle($data)` | label plus heading | The card and panel titles |
 
 Colours, presets and dynamic content:
-- Use `SiteColour::make()` (not Filament's `ColorPicker`) for a colour setting, and read it with `Colour::css()` (hex, see-through hex or a global colour's `var()`), or `Colour::hex()` when you need its value, e.g. for contrast.
+- Use `SiteColour::make()` (not Filament's `ColorPicker`) for a colour setting (`->readableOn(fn (Get $get) => $get('background'))` warns when a text colour is hard to read on that background), and read it with `Colour::css()` (hex, see-through hex or a global colour's `var()`), or `Colour::hex()` when you need its value, e.g. for contrast.
 - Presets (`BlockPresets`) and dynamic content (`DynamicContent`) work on every block: the preset is merged in before `viewData()` and the view see the data, and tags are filled in the finished HTML. Add your own tag with `SiteBuilder::dynamicContent('venue_name', 'Venue name', fn (Page $page) => ..., isPerRequest: false)`.
 
 Helpers for fields:

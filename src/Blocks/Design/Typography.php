@@ -2,12 +2,14 @@
 
 namespace ScBudgetWeb\SiteBuilder\Blocks\Design;
 
+use Closure;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Utilities\Get;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\HoverMode;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
@@ -89,7 +91,7 @@ final class Typography implements DesignGroup
 
         return [
             PanelToggle::design('heading_text', __('Heading text'), [self::headingTabs()], 50, $path),
-            PanelToggle::design('body_text', __('Body text'), [self::textFields('body')], 51, "{$path}.body"),
+            PanelToggle::design('body_text', __('Body text'), [self::textFields('body', self::blockBackground())], 51, "{$path}.body"),
             PanelToggle::design('link_text', __('Link text'), [
                 Grid::make(['default' => 1, 'sm' => 2])->schema([
                     SiteColour::make('colour')
@@ -148,20 +150,29 @@ final class Typography implements DesignGroup
             ->contained(false)
             ->tabs([
                 Tab::make(__('All'))
-                    ->schema([Group::make()->statePath('heading')->schema([self::textFields('heading')])]),
+                    ->schema([Group::make()->statePath('heading')->schema([self::textFields('heading', self::blockBackground())])]),
                 ...array_map(
                     fn (string $level): Tab => Tab::make(strtoupper($level))
-                        ->schema([Group::make()->statePath($level)->schema([self::textFields($level)])]),
+                        ->schema([Group::make()->statePath($level)->schema([self::textFields($level, self::blockBackground())])]),
                     array_keys(self::LEVELS),
                 ),
             ]);
     }
 
     /**
+     * The block's own background colour, from a text's settings (data.design.typography.{text}), for the contrast
+     * warning: only a custom single colour, as the standard backgrounds already pick a readable text colour.
+     */
+    private static function blockBackground(): Closure
+    {
+        return fn (Get $get): ?string => $get('../../../appearance.background') === 'custom' ? $get('../../../appearance.background_color') : null;
+    }
+
+    /**
      * A text's settings: font, weight, size, line height, letter spacing, alignment, style, colour (and its hover
      * colour) and shadow. Also each text part of a block's items (Items).
      */
-    public static function textFields(string $text): Grid
+    public static function textFields(string $text, ?Closure $background = null): Grid
     {
         return Grid::make(['default' => 1, 'sm' => 2])
             ->schema([
@@ -212,7 +223,9 @@ final class Typography implements DesignGroup
                 Group::make()->gap(false)->schema([
                     HoverMode::normal(SiteColour::make('colour')
                         ->label(__('Colour'))
-                        ->hintIcon(PageBlock::HELP_ICON, __('Replaces the automatic dark or light text colour.'))),
+                        ->hintIcon(PageBlock::HELP_ICON, __('Replaces the automatic dark or light text colour.'))
+                        // Warns when it's hard to read on the colour behind it, where that's one colour.
+                        ->when($background !== null, fn (SiteColour $field): SiteColour => $field->readableOn($background))),
                     HoverMode::only(SiteColour::make('colour_hover')
                         ->label(__('Colour on hover'))),
                 ]),

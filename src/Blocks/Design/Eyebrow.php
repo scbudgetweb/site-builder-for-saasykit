@@ -66,10 +66,11 @@ final class Eyebrow implements DesignGroup
                         ->sameOnEveryScreen()
                         ->visible(fn (Get $get): bool => in_array($get('decoration'), ['both', 'before'], true)),
                     SiteColour::make('pill_colour')
+                        ->live()
                         ->label(__('Pill colour'))
                         ->hintIcon(PageBlock::HELP_ICON, __('The background of a small heading that looks like a pill (Content tab).')),
                 ]),
-                Typography::textFields(self::key()),
+                Typography::textFields(self::key(), fn (Get $get): ?string => $get('../../eyebrow_style') === 'pill' ? $get('pill_colour') : null),
             ], 48, $path),
         ];
     }

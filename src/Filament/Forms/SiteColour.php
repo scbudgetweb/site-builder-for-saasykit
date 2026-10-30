@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Forms;
 use Closure;
 use Filament\Forms\Components\Concerns\HasPlaceholder;
 use Filament\Forms\Components\Field;
+use Filament\Schemas\Components\Text;
 use Filament\Support\Facades\FilamentAsset;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
@@ -26,6 +27,9 @@ class SiteColour extends Field
     protected bool|Closure $hasAlpha = true;
 
     protected bool|Closure $hasGlobals = true;
+
+    /** The colour this one is text on, for the contrast warning (readableOn()). */
+    protected ?Closure $contrastBackground = null;
 
     protected function setUp(): void
     {
@@ -58,6 +62,39 @@ class SiteColour extends Field
         $this->hasGlobals = $condition;
 
         return $this;
+    }
+
+    /**
+     * A text colour: warns under the field when it's hard to read on $background (a closure returning that colour, or
+     * null when there's none to check, e.g. a background that isn't a single colour), as Branding warns.
+     */
+    public function readableOn(Closure $background): static
+    {
+        $this->contrastBackground = $background;
+        $this->live();
+
+        $this->belowContent(fn (SiteColour $component): ?Text => ($warning = $component->contrastWarning()) === null
+            ? null
+            : Text::make($warning)->color('warning'));
+
+        return $this;
+    }
+
+    /**
+     * The contrast warning, or null when the text reads well (or there's nothing to check).
+     */
+    public function contrastWarning(): ?string
+    {
+        $text = $this->getState();
+        $background = $this->contrastBackground === null ? null : $this->evaluate($this->contrastBackground);
+
+        if (! is_string($text) || $text === '' || ! is_string($background) || $background === '') {
+            return null;
+        }
+
+        return Colour::isReadableTextOn($text, $background)
+            ? null
+            : __('Hard to read on its background: choose a lighter or darker colour.');
     }
 
     public function hasAlpha(): bool

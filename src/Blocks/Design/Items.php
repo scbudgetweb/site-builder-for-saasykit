@@ -82,7 +82,7 @@ final class Items implements DesignGroup
             PanelToggle::design('items', $parts->label, [self::boxFields()], 45, "{$path}.box"),
             ...($parts->icon !== null ? [PanelToggle::design('items_icon', $parts->icon, [self::iconFields()], 46, "{$path}.icon")] : []),
             ...array_map(
-                fn (string $part, string $label): PanelToggle => PanelToggle::design("items_{$part}", $label, [Typography::textFields($part)], 47, "{$path}.{$part}"),
+                fn (string $part, string $label): PanelToggle => PanelToggle::design("items_{$part}", $label, [Typography::textFields($part, fn (Get $get): ?string => $get('../box.background'))], 47, "{$path}.{$part}"),
                 array_keys($parts->texts),
                 $parts->texts,
             ),
@@ -97,6 +97,7 @@ final class Items implements DesignGroup
             // A setting and its hover value share a cell: only one shows at a time.
             Group::make()->gap(false)->schema([
                 HoverMode::normal(SiteColour::make('background')
+                    ->live()
                     ->label(__('Background'))
                     ->hintIcon(PageBlock::HELP_ICON, __('Each item\'s background. The text turns light on a dark colour. Blank: the standard look.'))),
                 HoverMode::only(SiteColour::make('background_hover')
@@ -206,6 +207,7 @@ final class Items implements DesignGroup
     {
         return Grid::make(['default' => 1, 'sm' => 2])->schema([
             Select::make('fill')
+                ->live()
                 ->label(__('Background'))
                 ->hintIcon(PageBlock::HELP_ICON, __('A tile behind the icon: a light tint, solid colour or ring. Blank: the standard look.'))
                 ->options(self::translated(self::FILLS))
@@ -223,11 +225,13 @@ final class Items implements DesignGroup
             Group::make()->gap(false)->schema([
                 HoverMode::normal(SiteColour::make('colour')
                     ->label(__('Colour'))
-                    ->hintIcon(PageBlock::HELP_ICON, __('The icon\'s (or number\'s) colour.'))),
+                    ->hintIcon(PageBlock::HELP_ICON, __('The icon\'s (or number\'s) colour.'))
+                    ->readableOn(fn (Get $get): ?string => $get('fill') === 'solid' ? $get('background') : null)),
                 HoverMode::only(SiteColour::make('colour_hover')
                     ->label(__('Colour on hover'))),
             ]),
             SiteColour::make('background')
+                ->live()
                 ->label(__('Tile colour'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The tile\'s colour, or the ring\'s with Outline. Blank: the site colour.')),
         ]);

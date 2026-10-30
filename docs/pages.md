@@ -217,6 +217,8 @@ Row and column settings in the visual builder use the same layout: a row's **Col
 
 On a block, the border and shadow go round its panel when it has one, and round the whole block otherwise. *Automatic* gives a panel the site's shadow and leaves other blocks without one. Images (in Image, Image + text, Image cards and Gallery) have their own corners, border and shadow in their **Image** toggle. Features and Image cards keep **Card layout** (Image cards: **Images & card layout**) for whether each card is a box and where its icon sits; their colours, shadow, icon and text are under the Items toggles. Steps have a **Connectors** toggle (a solid, dashed or dotted line joining the step numbers across each row, and its colour), and each step can be marked **Highlight this step**. Buttons with custom colours can have a border line and width, and any button can have a shadow.
 
+**Hard-to-read colours.** A text colour warns under its field when it would be hard to read on the colour behind it: an item's text on the items' background, an icon on its solid tile, the small heading on its pill, and Heading text or Body text on the block's own custom background colour. It's a warning only; the colour still saves.
+
 **Different on tablets and phones.** Sizes and spacing can have their own value on each screen size. Use the desktop, tablet and phone buttons beside the setting; in the visual builder they follow the Phone, Tablet and Desktop tabs. A dot marks a screen size with its own value, and an empty one shows the value it uses. A desktop value applies on every screen unless tablets have their own; a tablet value also applies on phones unless phones have their own.
 
 ### Advanced

@@ -22,7 +22,7 @@ class CoreBlocksTest extends PageTestCase
     public function test_every_core_block_is_in_the_picker(): void
     {
         $this->assertSame([
-            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'call_to_action', 'mailing_list',
+            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'pricing_table', 'call_to_action', 'mailing_list',
             'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));
@@ -50,9 +50,10 @@ class CoreBlocksTest extends PageTestCase
             self::block('social_follow', ['heading' => 'Follow us']),
             self::block('divider', ['label' => 'More']),
             self::block('heading', ['heading' => 'Our rooms', 'level' => 'h3']),
-            self::block('countdown', ['heading' => 'Open day', 'Weekends booked', 'Rooms in use', 'ends_at' => now()->addDays(3)->format('Y-m-d H:i:s')]),
+            self::block('countdown', ['heading' => 'Open day', 'Weekends booked', 'Rooms in use', 'Community', '£0', 'ends_at' => now()->addDays(3)->format('Y-m-d H:i:s')]),
             self::block('circle_counters', ['items' => [['label' => 'Weekends booked', 'value' => 85]]]),
             self::block('bar_counters', ['items' => [['label' => 'Rooms in use', 'value' => 60]]]),
+            self::block('pricing_table', ['plans' => [['name' => 'Community', 'price' => 0, 'period' => 'per hour', 'features' => "Main hall\n- Kitchen"]]]),
             self::block('toggle', ['title' => 'Can we bring our own food?', 'content' => '<p>Yes, the kitchen is yours.</p>', 'open' => true]),
             self::block('icon', ['icon' => 'bx:regular/bx-accessibility', 'label' => 'Wheelchair access']),
         ]]);

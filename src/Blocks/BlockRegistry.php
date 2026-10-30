@@ -44,6 +44,7 @@ class BlockRegistry
         Core\CountdownBlock::class,
         Core\CircleCountersBlock::class,
         Core\BarCountersBlock::class,
+        Core\PricingTableBlock::class,
         Core\CallToActionBlock::class,
         Core\MailingListBlock::class,
         Core\ButtonsBlock::class,

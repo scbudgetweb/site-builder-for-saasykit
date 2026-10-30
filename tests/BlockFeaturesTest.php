@@ -37,6 +37,7 @@ class BlockFeaturesTest extends PageTestCase
         'countdown' => [true, ['align', 'decoration', 'size'], true],
         'circle_counters' => [false, ['align', 'decoration', 'size'], true],
         'bar_counters' => [false, ['align', 'decoration', 'size'], true],
+        'pricing_table' => [true, ['align', 'decoration', 'size'], true],
         'faq' => [false, ['align', 'decoration', 'size'], true],
         'features' => [false, ['align', 'decoration', 'size'], true],
         'gallery' => [false, ['align', 'decoration', 'size'], true],

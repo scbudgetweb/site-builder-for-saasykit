@@ -466,6 +466,7 @@ abstract class PageBlock
                 ...(($parts = static::itemParts()) !== null ? Items::togglesFor($parts) : []),
                 ...(static::hasEyebrow() ? Eyebrow::panelToggles() : []),
             ] : []),
+            static::pullsContent() ? PanelToggle::content('when_empty', __('When empty'), [static::whenEmptyFields()], 90) : null,
             PanelToggle::content('admin_label', __('Admin label'), [static::adminLabelField()], 99),
             BlockConditions::toggle(),
         ];
@@ -541,6 +542,67 @@ abstract class PageBlock
      *
      * @param  array<string, mixed>  $data
      */
+    /**
+     * When empty (a block that pulls content in): hide => label. With nothing to show, the block is hidden, shows its
+     * heading only, or its heading and a message.
+     */
+    public const WHEN_EMPTY = [
+        'hide' => 'Hide the whole block',
+        'heading' => 'Show the heading only',
+        'message' => 'Show the heading and a message',
+    ];
+
+    /**
+     * Whether the block pulls its content in (latest posts, live figures, an app's latest jobs), so it can turn out
+     * empty: its panel then offers Content › When empty, and isEmpty() says when it is.
+     */
+    public static function pullsContent(): bool
+    {
+        return false;
+    }
+
+    /**
+     * Whether the content pulled in is empty, from viewData()'s result. Only asked when pullsContent() is true.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $viewData
+     */
+    public static function isEmpty(array $data, array $viewData): bool
+    {
+        return false;
+    }
+
+    /**
+     * What the block does when it's empty (WHEN_EMPTY), checked.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    public static function whenEmpty(array $data): string
+    {
+        return static::pick($data['when_empty'] ?? null, self::WHEN_EMPTY, 'hide');
+    }
+
+    /**
+     * Content › When empty, for a block that pulls content in.
+     */
+    protected static function whenEmptyFields(): Grid
+    {
+        return Grid::make(['default' => 1, 'sm' => 2])->schema([
+            Select::make('when_empty')
+                ->label(__('When there\'s nothing to show'))
+                ->hintIcon(self::HELP_ICON, __('E.g. before the first post is published. Hidden, the page shows no gap where the block would be.'))
+                ->options(array_map(fn (string $label): string => __($label), self::WHEN_EMPTY))
+                ->default('hide')
+                ->selectablePlaceholder(false)
+                ->live(),
+            TextInput::make('empty_message')
+                ->label(__('Message'))
+                ->placeholder(__('Nothing here yet. Check back soon.'))
+                ->maxLength(200)
+                ->visible(fn (Get $get): bool => $get('when_empty') === 'message'),
+        ]);
+    }
+
     public static function isCacheable(array $data): bool
     {
         return true;

@@ -161,6 +161,7 @@ Override these only when your block draws its own:
 | `contentTabLabel()` | *Content* | Rename the first tab |
 | `defaultWidth()` / `defaultBackground()` | contained / none | Change the starting look |
 | `defaultAnchor()` | `null` | Give the block an anchor (for example `opening-hours`) when the admin leaves Anchor ID empty, so a menu link can point at it |
+| `pullsContent()` / `isEmpty($data, $viewData)` | `false` | For a block that pulls content in (latest posts, jobs, live figures): return `true` from `pullsContent()`, and from `isEmpty()` when `viewData()` found nothing. The panel then offers Content › When empty (hide, heading only, or a message), and the renderer follows it |
 | `isVisible($data)` | `true` | Hide the block, with no wrapper or spacing, for example when a live list is empty |
 | `isCacheable($data)` | `true` | Return `false` when the HTML depends on the visitor or changes by itself: live figures, signed-in state, cookie consent, a form's CSRF token, any Livewire component. A page is cached only when all its blocks are |
 | `itemLabel($state)` / `editorTitle($data)` | label plus heading | The card and panel titles |

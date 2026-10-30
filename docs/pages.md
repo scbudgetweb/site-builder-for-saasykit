@@ -189,6 +189,7 @@ Row and column settings in the visual builder use the same layout: a row's **Col
 | **Text colour** | Automatic (from the background), Dark or Light |
 | **Background area** | *Full width*, or *Behind the content, as a panel*: a box with its own corners, border and shadow |
 | **Pattern & shape** | A pattern over the background (dots, grid, lines, stripes, checks or waves) and a decorative shape (blob, arc, slant, circle or triangle), each with a colour and strength |
+| **When empty** | Blocks that pull content in (Stats with live figures, and your app's own, e.g. latest jobs) can turn out empty: hide the whole block (the standard, with no gap left), show its heading only, or its heading and a message. In the visual builder a hidden one still shows a box to click |
 | **Link** | Link the whole block to a page, a part of a page or a web address, optionally in a new tab. Its own buttons and links still go to theirs |
 | **Admin label** | Your own name for the block in the builder. Visitors never see it |
 

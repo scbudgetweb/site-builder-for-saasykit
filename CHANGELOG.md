@@ -8,6 +8,7 @@
 - **New: fixed part classes**, `sb-items`, `sb-item`, `sb-item-icon`, `sb-item-title`, `sb-item-text`, `sb-item-value`, `sb-item-label` and `sb-item-meta`, kept stable for custom CSS (listed in the [Branding guide](docs/branding.md#custom-css)).
 - **New: brand colours by name for custom CSS.** Each global colour is also `--sb-colour-{its-name}` (e.g. `--sb-colour-sunrise-orange`), plus `--sb-colour-site` and `--sb-colour-secondary`, so custom CSS follows Branding instead of copying colour codes.
 - **New: Branding › Custom CSS › What your CSS can use**, a reference under the editor: the brand colour variables with swatches, the item part classes, and every block type's `[data-block]` selector. All custom CSS stays in this one place.
+- **New: Content › When empty** for blocks that pull content in: hide the whole block, show its heading only, or its heading and a message. Stats is one (live figures the app no longer provides are left out); an app's own blocks opt in with `pullsContent()` and `isEmpty()`. **Changed:** a Stats block with no numbers left is now hidden, where it used to show its heading over nothing.
 - **New: columns for each screen size** in Design › Items: how many items sit side by side on computers, tablets and phones, each on its own (2 on phones gives a 2 × 2 grid). Steps' connector lines follow them.
 - **New: rows that stay side by side on phones** (a row's *Side by side on phones too*), e.g. a header's logo, menu and account links in one line.
 - **Changed:** Stats and Steps take up to 12 items (from 6).

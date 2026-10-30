@@ -103,6 +103,19 @@ class StatsBlock extends PageBlock
     }
 
     /**
+     * Live figures come from the app, and one it no longer provides (or that fails) is left out, so every number can be.
+     */
+    public static function pullsContent(): bool
+    {
+        return true;
+    }
+
+    public static function isEmpty(array $data, array $viewData): bool
+    {
+        return ($viewData['items'] ?? []) === [];
+    }
+
+    /**
      * Live figures change, so a block showing one isn't cached.
      */
     public static function isCacheable(array $data): bool

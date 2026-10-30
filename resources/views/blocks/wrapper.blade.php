@@ -18,6 +18,8 @@
 --}}
 @php
     $marksNodes ??= false;
+    // The block's own view, or another in its place (blocks.empty, for content pulled in that's empty).
+    $blockView ??= $blockClass::view();
     /** @var \ScBudgetWeb\SiteBuilder\Blocks\Design\DesignOutput|null $design */
     $design ??= null;
     $hasPanel = (bool) ($appearance['panel'] ?? false);
@@ -42,7 +44,7 @@
     <div data-sb-node="block" data-sb-uid="{{ $uid }}" data-sb-type="{{ $blockClass::name() }}" style="display: contents">
 @endif
 @if ($appearance === null)
-    @include($blockClass::view(), $viewData)
+    @include($blockView, $viewData)
 @else
     <section @if ($appearance['id']) id="{{ $appearance['id'] }}" @endif
              class="{{ $join($sectionClass, 'scroll-mt-24', ($appearance['link'] ?? null) ? 'sb-has-link' : null) }}"
@@ -65,11 +67,11 @@
                 <div class="sb-panel {{ $panelClass }}" @if ($panelStyle !== '') style="{{ $panelStyle }}" @endif>
                     {!! $backgroundLayers !!}
                     <div class="relative">
-                        @include($blockClass::view(), $viewData)
+                        @include($blockView, $viewData)
                     </div>
                 </div>
             @else
-                @include($blockClass::view(), $viewData)
+                @include($blockView, $viewData)
             @endif
         </div>
     </section>

@@ -176,6 +176,29 @@ class PageRenderer
                     : null;
 
                 $extra = $blockClass::viewData($block['data'], $page);
+                $blockView = null;
+
+                // Content pulled in that turned out empty: hide the block, or show its heading (and a message).
+                if ($blockClass::pullsContent() && $blockClass::isEmpty($block['data'], $extra)) {
+                    $whenEmpty = $blockClass::whenEmpty($block['data']);
+
+                    if ($whenEmpty === 'hide') {
+                        if ($marksNodes) {
+                            $rendered[] = view('site-builder::blocks.canvas-placeholder', [
+                                'uid' => is_string($block['uid'] ?? null) ? $block['uid'] : null,
+                                'type' => $blockClass::name(),
+                                'label' => $blockClass::label(),
+                            ])->render();
+                        }
+
+                        continue;
+                    }
+
+                    $blockView = 'site-builder::blocks.empty';
+                    $extra['emptyMessage'] = $whenEmpty === 'message'
+                        ? (filled($block['data']['empty_message'] ?? null) && is_string($block['data']['empty_message']) ? $block['data']['empty_message'] : __('Nothing here yet. Check back soon.'))
+                        : null;
+                }
 
                 if (is_a($blockClass, SectionBlock::class, true)) {
                     // A column with its own background (or text colour) gives its blocks its text colour.
@@ -204,6 +227,7 @@ class PageRenderer
 
                 $rendered[] = DynamicContent::replace(view('site-builder::blocks.wrapper', [
                     'blockClass' => $blockClass,
+                    'blockView' => $blockView,
                     'block' => $block['data'],
                     'extra' => $extra,
                     'appearance' => $appearance,

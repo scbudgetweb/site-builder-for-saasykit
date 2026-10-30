@@ -44,6 +44,7 @@ class BlockRegistry
         Core\CallToActionBlock::class,
         Core\MailingListBlock::class,
         Core\ButtonsBlock::class,
+        Core\IconBlock::class,
         Core\TestimonialsBlock::class,
         Core\TeamBlock::class,
         Core\FaqBlock::class,

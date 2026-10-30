@@ -32,6 +32,7 @@ class BlockFeaturesTest extends PageTestCase
         'image_text' => [true, ['decoration', 'size'], true],
         'text' => [true, [], true],
         'heading' => [false, ['decoration', 'size'], false],
+        'icon' => [false, [], false],
         'faq' => [false, ['align', 'decoration', 'size'], true],
         'features' => [false, ['align', 'decoration', 'size'], true],
         'gallery' => [false, ['align', 'decoration', 'size'], true],
@@ -126,7 +127,9 @@ class BlockFeaturesTest extends PageTestCase
                 $this->assertMatchesRegularExpression('/["\'\s]'.preg_quote($class, '/').'["\'\s]/', $source, "{$name} declares {$class} but doesn't draw it.");
             }
 
-            $this->assertContains('items', $this->toggleKeys($blockClass), "{$name}: Design › Items.");
+            if ($parts->hasBox) {
+                $this->assertContains('items', $this->toggleKeys($blockClass), "{$name}: Design › Items.");
+            }
         }
     }
 

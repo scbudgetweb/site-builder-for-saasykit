@@ -30,6 +30,7 @@ final class ItemParts
         public readonly string $label,
         public readonly ?string $icon = null,
         public readonly array $texts = [],
+        public readonly bool $hasBox = true,
     ) {}
 
     /**
@@ -45,7 +46,7 @@ final class ItemParts
      */
     public function icon(string $label): self
     {
-        return new self($this->label, $label, $this->texts);
+        return new self($this->label, $label, $this->texts, $this->hasBox);
     }
 
     /**
@@ -57,18 +58,27 @@ final class ItemParts
             throw new InvalidArgumentException("[{$part}] isn't an item text part. Use one of: ".implode(', ', array_keys(self::TEXTS)).'.');
         }
 
-        return new self($this->label, $this->icon, [...$this->texts, $part => $label]);
+        return new self($this->label, $this->icon, [...$this->texts, $part => $label], $this->hasBox);
     }
 
     /**
-     * The classes the block's view must have: sb-items, sb-item, sb-item-icon (with an icon) and sb-item-{part}.
+     * A block with one item and nothing around it (e.g. the Icon block): no box settings (background, columns,
+     * dividers…), only its icon and text parts.
+     */
+    public function withoutBox(): self
+    {
+        return new self($this->label, $this->icon, $this->texts, hasBox: false);
+    }
+
+    /**
+     * The classes the block's view must have: sb-items (with a box), sb-item, sb-item-icon (with an icon) and sb-item-{part}.
      *
      * @return array<int, string>
      */
     public function classes(): array
     {
         return [
-            'sb-items',
+            ...($this->hasBox ? ['sb-items'] : []),
             'sb-item',
             ...($this->icon !== null ? ['sb-item-icon'] : []),
             ...array_map(fn (string $part): string => "sb-item-{$part}", array_keys($this->texts)),

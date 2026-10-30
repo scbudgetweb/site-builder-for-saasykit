@@ -76,6 +76,10 @@
  * The icon (or a step's marker). A fill draws a tile behind it, and a tile (the fill's, or the block's standard one,
  * .sb-has-tile) grows with the icon's size (--sb-icsz).
  */
+/* The Icon block's icon is larger as standard (no tile until a fill is chosen); its own size still wins. */
+:where(.sb-icon-block) .sb-item-icon { --sb-icsz: 3rem; }
+:where(.sb-icon-block) .sb-item-icon svg { width: var(--sb-icsz); height: var(--sb-icsz); }
+
 .sb-d-ics .sb-item-icon { --sb-icsz: var(--sb-ics); }
 .sb-d-ics .sb-item-icon svg { width: var(--sb-icsz); height: var(--sb-icsz); }
 

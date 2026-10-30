@@ -79,7 +79,7 @@ final class Items implements DesignGroup
         $path = 'design.'.self::key();
 
         return [
-            PanelToggle::design('items', $parts->label, [self::boxFields()], 45, "{$path}.box"),
+            ...($parts->hasBox ? [PanelToggle::design('items', $parts->label, [self::boxFields()], 45, "{$path}.box")] : []),
             ...($parts->icon !== null ? [PanelToggle::design('items_icon', $parts->icon, [self::iconFields()], 46, "{$path}.icon")] : []),
             ...array_map(
                 fn (string $part, string $label): PanelToggle => PanelToggle::design("items_{$part}", $label, [Typography::textFields($part, fn (Get $get): ?string => $get('../box.background'))], 47, "{$path}.{$part}"),

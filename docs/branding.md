@@ -133,7 +133,7 @@ Mistakes that don't make the CSS unsafe are saved but listed, each with its line
 
 Blocks have a **CSS classes** setting (Advanced › CSS ID & classes) for styling one block with your CSS. `fixed` and `sticky` aren't allowed there: they could pin a block over the rest of the page.
 
-All custom CSS lives here, in one place. These names stay the same from one version of the package to the next, so CSS written against them keeps working:
+All custom CSS lives here, in one place. **What your CSS can use**, under the editor, lists the names that stay the same from one version of the package to the next, so CSS written with them keeps working:
 
 | Selector | What it is |
 |---|---|
@@ -146,8 +146,11 @@ All custom CSS lives here, in one place. These names stay the same from one vers
 | `.sb-item-value`, `.sb-item-label` | A stat's number and label |
 | `.sb-item-meta` | A person's or quote's role |
 | `.sb-item-highlight` | A step marked *Highlight this step* |
+| `var(--sb-colour-site)`, `var(--sb-colour-secondary)` | The site and secondary colours |
+| `var(--sb-colour-sunrise-orange)` | A global colour, by its name ("Sunrise orange"). Two with the same name get `-2`, `-3`…; a name with no letters or numbers uses the colour's id. Renaming a colour renames its variable |
+| `var(--color-primary-50)` … `var(--color-primary-950)` | Shades of the site colour, light to dark |
 
-For example, `[data-block="stats"] .sb-item-value { font-variant-numeric: tabular-nums; }`. Avoid layout classes such as `.max-w-4xl` or `.grid`: they can change in any update.
+For example, `[data-block="stats"] .sb-item-value { color: var(--sb-colour-sunrise-orange); }` follows Branding when the colour changes. Avoid layout classes such as `.max-w-4xl` or `.grid`: they can change in any update.
 
 ## Your app's own tabs
 

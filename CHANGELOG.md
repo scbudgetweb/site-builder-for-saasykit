@@ -6,9 +6,11 @@
 
 - **New: Design › Items** for every block with repeated items (Features, Image cards, Stats, Steps, Team, Testimonials, FAQ, Gallery, Logo strip). The items' box: background colour or gradient (with readable text on it), padding, space between, corners, border, an accent edge, shadow, lines between items, and hover background, border colour, shadow and lift. Their icon: background (none, soft, solid or outline), shape, size and colours. And a text style for each text part (title, text, number, label, role), e.g. stat numbers in their own colour.
 - **New: fixed part classes**, `sb-items`, `sb-item`, `sb-item-icon`, `sb-item-title`, `sb-item-text`, `sb-item-value`, `sb-item-label` and `sb-item-meta`, kept stable for custom CSS (listed in the [Branding guide](docs/branding.md#custom-css)).
+- **New: brand colours by name for custom CSS.** Each global colour is also `--sb-colour-{its-name}` (e.g. `--sb-colour-sunrise-orange`), plus `--sb-colour-site` and `--sb-colour-secondary`, so custom CSS follows Branding instead of copying colour codes.
+- **New: Branding › Custom CSS › What your CSS can use**, a reference under the editor: the brand colour variables with swatches, the item part classes, and every block type's `[data-block]` selector. All custom CSS stays in this one place.
 - **New: Steps connectors and highlight.** A solid, dashed or dotted line joins the step numbers across each row, and a step can be highlighted.
 - **New:** *Items* in the right-click menu's copy and paste styles.
-- For developers: `PageBlock::itemParts()` and `Design\ItemParts` declare a block's parts ([custom blocks](docs/developers/custom-blocks.md#5-optional-hooks)); `Design\Items` is the design group; `Typography::textFields()` and `Typography::addText()` are public; `BlockSchema::VERSION` is 3.
+- For developers: `PageBlock::itemParts()` and `Design\ItemParts` declare a block's parts ([custom blocks](docs/developers/custom-blocks.md#5-optional-hooks)); `Design\Items` is the design group; `Typography::textFields()` and `Typography::addText()` are public; `BlockSchema::VERSION` is 3; `Branding::colourVariables()`.
 
 ## 1.6.4 - 2026-10-30
 

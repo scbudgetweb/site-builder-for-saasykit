@@ -237,7 +237,7 @@ class Branding
      *
      * @var array<int, string>
      */
-    private const DEFAULT_PRIMARY_SHADES = [100 => '#d2bcf7', 800 => '#3d157e', 900 => '#2f1060', 950 => '#1f0a3f'];
+    private const DEFAULT_PRIMARY_SHADES = [100 => '#d2bcf7', 500 => '#6f27e5', 800 => '#3d157e', 900 => '#2f1060', 950 => '#1f0a3f'];
 
     public const DEFAULT_SITE_FONT = 'poppins';
 
@@ -594,6 +594,14 @@ class Branding
             }
         }
 
+        // The same colours by name, for custom CSS (--sb-colour-sunrise-orange…). The site and secondary colours'
+        // (--sb-colour-site, --sb-colour-secondary) are in site-builder.css, as they follow the palette.
+        foreach ($this->colourVariables() as $variable => $colour) {
+            if (! in_array($variable, ['--sb-colour-site', '--sb-colour-secondary'], true)) {
+                $variables[] = "{$variable}: {$colour['value']}";
+            }
+        }
+
         foreach ($this->appColourGroups() as $group) {
             foreach ($group->colours as $key => $colour) {
                 if (Colour::isValidHex($color = $this->string(ColourGroup::settingKey($key)))) {
@@ -666,6 +674,40 @@ class Branding
         }
 
         return $colours;
+    }
+
+    /**
+     * The site and global colours as CSS variables named after them, for custom CSS: --sb-colour-site,
+     * --sb-colour-secondary, then each global colour's name (e.g. "Sunrise orange" is --sb-colour-sunrise-orange). Two
+     * colours with the same name get -2, -3…; a name with no letters or numbers uses the colour's id. Renaming a
+     * colour renames its variable, but --sb-gc-{id} (what blocks use) never changes.
+     *
+     * @return array<string, array{name: string, value: string}> variable => its colour's name and CSS value
+     */
+    public function colourVariables(): array
+    {
+        $variables = [];
+
+        foreach ($this->globalColours() as $id => $colour) {
+            $slug = match ($id) {
+                'primary' => 'site',
+                'secondary' => 'secondary',
+                default => Str::slug($colour['name']) ?: $id,
+            };
+            $variable = "--sb-colour-{$slug}";
+
+            for ($count = 2; isset($variables[$variable]); $count++) {
+                $variable = "--sb-colour-{$slug}-{$count}";
+            }
+
+            $variables[$variable] = [
+                'name' => $colour['name'],
+                // A built-in colour follows the theme's (or Branding's) shade, set or not.
+                'value' => isset(Colour::BUILT_IN_GLOBALS[$id]) ? 'var('.Colour::BUILT_IN_GLOBALS[$id][1].')' : (string) $colour['colour'],
+            ];
+        }
+
+        return $variables;
     }
 
     /**

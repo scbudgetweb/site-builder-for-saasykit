@@ -26,6 +26,7 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\View;
 use Filament\Schemas\Concerns\RestrictsFileUploadsToSchemaComponents;
 use Filament\Schemas\Schema;
 use Illuminate\Contracts\Support\Htmlable;
@@ -33,6 +34,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
@@ -385,6 +387,15 @@ class ManageBranding extends Page
                                                         $fail($problem);
                                                     }
                                                 }),
+                                        ]),
+                                    Section::make(__('What your CSS can use'))
+                                        ->description(__('Brand colours, block parts and block types, by the names that stay the same when the site builder is updated.'))
+                                        ->icon('heroicon-o-book-open')
+                                        ->collapsible()
+                                        ->collapsed()
+                                        ->schema([
+                                            View::make('site-builder::filament.branding.css-reference')
+                                                ->viewData(fn (): array => self::cssReference()),
                                         ]),
                                 ]),
                             // The app's own sections (SiteBuilder::brandingSection()), a tab each, after the package's.
@@ -1033,6 +1044,46 @@ class ManageBranding extends Page
                 array_keys($fields),
                 $fields,
             ));
+    }
+
+    /**
+     * What Branding › Custom CSS can rely on: the brand colour variables, the item part classes (ItemParts) and each
+     * block type's section ([data-block]), for the reference under the editor.
+     *
+     * @return array{colours: array<string, array{name: string, value: string}>, swatches: array<string, ?string>, parts: array<string, string>, blocks: array<string, string>}
+     */
+    public static function cssReference(): array
+    {
+        $branding = app(Branding::class);
+        $colours = $branding->colourVariables();
+        $saved = array_values($branding->globalColours());
+
+        return [
+            'colours' => $colours,
+            // Each colour's swatch as it is on the website (the admin panel has its own site colour variables): the
+            // saved colour, the standard site colour, or null for a secondary colour that's the theme's own.
+            'swatches' => array_combine(array_keys($colours), array_map(
+                fn (array $colour, int $index): ?string => $saved[$index]['colour'] ?? ($index === 0 ? $branding->primaryShade(500) : null),
+                $colours,
+                array_keys(array_values($colours)),
+            )),
+            'parts' => [
+                '.sb-items' => __('The list of items'),
+                '.sb-item' => __('One item'),
+                '.sb-item-icon' => __('Its icon, a step\'s number or a quote mark'),
+                '.sb-item-title' => __('Its title (a card\'s, a person\'s name, a question)'),
+                '.sb-item-text' => __('Its text (a card\'s, a quote, an answer, a caption)'),
+                '.sb-item-value' => __('A number in Stats'),
+                '.sb-item-label' => __('A number\'s label in Stats'),
+                '.sb-item-meta' => __('A person\'s or quote\'s role'),
+                '.sb-item-highlight' => __('A step marked "Highlight this step"'),
+            ],
+            'blocks' => collect(app(BlockRegistry::class)->all())
+                ->filter(fn (string $blockClass): bool => $blockClass::hasAppearance())
+                ->map(fn (string $blockClass): string => $blockClass::label())
+                ->sort()
+                ->all(),
+        ];
     }
 
     /**

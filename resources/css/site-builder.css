@@ -21,6 +21,12 @@
 @import './design/hover.css';
 @import './design/items.css';
 
+/* Branding's site and secondary colours by name, for custom CSS (Branding::colourVariables()). */
+:root {
+    --sb-colour-site: var(--color-primary-500);
+    --sb-colour-secondary: var(--color-secondary-500);
+}
+
 /* Content › Link: a link over the whole block, under the block's own links and buttons. */
 .sb-block-link { position: absolute; inset: 0; z-index: 1; }
 .sb-has-link :is(a, button, input, select, textarea, summary, label):not(.sb-block-link) { position: relative; z-index: 2; }

@@ -257,6 +257,8 @@ Until a visitor accepts marketing cookies, a video shows a still picture with a 
 
 Images can be JPG, PNG, WebP, AVIF or SVG, up to 2 MB. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
 
+Pages can also be built from a JSON file with `php artisan site-builder:page`, checked as the editor checks them: see [Building pages from JSON](developers/extending.md#building-pages-from-json).
+
 To use an image that's already uploaded, click **Choose from uploads** beside any image field: it lists the images uploaded to your pages, newest first, with a picture of each, and you can type part of a file name to search. The same file is used again, not copied. Only page images are listed (not Branding's logos), and a share image's list leaves out SVGs.
 
 An image you remove from a page is deleted from storage once nothing uses it any more. That includes other pages, the block library and the page's kept [revisions](revisions.md).

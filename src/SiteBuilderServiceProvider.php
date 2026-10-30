@@ -20,6 +20,7 @@ use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Console\CleanUnusedUploadsCommand;
 use ScBudgetWeb\SiteBuilder\Console\GeneratePageSitemapCommand;
+use ScBudgetWeb\SiteBuilder\Console\ImportPageCommand;
 use ScBudgetWeb\SiteBuilder\Console\InstallCommand;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
 use ScBudgetWeb\SiteBuilder\Livewire\MailingListSignup;
@@ -113,7 +114,7 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->registerPanelHooks();
 
         if ($this->app->runningInConsole()) {
-            $this->commands([InstallCommand::class, GeneratePageSitemapCommand::class, CleanUnusedUploadsCommand::class]);
+            $this->commands([InstallCommand::class, GeneratePageSitemapCommand::class, CleanUnusedUploadsCommand::class, ImportPageCommand::class]);
 
             $this->publishes([__DIR__.'/../config/site-builder.php' => config_path('site-builder.php')], 'site-builder-config');
             $this->publishes([__DIR__.'/../resources/fonts' => public_path(Branding::PACKAGE_FONTS_DIRECTORY)], 'site-builder-assets');

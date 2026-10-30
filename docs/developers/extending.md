@@ -248,6 +248,42 @@ SiteBuilder::consentChecker(fn (string $category): bool => CookieConsent::allows
 
 Until a checker is set, nothing is allowed. If it throws, the answer is "not allowed" and the error is reported.
 
+## Building pages from JSON
+
+`site-builder:page` creates a page from a JSON file, for agents, scripts and template sites. The page goes through the page form itself, so every block is checked by its own fields and rules, exactly as Save in the editor checks it, and saved the way the editor saves it (with a revision).
+
+```bash
+php artisan site-builder:page pages/about.json --dry-run   # check only
+php artisan site-builder:page pages/about.json             # create it
+php artisan site-builder:page pages/about.json --update    # change the page with this slug
+cat about.json | php artisan site-builder:page -
+```
+
+```json
+{
+  "title": "About Sometown Village Hall",
+  "slug": "about",
+  "status": "draft",
+  "seo_title": "About us",
+  "blocks": [
+    {"type": "hero", "data": {"heading": "Welcome to Sometown Village Hall", "buttons": [{"label": "Book a room", "url": "/book"}]}},
+    {"type": "stats", "data": {"items": [{"source": "custom", "value": 1923, "label": "Built", "format": "plain"}]}},
+    {"type": "section", "data": {"rows": [{"layout": "2", "columns": [
+      {"blocks": [{"type": "text", "data": {"content": "<h2>Rooms</h2><p>Two halls and a kitchen.</p>"}}]},
+      {"blocks": [{"type": "image", "data": {"image": "file:images/hall.jpg", "alt": "The main hall"}}]}
+    ]}]}}
+  ]
+}
+```
+
+- The page settings are `title`, `slug`, `status` (`draft` unless it says `published`), `replaces`, `show_page_banner`, `seo_title`, `seo_description`, `share_image`, `noindex` and `blocks`. With `--update`, only the settings given change.
+- A block is `{"type", "data"}`; its data uses the same keys the editor saves (a saved page's blocks are the best examples). A Section's data has `rows`, each with a `layout` (`stacked`, `2`, `1-2`, `3` …) and `columns`, each with its `blocks`.
+- An image is a page upload's path (e.g. `site-builder/pages/….jpg`, as *Choose from uploads* lists), or `file:` and a path relative to the JSON file to upload one. Files get an upload's checks: JPG, PNG, WebP, AVIF or a plain SVG, up to 2 MB; no SVG for a share image.
+- Problems are listed by their place in the JSON (`blocks.2.data.items.0.title: The title field is required.`), and nothing is saved, including uploaded files. It also refuses what the form would drop without a word: an unknown block type, a block a Section's column can't take, a setting that doesn't exist (often a typo), text where a number or yes/no goes, and an image that isn't an uploaded file.
+- A list (repeater) holds only the rows given: none come from its defaults, so a block that needs at least one row says so.
+- A setting that another one hides (e.g. a custom background colour when the background isn't *Custom*) is left out with a warning.
+- In code: `app(PageImport::class)->import($array, $folderForFiles, update: false, dryRun: false)` returns a `PageImportResult` (`errors`, `warnings`, `page`, `isNew`).
+
 ## Settings, caching and scheduling
 
 Settings and caching:

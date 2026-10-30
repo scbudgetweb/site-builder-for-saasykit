@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.3 - 2026-10-30
+
+- **Fixed:** on the mailing list sign-up form, the Privacy Policy and Terms of Service links in the small print used the site's link colour, which can barely show on the form's background. They now take the small print's colour, and stay underlined.
+- **Website › Mailing lists** shows each service's logo, as SaaSykit shows its payment and email providers. The logos ship with the package (`resources/images/mailing-list-providers`) and are shown inline, so there's nothing to publish. New: `MailingListProvider::iconUrl()`.
+- The README has screenshots of the Theme Builder, block library, Branding and mailing lists.
+
 ## 1.6.2 - 2026-10-30
 
 - **Fixed:** in the visual builder, a block or row moved by drag and drop stayed where it was on the canvas until the page was reloaded, although the move was saved. Any change that redraws the whole canvas had the same problem.

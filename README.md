@@ -32,12 +32,50 @@ The page in these pictures, *Bloom & Stem*, is a made-up flower subscription sho
 |---|---|
 | ![A Features block's panel, with Content, Design and Advanced tabs](docs/images/block-panel.png) | ![A row's panel, listing its three columns](docs/images/row-panel.png) |
 | Each block's panel has **Content**, **Design** and **Advanced** tabs, a search across them and presets. | A row's panel: column structure, its columns, link and background. |
-| ![The right-click menu on the Hero block](docs/images/context-menu.jpg) | ![The page at phone width](docs/images/phone.jpg) |
-| Right-click to add, duplicate, move or delete, and to copy and paste styles. | The same page at phone width. |
+| ![The right-click menu on the Hero block](docs/images/context-menu.jpg) | ![A Section in the form editor, showing a row of three columns, each holding a block](docs/images/form-builder-section.png) |
+| Right-click to add, duplicate, move or delete, and to copy and paste styles. | Prefer a form? **Edit as a form** has the same blocks, Sections, rows and columns, with the same panels. The coloured edges show the level: Sections blue, rows green, columns purple, blocks grey. |
 
-Prefer a form? **Edit as a form** shows the same blocks, Sections, rows and columns, with the same panels. The coloured edges show the level: Sections blue, rows green, columns purple, blocks grey.
+### Theme Builder
 
-![A Section in the form editor, showing a row of three columns, each holding a block](docs/images/form-builder-section.png)
+Build the header and footer from blocks, in the same visual builder or as a form, and choose the pages each one shows on. The Logo, Menu, Account links, Footer links and Copyright blocks are offered only here.
+
+![The Bloom & Stem header template in the visual builder, with the Menu block's panel open](docs/images/theme-builder.jpg)
+
+| | |
+|---|---|
+| ![The Bloom & Stem footer template in the visual builder](docs/images/theme-builder-footer.jpg) | ![The list of templates: a header and a footer shown only on chosen pages](docs/images/theme-builder-list.png) |
+| A footer: text, the footer links and the copyright line, on a Section with its own colour. | Each template is on or off, and shows on every page, chosen pages, or every page except those. |
+
+### Block library
+
+Save a block once and use it on many pages. Change it in the library and every page using it follows.
+
+| | |
+|---|---|
+| ![The plans Section from the block library, open in the visual builder](docs/images/block-library.jpg) | ![The block library list, with what each block is and where it's used](docs/images/block-library-list.png) |
+| A library block opens in the visual builder or as a form, like a page. | The list shows what each block is and how many pages use it. |
+
+### Mailing lists
+
+Connect Brevo, choose the list people join, and add a **Mailing list sign-up** block anywhere. The API key is checked when it's saved and stored encrypted, and the form has spam protection built in.
+
+![The mailing list sign-up block on the page, asking for a name and an email address](docs/images/mailing-lists-block.jpg)
+
+| | |
+|---|---|
+| ![Website › Mailing lists, with Brevo in use and its list](docs/images/mailing-lists-list.png) | ![Setting up Brevo: the API key](docs/images/mailing-lists-edit.png) |
+| **Website › Mailing lists**: one service in use at a time, and the list sign-ups go to. | Paste the API key from Brevo. Then choose the default list and, if you like, double opt-in. |
+| ![The sign-up block's panel: heading, text and which list sign-ups go to](docs/images/mailing-lists-panel.jpg) | ![Branding › Mailing list: the form's standard wording](docs/images/mailing-lists-branding.png) |
+| Each block can have its own wording, send sign-ups to another list, ask for a name, require a tick for the small print and go to a page afterwards. | **Branding › Mailing list** sets the standard wording, button and colours for every sign-up form. |
+
+### Branding
+
+The site's look in one place: logos, colours, fonts, buttons, corners and shadows, header and footer colours, banners and the dashboards. Blocks use it unless they're given their own.
+
+| | |
+|---|---|
+| ![Branding's colours: the site colour, a secondary colour and global colours](docs/images/branding-colours.png) | ![Branding's typography: heading and body fonts and sizes](docs/images/branding-typography.png) |
+| Site colours and global colours, offered as swatches in every block colour setting. It warns when white text won't read well on a colour. | Fonts are stored on the site, never loaded from a font service. |
 
 ## Requirements
 

@@ -80,4 +80,19 @@ class MailingListProvider extends Model
     {
         return filled($this->api_key);
     }
+
+    /**
+     * The service's logo (resources/images/mailing-list-providers/{slug}.svg) as a data URI, so it shows straight after
+     * installing or updating, with nothing to publish. Null when there isn't one.
+     */
+    public function iconUrl(): ?string
+    {
+        if (preg_match('/^[a-z0-9-]+$/', (string) $this->slug) !== 1) {
+            return null;
+        }
+
+        $path = __DIR__."/../../resources/images/mailing-list-providers/{$this->slug}.svg";
+
+        return is_file($path) ? 'data:image/svg+xml;base64,'.base64_encode((string) file_get_contents($path)) : null;
+    }
 }

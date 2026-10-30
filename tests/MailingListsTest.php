@@ -219,6 +219,32 @@ class MailingListsTest extends PageTestCase
         $this->assertFalse(MailingListBlock::isCacheable([]), 'A form for each visitor.');
     }
 
+    public function test_the_small_print_links_take_its_colour(): void
+    {
+        $this->app['router']->get('/privacy-policy', fn () => 'Privacy')->name('privacy-policy');
+        $this->app['router']->get('/terms-of-service', fn () => 'Terms')->name('terms-of-service');
+        $this->app['router']->getRoutes()->refreshNameLookups();
+        $this->connected();
+
+        $this->form()
+            ->assertSeeHtml('class="underline hover:no-underline" style="color: inherit;">Privacy Policy</a>')
+            ->assertSeeHtml('style="color: inherit;">Terms of Service</a>');
+    }
+
+    public function test_a_service_shows_its_logo_from_the_package(): void
+    {
+        $brevo = $this->brevo();
+
+        $this->assertStringStartsWith('data:image/svg+xml;base64,', (string) $brevo->iconUrl());
+        $this->assertStringContainsString('<svg', base64_decode(substr((string) $brevo->iconUrl(), strlen('data:image/svg+xml;base64,'))));
+
+        $brevo->slug = 'unknown';
+        $this->assertNull($brevo->iconUrl(), 'No logo shipped: none shown.');
+
+        $brevo->slug = '../../composer';
+        $this->assertNull($brevo->iconUrl(), 'Only a plain name is looked up.');
+    }
+
     public function test_admins_connect_brevo_and_choose_the_default_list(): void
     {
         Filament::setCurrentPanel(Filament::getPanel('admin'));
@@ -226,7 +252,8 @@ class MailingListsTest extends PageTestCase
         Gate::define('update settings', fn ($user): bool => $user->getAttribute('email') === 'admin@example.com');
         $brevo = $this->brevo();
 
-        $this->get(MailingListProviderResource::getUrl('index', panel: 'admin'))->assertSuccessful()->assertSee('Not connected');
+        $this->get(MailingListProviderResource::getUrl('index', panel: 'admin'))->assertSuccessful()->assertSee('Not connected')
+            ->assertSee('<img src="data:image/svg+xml;base64,', false);
 
         Http::fake([
             '*/account' => Http::sequence()->push(['message' => 'Key not found'], 401)->push(['email' => 'admin@example.com']),

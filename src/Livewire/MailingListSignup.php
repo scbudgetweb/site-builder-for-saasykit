@@ -213,12 +213,13 @@ class MailingListSignup extends Component
     }
 
     /**
-     * The small print as HTML: the text escaped, with ":privacy" and ":terms" as links to the legal pages.
+     * The small print as HTML: the text escaped, with ":privacy" and ":terms" as links to the legal pages. The links take
+     * the small print's colour, which suits the form's background; the site's link colour may not.
      */
     private function consentHtml(string $text): string
     {
         $link = fn (string $route, string $label): string => Route::has($route)
-            ? '<a href="'.e(route($route)).'" class="underline hover:no-underline">'.e($label).'</a>'
+            ? '<a href="'.e(route($route)).'" class="underline hover:no-underline" style="color: inherit;">'.e($label).'</a>'
             : e($label);
 
         return strtr(e($text), [

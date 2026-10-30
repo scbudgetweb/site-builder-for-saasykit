@@ -168,7 +168,14 @@ class MailingListProviderResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('name')->label(__('Service')),
+                // With its logo, as SaaSykit shows its payment and email providers.
+                TextColumn::make('name')
+                    ->label(__('Service'))
+                    ->formatStateUsing(fn (string $state, MailingListProvider $record): HtmlString => new HtmlString(
+                        '<div class="flex items-center gap-2">'
+                        .($record->iconUrl() ? '<img src="'.$record->iconUrl().'" alt="" class="h-6 w-6">' : '')
+                        .e($state).'</div>'
+                    )),
                 TextColumn::make('status')
                     ->label(__('Status'))
                     ->state(fn (MailingListProvider $record): string => match (true) {

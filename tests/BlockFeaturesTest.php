@@ -34,6 +34,7 @@ class BlockFeaturesTest extends PageTestCase
         'heading' => [false, ['decoration', 'size'], false],
         'icon' => [false, [], false],
         'toggle' => [false, [], true],
+        'countdown' => [true, ['align', 'decoration', 'size'], true],
         'faq' => [false, ['align', 'decoration', 'size'], true],
         'features' => [false, ['align', 'decoration', 'size'], true],
         'gallery' => [false, ['align', 'decoration', 'size'], true],

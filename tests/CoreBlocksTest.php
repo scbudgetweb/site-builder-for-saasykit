@@ -22,7 +22,7 @@ class CoreBlocksTest extends PageTestCase
     public function test_every_core_block_is_in_the_picker(): void
     {
         $this->assertSame([
-            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'call_to_action', 'mailing_list',
+            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'call_to_action', 'mailing_list',
             'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));
@@ -50,6 +50,7 @@ class CoreBlocksTest extends PageTestCase
             self::block('social_follow', ['heading' => 'Follow us']),
             self::block('divider', ['label' => 'More']),
             self::block('heading', ['heading' => 'Our rooms', 'level' => 'h3']),
+            self::block('countdown', ['heading' => 'Open day', 'ends_at' => now()->addDays(3)->format('Y-m-d H:i:s')]),
             self::block('toggle', ['title' => 'Can we bring our own food?', 'content' => '<p>Yes, the kitchen is yours.</p>', 'open' => true]),
             self::block('icon', ['icon' => 'bx:regular/bx-accessibility', 'label' => 'Wheelchair access']),
         ]]);
@@ -59,7 +60,7 @@ class CoreBlocksTest extends PageTestCase
         foreach ([
             'Welcome to the hall</h1>', 'py-24 sm:py-36', 'Main room', 'Free wifi', 'href="/wifi"', 'Parking', 'Choose a date',
             'Step 2', '1,200', 'Book now', 'justify-end', 'Lovely hall', 'Caretaker', 'Alex on LinkedIn', 'Is there parking?',
-            'role="tablist"', 'aria-controls="tabpanel-', 'Kitchen', 'A tour of the hall', 'Parish council', 'Follow us', 'More', 'Our rooms</h3>', 'aria-label="Wheelchair access"', 'Can we bring our own food?', 'the kitchen is yours',
+            'role="tablist"', 'aria-controls="tabpanel-', 'Kitchen', 'A tour of the hall', 'Parish council', 'Follow us', 'More', 'Our rooms</h3>', 'aria-label="Wheelchair access"', 'Can we bring our own food?', 'the kitchen is yours', 'Open day',
         ] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }

@@ -99,6 +99,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | **Image cards** | Cards with an image or an icon, a title, short text and a button. With more cards than columns they become a carousel, which can move on by itself |
 | **Steps (how it works)** | Numbered steps, for example *Choose a date → Book → Enjoy*. Each step can show an icon instead of its number |
 | **Stats** | Big numbers with labels (up to 12). Type your own, or show live figures from the app. They can count up as visitors scroll to them. Each number has a **format**: with a thousands separator (9,000), plain (2040, for a year) or short (2m, 300k, 1.5bn), and up to 3 **decimal places** (1.25) |
+| **Countdown** | Days, hours, minutes and (unless turned off) seconds to a date and time, in the site's time zone, with a heading and up to two buttons. **When it ends**: show a message (yours, or *This has now ended.*), hide the block, or stay at zero. It counts in the visitor's browser, so a cached page is never out of date. Each unit is an item: Design › Items gives them a box (e.g. white tiles), and Number text and Label text style them |
 | **Call to action** | A heading, a line of text and buttons |
 | **Buttons** | One to three buttons |
 | **Testimonials** | Quotes with the person's name, role, photo and an optional star rating, in 1 to 4 columns |

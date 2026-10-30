@@ -41,6 +41,7 @@ class BlockRegistry
         Core\ImageCardsBlock::class,
         Core\StepsBlock::class,
         Core\StatsBlock::class,
+        Core\CountdownBlock::class,
         Core\CallToActionBlock::class,
         Core\MailingListBlock::class,
         Core\ButtonsBlock::class,

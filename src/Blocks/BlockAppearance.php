@@ -604,13 +604,13 @@ class BlockAppearance
      *
      * @return array{id: ?string, class: string, style: string, container: string, panel: ?array{class: string, style: string}, image: ?string, overlayStyle: ?string, isDark: bool, textScheme: ?string, headingAlign: ?string, headingDecoration: string, headingDecorationClass: string}
      */
-    public static function resolve(mixed $appearance, string $defaultWidth = 'contained', string $defaultBackground = 'none', ?string $defaultAnchor = null, ?bool $parentIsDark = null, ?string $parentHeadingDecoration = null): array
+    public static function resolve(mixed $appearance, string $defaultWidth = 'contained', string $defaultBackground = 'none', ?string $defaultAnchor = null, ?bool $parentIsDark = null, ?string $parentHeadingDecoration = null, string $defaultSpacing = 'medium'): array
     {
         $appearance = is_array($appearance) ? $appearance : [];
 
         $background = self::pick($appearance['background'] ?? null, self::BACKGROUNDS, $defaultBackground);
         $isNested = $parentIsDark !== null;
-        $spacing = self::pick($appearance['spacing'] ?? null, self::SPACINGS, $isNested ? 'none' : 'medium');
+        $spacing = self::pick($appearance['spacing'] ?? null, self::SPACINGS, $isNested ? 'none' : $defaultSpacing);
         $width = self::pick($appearance['width'] ?? null, self::WIDTHS, $isNested ? 'full' : $defaultWidth);
         $text = self::pick($appearance['text'] ?? null, self::TEXT_COLOURS, 'auto');
         $isPanel = $background !== 'none' && self::pick($appearance['background_area'] ?? null, self::BACKGROUND_AREAS, 'full') === 'panel';

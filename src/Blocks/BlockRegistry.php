@@ -33,6 +33,7 @@ class BlockRegistry
         Core\SectionBlock::class,
         Core\HeroBlock::class,
         Core\BannerBlock::class,
+        Core\HeadingBlock::class,
         Core\TextBlock::class,
         Core\ImageTextBlock::class,
         Core\ImageBlock::class,

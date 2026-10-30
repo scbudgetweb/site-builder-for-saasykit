@@ -31,6 +31,7 @@ class BlockFeaturesTest extends PageTestCase
         'image_cards' => [true, ['align', 'decoration', 'size'], true],
         'image_text' => [true, ['decoration', 'size'], true],
         'text' => [true, [], true],
+        'heading' => [false, ['decoration', 'size'], false],
         'faq' => [false, ['align', 'decoration', 'size'], true],
         'features' => [false, ['align', 'decoration', 'size'], true],
         'gallery' => [false, ['align', 'decoration', 'size'], true],

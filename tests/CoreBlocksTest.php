@@ -22,7 +22,7 @@ class CoreBlocksTest extends PageTestCase
     public function test_every_core_block_is_in_the_picker(): void
     {
         $this->assertSame([
-            'section', 'hero', 'banner', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'call_to_action', 'mailing_list',
+            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'call_to_action', 'mailing_list',
             'buttons', 'testimonials', 'team', 'faq', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));
@@ -49,6 +49,7 @@ class CoreBlocksTest extends PageTestCase
             self::block('logo_strip', ['logos' => [['image' => 'site-builder/pages/c.png', 'name' => 'Parish council', 'url' => 'https://example.com']]]),
             self::block('social_follow', ['heading' => 'Follow us']),
             self::block('divider', ['label' => 'More']),
+            self::block('heading', ['heading' => 'Our rooms', 'level' => 'h3']),
         ]]);
 
         $html = $this->get('/about-us')->assertOk()->getContent();
@@ -56,7 +57,7 @@ class CoreBlocksTest extends PageTestCase
         foreach ([
             'Welcome to the hall</h1>', 'py-24 sm:py-36', 'Main room', 'Free wifi', 'href="/wifi"', 'Parking', 'Choose a date',
             'Step 2', '1,200', 'Book now', 'justify-end', 'Lovely hall', 'Caretaker', 'Alex on LinkedIn', 'Is there parking?',
-            'role="tablist"', 'aria-controls="tabpanel-', 'Kitchen', 'A tour of the hall', 'Parish council', 'Follow us', 'More',
+            'role="tablist"', 'aria-controls="tabpanel-', 'Kitchen', 'A tour of the hall', 'Parish council', 'Follow us', 'More', 'Our rooms</h3>',
         ] as $expected) {
             $this->assertStringContainsString($expected, $html);
         }

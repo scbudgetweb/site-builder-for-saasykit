@@ -205,6 +205,25 @@
         font-weight: var(--heading-weight, 700);
     }
 
+    /* The Heading block's smaller levels. */
+    .sb-h4 {
+        font-size: calc(1.25rem * var(--sb-heading-scale, 1));
+        line-height: 1.35;
+        font-weight: var(--heading-weight, 700);
+    }
+
+    .sb-h5 {
+        font-size: calc(1.125rem * var(--sb-heading-scale, 1));
+        line-height: 1.4;
+        font-weight: var(--heading-weight, 700);
+    }
+
+    .sb-h6 {
+        font-size: calc(1rem * var(--sb-heading-scale, 1));
+        line-height: 1.5;
+        font-weight: var(--heading-weight, 700);
+    }
+
     /* Section headings (block headings and the theme's section titles). Decorations come from Branding. */
     .section-heading {
         font-weight: var(--heading-weight, 700);
@@ -490,6 +509,11 @@
 .heading-decoration-short-above .text-center .section-heading::before,
 .heading-decoration-short-above .section-heading.text-center::before {
     margin-inline: auto;
+}
+
+.heading-decoration-short-under .section-heading.text-right::after,
+.heading-decoration-short-above .section-heading.text-right::before {
+    margin-inline: auto 0;
 }
 
 /*

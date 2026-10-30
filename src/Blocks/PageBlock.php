@@ -270,6 +270,15 @@ abstract class PageBlock
         return 'contained';
     }
 
+    /**
+     * The space above and below the block when Design › Spacing is left as it is (BlockAppearance::SPACINGS). Inside
+     * a Section a block has none, as the Section spaces its rows.
+     */
+    public static function defaultSpacing(): string
+    {
+        return 'medium';
+    }
+
     public static function defaultBackground(): string
     {
         return 'none';
@@ -464,7 +473,7 @@ abstract class PageBlock
             ...static::blockToggles(),
             static::hasButtons() ? PanelToggle::design('button', __('Buttons'), [static::buttonDesignFields()], 70) : null,
             ...(static::hasAppearance() ? [
-                ...BlockAppearance::toggles($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : 'medium', static::defaultBackground(), static::headingSettings(), static::hasBodyText()),
+                ...BlockAppearance::toggles($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : static::defaultSpacing(), static::defaultBackground(), static::headingSettings(), static::hasBodyText()),
                 ...BlockDesign::toggles(static::designWithout()),
                 ...(($parts = static::itemParts()) !== null ? Items::togglesFor($parts) : []),
                 ...(static::hasEyebrow() ? Eyebrow::panelToggles() : []),

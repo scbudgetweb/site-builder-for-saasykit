@@ -172,7 +172,7 @@ class PageRenderer
 
             try {
                 $appearance = $blockClass::hasAppearance()
-                    ? BlockAppearance::resolve($blockClass::shownAppearance($block['data']['appearance'] ?? null), $blockClass::defaultWidth(), $blockClass::defaultBackground(), $blockClass::defaultAnchor(), $parentIsDark, $parentHeadingDecoration)
+                    ? BlockAppearance::resolve($blockClass::shownAppearance($block['data']['appearance'] ?? null), $blockClass::defaultWidth(), $blockClass::defaultBackground(), $blockClass::defaultAnchor(), $parentIsDark, $parentHeadingDecoration, $blockClass::defaultSpacing())
                     : null;
 
                 $extra = $blockClass::viewData($block['data'], $page);

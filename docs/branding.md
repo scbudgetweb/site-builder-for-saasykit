@@ -133,6 +133,22 @@ Mistakes that don't make the CSS unsafe are saved but listed, each with its line
 
 Blocks have a **CSS classes** setting (Advanced › CSS ID & classes) for styling one block with your CSS. `fixed` and `sticky` aren't allowed there: they could pin a block over the rest of the page.
 
+All custom CSS lives here, in one place. These names stay the same from one version of the package to the next, so CSS written against them keeps working:
+
+| Selector | What it is |
+|---|---|
+| `[data-block="stats"]` | Every block of one type (its section). The type is the block's name: `features`, `image_cards`, `steps`, `team`, `testimonials`… |
+| `.your-class` | One block, with your class from Advanced › CSS ID & classes (or `#its-anchor`) |
+| `.sb-items` | The list of a block's repeated items |
+| `.sb-item` | One item (a card, number, step, person, quote, question, image or logo) |
+| `.sb-item-icon` | An item's icon, a step's number (also `.sb-item-marker`) or a quote mark |
+| `.sb-item-title`, `.sb-item-text` | An item's title and text |
+| `.sb-item-value`, `.sb-item-label` | A stat's number and label |
+| `.sb-item-meta` | A person's or quote's role |
+| `.sb-item-highlight` | A step marked *Highlight this step* |
+
+For example, `[data-block="stats"] .sb-item-value { font-variant-numeric: tabular-nums; }`. Avoid layout classes such as `.max-w-4xl` or `.grid`: they can change in any update.
+
 ## Your app's own tabs
 
 Your app may add tabs of its own after these, for settings of its own features: for example the text, colours, button style and banner of a sign-up box. They work like the rest of Branding:

@@ -5,7 +5,7 @@
 <div x-data="{ open: null, images: @js(collect($images)->map(fn ($image) => ['url' => $image['url'], 'alt' => $image['alt']])->all()) }"
      @keydown.escape.window="open = null">
     <div @class([
-        'grid gap-4 grid-cols-2',
+        'sb-items grid gap-4 grid-cols-2',
         'md:grid-cols-2' => $columns === 2,
         'md:grid-cols-3' => $columns === 3,
         'md:grid-cols-4' => $columns === 4,
@@ -16,7 +16,7 @@
                     <img src="{{ $image['url'] }}" alt="{{ $image['alt'] }}" loading="lazy" decoding="async" class="aspect-[4/3] w-full object-cover transition-transform duration-300 hover:scale-105">
                 </button>
                 @if (filled($image['caption']))
-                    <figcaption class="mt-2 text-sm opacity-75">{{ $image['caption'] }}</figcaption>
+                    <figcaption class="sb-item-text mt-2 text-sm opacity-75">{{ $image['caption'] }}</figcaption>
                 @endif
             </figure>
         @endforeach

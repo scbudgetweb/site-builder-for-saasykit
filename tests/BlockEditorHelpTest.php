@@ -67,7 +67,7 @@ class BlockEditorHelpTest extends PageTestCase
             ->assertFormFieldExists("items.{$itemKey}.link_url", 'mountedActionSchema0', self::tooltip('A page on this site'))
             ->assertFormFieldExists('columns', 'mountedActionSchema0', self::tooltip('How many sit side by side'))
             ->assertFormFieldExists('card.background', 'mountedActionSchema0', self::tooltip('A background and border make each card a box'))
-            ->assertFormFieldExists('card.icon_background', 'mountedActionSchema0', self::tooltip('A tile is a small square'))
+            ->assertFormFieldExists('design.items.icon.fill', 'mountedActionSchema0', self::tooltip('A tile behind the icon'))
             ->assertFormFieldExists('items', 'mountedActionSchema0', fn (Repeater $field): bool => $field->getCloneAction()->getTooltip() === 'Duplicate this feature'
                 && $field->getDeleteAction()->getTooltip() === 'Delete this feature'
                 && $field->getReorderAction()->getTooltip() === 'Drag to move this feature');

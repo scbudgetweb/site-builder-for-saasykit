@@ -10,6 +10,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Cache;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -139,5 +140,13 @@ class StatsBlock extends PageBlock
         });
 
         return is_numeric($value) ? $value + 0 : null;
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Numbers'))
+            ->icon(__('Icons'))
+            ->text('value', __('Number text'))
+            ->text('label', __('Label text'));
     }
 }

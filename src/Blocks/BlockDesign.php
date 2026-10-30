@@ -8,6 +8,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\Design\DesignGroup;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\DesignOutput;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Dividers;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Effects;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\Items;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Motion;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Position;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Spacing;
@@ -31,7 +32,7 @@ class BlockDesign
      */
     public static function groups(): array
     {
-        return [Typography::class, Spacing::class, BordersBackgrounds::class, Effects::class, Position::class, Dividers::class, Motion::class];
+        return [Typography::class, Spacing::class, BordersBackgrounds::class, Effects::class, Position::class, Dividers::class, Motion::class, Items::class];
     }
 
     /**

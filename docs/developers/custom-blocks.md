@@ -155,6 +155,7 @@ Override these only when your block draws its own:
 | `hasButtons()` | found from your fields | Return `true` when your view draws buttons without `buttonsRepeater()` |
 | `headingSettings()` | found from your fields | List the heading settings your own heading supports, e.g. `['size']` for a `.block-heading` |
 | `hasBodyText()` | found from your fields | Return `true` when your view draws `.block-text` from a plain text field |
+| `itemParts()` | `null` | Declare your block's repeated items, so its panel gets Design › Items: `ItemParts::make(__('Rooms'))->icon(__('Icons'))->text('title', __('Name text'))->text('meta', __('Size text'))`. Text parts are `title`, `text`, `value`, `label` and `meta`. Your view then puts `sb-items` on the list, `sb-item` on each item, `sb-item-icon` on the icon and `sb-item-{part}` on each text part; a test checks it does. Give an icon that has a tile in your standard look `sb-has-tile` too, so it grows with the icon size |
 | `designWithout()` | `[]` | Leave design options out of your panel (a group's key such as `typography`, or `spacing.margin`); saved values for them stop applying too |
 | `layoutFields()` / `styleFields()` / `advancedFields()` | `[]` | Add your own settings to those tabs, above the shared ones |
 | `contentTabLabel()` | *Content* | Rename the first tab |

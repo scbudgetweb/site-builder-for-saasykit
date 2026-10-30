@@ -19,6 +19,7 @@
 @import './design/dividers.css';
 @import './design/motion.css';
 @import './design/hover.css';
+@import './design/items.css';
 
 /* Content › Link: a link over the whole block, under the block's own links and buttons. */
 .sb-block-link { position: absolute; inset: 0; z-index: 1; }

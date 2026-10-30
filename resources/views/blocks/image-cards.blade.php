@@ -38,7 +38,7 @@
             destroy() { clearInterval(this.timer) },
          }"
          @mouseenter="paused = true" @mouseleave="paused = false" @focusin="paused = true" @focusout="paused = false">
-        <ul x-ref="strip" class="no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2" aria-label="{{ __('Cards') }}">
+        <ul x-ref="strip" class="sb-items no-scrollbar flex snap-x snap-mandatory gap-6 overflow-x-auto pb-2" aria-label="{{ __('Cards') }}">
             @foreach ($cards as $card)
                 <li class="{{ $carouselWidth }} shrink-0 snap-start">{!! $renderCard($card) !!}</li>
             @endforeach
@@ -55,7 +55,7 @@
     </div>
 @else
     <div @class([
-        'grid gap-6 sm:grid-cols-2',
+        'sb-items grid gap-6 sm:grid-cols-2',
         'lg:grid-cols-3' => $columns === 3,
         'lg:grid-cols-4' => $columns === 4,
     ])>

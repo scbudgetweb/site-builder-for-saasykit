@@ -132,7 +132,11 @@ final class Typography implements DesignGroup
         ];
     }
 
-    private static function textFields(string $text): Grid
+    /**
+     * A text's settings: font, weight, size, line height, letter spacing, alignment, style, colour (and its hover
+     * colour) and shadow. Also each text part of a block's items (Items).
+     */
+    public static function textFields(string $text): Grid
     {
         return Grid::make(['default' => 1, 'sm' => 2])
             ->schema([
@@ -191,50 +195,7 @@ final class Typography implements DesignGroup
         $output = new DesignOutput;
 
         foreach (self::TEXTS as $text => $short) {
-            $settings = is_array($values[$text] ?? null) ? $values[$text] : [];
-
-            $font = $settings['font'] ?? null;
-            $fonts = app(Branding::class)->availableFonts();
-
-            if (is_string($font) && isset($fonts[$font])) {
-                $family = trim((string) preg_replace('/[^A-Za-z0-9 ]/', '', app(Branding::class)->fontFamily($font)));
-
-                if ($family !== '') {
-                    $output->addFont($font)
-                        ->addClass('section', "sb-d-{$short}f")
-                        ->setProperty('section', "--sb-{$short}f", "'{$family}', ui-sans-serif, system-ui, sans-serif");
-                }
-            }
-
-            if (($weight = DesignValue::choice($settings['weight'] ?? null, self::WEIGHTS)) !== null) {
-                $output->addClass('section', "sb-d-{$short}w")->setProperty('section', "--sb-{$short}w", $weight);
-            }
-
-            foreach (is_array($settings['style'] ?? null) ? $settings['style'] : [] as $style) {
-                if (($style = DesignValue::choice($style, self::STYLES)) !== null) {
-                    $output->addClass('section', "sb-d-{$short}-{$style}");
-                }
-            }
-
-            DesignValue::addLength($output, 'section', "{$short}s", $settings['size'] ?? null, self::SIZE_UNITS, 0, 200);
-            DesignValue::addLength($output, 'section', "{$short}lh", $settings['line_height'] ?? null, self::LINE_HEIGHT_UNITS, 0, 200);
-            DesignValue::addLength($output, 'section', "{$short}ls", $settings['letter_spacing'] ?? null, self::LETTER_SPACING_UNITS, -20, 50);
-
-            if (($align = DesignValue::choice($settings['align'] ?? null, self::ALIGNMENTS)) !== null) {
-                $output->addClass('section', "sb-d-{$short}-align-{$align}");
-            }
-
-            if (($colour = DesignValue::colour($settings['colour_hover'] ?? null)) !== null) {
-                $output->addClass('section', "sb-d-{$short}c-h")->setProperty('section', "--sb-{$short}c-h", $colour);
-            }
-
-            if (($colour = DesignValue::colour($settings['colour'] ?? null)) !== null) {
-                $output->addClass('section', "sb-d-{$short}c")->setProperty('section', "--sb-{$short}c", $colour);
-            }
-
-            if (($shadow = DesignValue::choice($settings['shadow'] ?? null, self::SHADOWS)) !== null) {
-                $output->addClass('section', "sb-d-{$short}-shadow-{$shadow}");
-            }
+            self::addText($output, $values[$text] ?? null, $short);
         }
 
         $links = is_array($values['links'] ?? null) ? $values['links'] : [];
@@ -277,6 +238,58 @@ final class Typography implements DesignGroup
         }
 
         return $output;
+    }
+
+    /**
+     * One text's settings (textFields()) as section classes and properties named after $short: sb-d-{short}f and
+     * --sb-{short}f for its font, and so on. The CSS decides what they reach (typography.css, items.css).
+     */
+    public static function addText(DesignOutput $output, mixed $settings, string $short): void
+    {
+        $settings = is_array($settings) ? $settings : [];
+
+        $font = $settings['font'] ?? null;
+        $fonts = app(Branding::class)->availableFonts();
+
+        if (is_string($font) && isset($fonts[$font])) {
+            $family = trim((string) preg_replace('/[^A-Za-z0-9 ]/', '', app(Branding::class)->fontFamily($font)));
+
+            if ($family !== '') {
+                $output->addFont($font)
+                    ->addClass('section', "sb-d-{$short}f")
+                    ->setProperty('section', "--sb-{$short}f", "'{$family}', ui-sans-serif, system-ui, sans-serif");
+            }
+        }
+
+        if (($weight = DesignValue::choice($settings['weight'] ?? null, self::WEIGHTS)) !== null) {
+            $output->addClass('section', "sb-d-{$short}w")->setProperty('section', "--sb-{$short}w", $weight);
+        }
+
+        foreach (is_array($settings['style'] ?? null) ? $settings['style'] : [] as $style) {
+            if (($style = DesignValue::choice($style, self::STYLES)) !== null) {
+                $output->addClass('section', "sb-d-{$short}-{$style}");
+            }
+        }
+
+        DesignValue::addLength($output, 'section', "{$short}s", $settings['size'] ?? null, self::SIZE_UNITS, 0, 200);
+        DesignValue::addLength($output, 'section', "{$short}lh", $settings['line_height'] ?? null, self::LINE_HEIGHT_UNITS, 0, 200);
+        DesignValue::addLength($output, 'section', "{$short}ls", $settings['letter_spacing'] ?? null, self::LETTER_SPACING_UNITS, -20, 50);
+
+        if (($align = DesignValue::choice($settings['align'] ?? null, self::ALIGNMENTS)) !== null) {
+            $output->addClass('section', "sb-d-{$short}-align-{$align}");
+        }
+
+        if (($colour = DesignValue::colour($settings['colour_hover'] ?? null)) !== null) {
+            $output->addClass('section', "sb-d-{$short}c-h")->setProperty('section', "--sb-{$short}c-h", $colour);
+        }
+
+        if (($colour = DesignValue::colour($settings['colour'] ?? null)) !== null) {
+            $output->addClass('section', "sb-d-{$short}c")->setProperty('section', "--sb-{$short}c", $colour);
+        }
+
+        if (($shadow = DesignValue::choice($settings['shadow'] ?? null, self::SHADOWS)) !== null) {
+            $output->addClass('section', "sb-d-{$short}-shadow-{$shadow}");
+        }
     }
 
     /**

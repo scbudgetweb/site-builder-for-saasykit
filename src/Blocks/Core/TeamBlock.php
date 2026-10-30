@@ -7,6 +7,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 
 class TeamBlock extends PageBlock
@@ -58,5 +59,13 @@ class TeamBlock extends PageBlock
         return [
             static::columnsSelect(3),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('People'))
+            ->text('title', __('Name text'))
+            ->text('meta', __('Role text'))
+            ->text('text', __('Bio text'));
     }
 }

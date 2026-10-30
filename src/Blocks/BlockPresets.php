@@ -199,7 +199,9 @@ class BlockPresets
 
         foreach ((array) ($this->stored($type)['items'] ?? []) as $id => $preset) {
             if (is_string($id) && preg_match(self::ID_PATTERN, $id) === 1 && is_array($preset) && is_string($preset['name'] ?? null)) {
-                $items[$id] = ['name' => $preset['name'], 'values' => is_array($preset['values'] ?? null) ? $preset['values'] : []];
+                $values = is_array($preset['values'] ?? null) ? $preset['values'] : [];
+                // Saved before 1.7, a card preset's look is moved to Design › Items, as its blocks' is (BlockSchema).
+                $items[$id] = ['name' => $preset['name'], 'values' => in_array($type, CardStyle::BLOCK_TYPES, true) ? CardStyle::upgrade($values) : $values];
             }
         }
 

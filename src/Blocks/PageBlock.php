@@ -30,6 +30,8 @@ use Filament\Schemas\Components\View;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\Items;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
@@ -449,6 +451,7 @@ abstract class PageBlock
             ...(static::hasAppearance() ? [
                 ...BlockAppearance::toggles($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : 'medium', static::defaultBackground(), static::headingSettings(), static::hasBodyText()),
                 ...BlockDesign::toggles(static::designWithout()),
+                ...(($parts = static::itemParts()) !== null ? Items::togglesFor($parts) : []),
             ] : []),
             PanelToggle::content('admin_label', __('Admin label'), [static::adminLabelField()], 99),
             BlockConditions::toggle(),
@@ -860,6 +863,15 @@ abstract class PageBlock
     }
 
     /**
+     * The parts of the block's repeated items (cards, numbers, steps…), for Design › Items: their box, icon and text
+     * styles, and the fixed classes the block's view puts on them (ItemParts). Null for a block without repeated items.
+     */
+    public static function itemParts(): ?ItemParts
+    {
+        return null;
+    }
+
+    /**
      * The design options this block's panel leaves out (BlockDesign::toggles()): a group's key, or "group.setting".
      * Saved values for them don't apply either.
      *
@@ -929,7 +941,7 @@ abstract class PageBlock
                     self::buttonColorField('border_color', __('Border colour (optional)'))->live(onBlur: true),
                     Select::make('border_style')
                         ->label(__('Border line'))
-                        ->options(array_map(fn (string $label): string => __($label), CardStyle::BORDER_STYLES))
+                        ->options(array_map(fn (string $label): string => __($label), Items::BORDER_STYLES))
                         ->default('solid')
                         ->selectablePlaceholder(false)
                         ->visible(fn (Get $get): bool => filled($get('border_color'))),
@@ -1155,7 +1167,7 @@ abstract class PageBlock
         }
 
         $width = is_numeric($button['border_width'] ?? null) ? max(1, min(8, (int) $button['border_width'])) : 2;
-        $line = static::pick($button['border_style'] ?? null, CardStyle::BORDER_STYLES, 'solid');
+        $line = static::pick($button['border_style'] ?? null, Items::BORDER_STYLES, 'solid');
 
         return $line === 'solid'
             ? " --site-button-border: {$color}; --site-button-border-width: {$width}px;"

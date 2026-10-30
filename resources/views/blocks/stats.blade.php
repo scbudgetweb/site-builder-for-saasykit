@@ -3,7 +3,7 @@
 @include('site-builder::blocks.partials.heading')
 
 <dl @class([
-    'grid gap-8 text-center',
+    'sb-items grid gap-8 text-center',
     'sm:grid-cols-2' => count($items) > 1,
     'lg:grid-cols-3' => count($items) === 3 || count($items) > 4,
     'lg:grid-cols-4' => count($items) === 4,
@@ -12,10 +12,10 @@
         @php($number = $item['number'] ?? 0)
         <div class="sb-item">
             @if (($icon = \ScBudgetWeb\SiteBuilder\Support\IconLibrary::render($item['icon'] ?? null, 'h-8 w-8'))->toHtml() !== '')
-                <span class="mb-3 inline-flex text-primary-600" @if ($isDark) style="color: inherit" @endif>{{ $icon }}</span>
+                <span @class(['sb-item-icon mb-3 inline-flex', $isDark ? 'text-inherit' : 'text-primary-600'])>{{ $icon }}</span>
             @endif
             <dt class="sr-only">{{ $item['label'] ?? '' }}</dt>
-            <dd class="text-4xl sm:text-5xl font-extrabold text-primary-600" @if ($isDark) style="color: inherit" @endif>
+            <dd @class(['sb-item-value text-4xl sm:text-5xl font-extrabold', $isDark ? 'text-inherit' : 'text-primary-600'])>
                 {{ $item['prefix'] ?? '' }}<span
                     @if ($animate)
                         x-data="{ shown: 0, target: {{ (float) $number }} }"
@@ -24,7 +24,7 @@
                     @endif
                 >{{ number_format((float) $number) }}</span>{{ $item['suffix'] ?? '' }}
             </dd>
-            <p class="mt-2 text-sm font-medium opacity-80" aria-hidden="true">{{ $item['label'] ?? '' }}</p>
+            <p class="sb-item-label mt-2 text-sm font-medium opacity-80" aria-hidden="true">{{ $item['label'] ?? '' }}</p>
         </div>
     @endforeach
 </dl>

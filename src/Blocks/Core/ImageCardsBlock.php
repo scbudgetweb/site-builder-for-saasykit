@@ -12,6 +12,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\BorderShadow;
 use ScBudgetWeb\SiteBuilder\Blocks\CardStyle;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
@@ -99,7 +100,7 @@ class ImageCardsBlock extends PageBlock
 
     protected static function styleToggleTitle(): string
     {
-        return __('Cards');
+        return __('Images & card layout');
     }
 
     protected static function styleFields(): array
@@ -172,7 +173,7 @@ class ImageCardsBlock extends PageBlock
             // Corners only on cards without a box (the image runs edge to edge in a box); border and shadow always.
             'imageStyle' => static::imageCornerStyle($data),
             'imageBorderStyle' => BorderShadow::style($data, 'image_'),
-            'style' => $style = CardStyle::resolve($data['card'] ?? null),
+            'style' => $style = CardStyle::resolve($data['card'] ?? null, $data['design']['items'] ?? null),
             // The card's box (background, border, corners, shadow, text colour) without CardStyle's layout,
             // as the image sits edge to edge on top and the layout goes on the card's body.
             'cardClass' => trim('flex h-full flex-col overflow-hidden '.implode(' ', array_diff(
@@ -188,5 +189,13 @@ class ImageCardsBlock extends PageBlock
             // Buttons suit the card's own background when it has one, otherwise the block's.
             'cardIsDark' => str_contains($style['card'], 'text-white') ? true : (str_contains($style['card'], 'text-gray-900') ? false : null),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Cards'))
+            ->icon(__('Icons'))
+            ->text('title', __('Title text'))
+            ->text('text', __('Card text'));
     }
 }

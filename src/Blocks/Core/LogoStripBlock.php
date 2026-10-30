@@ -9,6 +9,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
@@ -153,5 +154,10 @@ class LogoStripBlock extends PageBlock
                 ->values()
                 ->all(),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Logos'));
     }
 }

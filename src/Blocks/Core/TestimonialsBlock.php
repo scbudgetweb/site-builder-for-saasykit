@@ -8,6 +8,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 
 class TestimonialsBlock extends PageBlock
@@ -58,5 +59,14 @@ class TestimonialsBlock extends PageBlock
         return [
             static::columnsSelect(2, [1, 2, 3, 4]),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Quotes'))
+            ->icon(__('Quote mark'))
+            ->text('text', __('Quote text'))
+            ->text('title', __('Name text'))
+            ->text('meta', __('Role text'));
     }
 }

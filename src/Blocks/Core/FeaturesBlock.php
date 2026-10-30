@@ -8,6 +8,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\CardStyle;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 
 class FeaturesBlock extends PageBlock
@@ -59,7 +60,7 @@ class FeaturesBlock extends PageBlock
 
     protected static function styleToggleTitle(): string
     {
-        return __('Cards');
+        return __('Card layout');
     }
 
     protected static function styleFields(): array
@@ -74,5 +75,13 @@ class FeaturesBlock extends PageBlock
         return [
             static::columnsSelect(3),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Cards'))
+            ->icon(__('Icons'))
+            ->text('title', __('Title text'))
+            ->text('text', __('Card text'));
     }
 }

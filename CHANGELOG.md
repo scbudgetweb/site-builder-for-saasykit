@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased (1.7.0)
+
+**Upgrading:** nothing to do for pages. Blocks are now saved in shape 3: a Features or Image cards block's card colours, border line, shadow, icon and text sizes and colours move from its Cards settings to the new Design › Items, as it's read, so pages, drafts, revisions, library items, templates and presets look as before. If your app has its own copy of a block view (`features`, `partials/image-card`, `image-cards`, `stats`, `steps`, `team`, `testimonials`, `faq`, `gallery` or `logo-strip`), compare it with the package's: they now carry the item part classes, and `CardStyle::resolve()` no longer returns `cardStyle`, `iconStyle`, `titleStyle` or `textStyle` (that look comes from Design › Items' CSS). Run `npm run build` for the new styles (`resources/css/design/items.css`).
+
+- **New: Design › Items** for every block with repeated items (Features, Image cards, Stats, Steps, Team, Testimonials, FAQ, Gallery, Logo strip). The items' box: background colour or gradient (with readable text on it), padding, space between, corners, border, an accent edge, shadow, lines between items, and hover background, border colour, shadow and lift. Their icon: background (none, soft, solid or outline), shape, size and colours. And a text style for each text part (title, text, number, label, role), e.g. stat numbers in their own colour.
+- **New: fixed part classes**, `sb-items`, `sb-item`, `sb-item-icon`, `sb-item-title`, `sb-item-text`, `sb-item-value`, `sb-item-label` and `sb-item-meta`, kept stable for custom CSS (listed in the [Branding guide](docs/branding.md#custom-css)).
+- **New: Steps connectors and highlight.** A solid, dashed or dotted line joins the step numbers across each row, and a step can be highlighted.
+- **New:** *Items* in the right-click menu's copy and paste styles.
+- For developers: `PageBlock::itemParts()` and `Design\ItemParts` declare a block's parts ([custom blocks](docs/developers/custom-blocks.md#5-optional-hooks)); `Design\Items` is the design group; `Typography::textFields()` and `Typography::addText()` are public; `BlockSchema::VERSION` is 3.
+
 ## 1.6.4 - 2026-10-30
 
 **Upgrading:** nothing to do. The package now raises Livewire's `payload.max_nesting_depth` from its standard 10 to 48 for the whole app, if it's lower. That's a limit on how deep an update's property path can be, kept as a guard against very deep payloads, so it stays bounded. An app that already allows more keeps its own value. To keep Livewire's setting as it is, set `livewire_nesting_depth` to `false` in `config/site-builder.php` (add the key if your copy is older).

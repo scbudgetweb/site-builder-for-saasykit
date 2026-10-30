@@ -30,6 +30,7 @@ final class StyleClipboard
         'links' => 'Links',
         'borders' => 'Borders, corners & shadow',
         'buttons' => 'Buttons',
+        'items' => 'Items (cards, numbers, steps…)',
         'effects' => 'Effects',
         'position' => 'Transform, position & motion',
     ];
@@ -42,6 +43,7 @@ final class StyleClipboard
         'links' => ['design.typography.links'],
         'borders' => ['appearance.border_*', 'appearance.shadow*', 'design.borders'],
         'buttons' => ['button_design'],
+        'items' => ['design.items'],
         'effects' => ['design.effects'],
         'position' => ['design.position', 'design.motion'],
     ];

@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Blocks\Core;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
@@ -77,5 +78,11 @@ class GalleryBlock extends PageBlock
                 ->values()
                 ->all(),
         ];
+    }
+
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Images'))
+            ->text('text', __('Caption text'));
     }
 }

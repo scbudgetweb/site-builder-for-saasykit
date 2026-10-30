@@ -3,6 +3,10 @@
 namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\CardStyle;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\StatsBlock;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\TabsBlock;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\TeamBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Facades\SiteBuilder as SiteBuilderFacade;
 use ScBudgetWeb\SiteBuilder\Tests\Fixtures\Blocks\OpeningHoursBlock;
@@ -99,6 +103,40 @@ class BlockFeaturesTest extends PageTestCase
     }
 
     /**
+     * Design › Items relies on the part classes (ItemParts), and so does custom CSS: a block that declares its parts
+     * must draw each one, and a view with items must declare them.
+     */
+    public function test_every_block_draws_the_item_parts_it_declares(): void
+    {
+        foreach (app(BlockRegistry::class)->all() as $name => $blockClass) {
+            $view = $this->viewSource($blockClass::view());
+            $parts = $blockClass::itemParts();
+
+            if ($parts === null) {
+                $this->assertDoesNotMatchRegularExpression('/["\'\s]sb-item["\'\s]/', $view, "{$name} draws items, so it needs itemParts().");
+
+                continue;
+            }
+
+            // Card blocks' icon tile comes from CardStyle.
+            $source = $view.(str_contains($view, 'CardStyle') || str_contains($view, "\$style['iconWrap']") ? (string) file_get_contents((new \ReflectionClass(CardStyle::class))->getFileName()) : '');
+
+            foreach ($parts->classes() as $class) {
+                $this->assertMatchesRegularExpression('/["\'\s]'.preg_quote($class, '/').'["\'\s]/', $source, "{$name} declares {$class} but doesn't draw it.");
+            }
+
+            $this->assertContains('items', $this->toggleKeys($blockClass), "{$name}: Design › Items.");
+        }
+    }
+
+    public function test_the_items_toggles_follow_the_declared_parts(): void
+    {
+        $this->assertSame(['items', 'items_icon', 'items_value', 'items_label'], array_values(array_filter($this->toggleKeys(StatsBlock::class), fn (string $key): bool => str_starts_with($key, 'items'))));
+        $this->assertSame(['items', 'items_title', 'items_meta', 'items_text'], array_values(array_filter($this->toggleKeys(TeamBlock::class), fn (string $key): bool => str_starts_with($key, 'items'))), 'No icon, no icon toggle.');
+        $this->assertSame([], array_values(array_filter($this->toggleKeys(TabsBlock::class), fn (string $key): bool => str_starts_with($key, 'items'))), 'Tabs have no repeated items.');
+    }
+
+    /**
      * @param  class-string<PageBlock>  $blockClass
      * @return array<int, string>
      */
@@ -119,7 +157,7 @@ class BlockFeaturesTest extends PageTestCase
     {
         $source = (string) file_get_contents(view()->getFinder()->find($view));
 
-        preg_match_all("/@include\\('(site-builder::blocks\\.partials\\.[a-z-]+)'/", $source, $matches);
+        preg_match_all("/(?:@include|view)\\('(site-builder::blocks\\.partials\\.[a-z-]+)'/", $source, $matches);
 
         foreach ($matches[1] as $partial) {
             $source .= (string) file_get_contents(view()->getFinder()->find($partial));

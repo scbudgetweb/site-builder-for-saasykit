@@ -31,7 +31,7 @@
                     <ul class="flex shrink-0 items-center gap-x-16 pr-16" @if ($isSecondHalf) aria-hidden="true" @endif>
                         @for ($pass = 0; $pass < $repeats; $pass++)
                             @foreach ($logos as $logo)
-                                <li class="shrink-0" @if ($isSecondHalf || $pass > 0) aria-hidden="true" inert @endif>{!! $logoHtml($logo) !!}</li>
+                                <li class="sb-item shrink-0" @if ($isSecondHalf || $pass > 0) aria-hidden="true" inert @endif>{!! $logoHtml($logo) !!}</li>
                             @endforeach
                         @endfor
                     </ul>
@@ -79,9 +79,9 @@
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
             </button>
 
-            <ul x-ref="strip" class="no-scrollbar flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto">
+            <ul x-ref="strip" class="sb-items no-scrollbar flex min-w-0 flex-1 snap-x snap-mandatory overflow-x-auto">
                 @foreach ($logos as $logo)
-                    <li class="{{ $slideWidth }} flex shrink-0 snap-start items-center justify-center px-4">{!! $logoHtml($logo) !!}</li>
+                    <li class="sb-item {{ $slideWidth }} flex shrink-0 snap-start items-center justify-center px-4">{!! $logoHtml($logo) !!}</li>
                 @endforeach
             </ul>
 
@@ -101,7 +101,7 @@
         @endif
     </div>
 @else
-    <ul class="flex flex-wrap items-center {{ $alignClass }} gap-x-10 gap-y-8">
+    <ul class="sb-items flex flex-wrap items-center {{ $alignClass }} gap-x-10 gap-y-8">
         @foreach ($logos as $logo)
             <li class="sb-item">{!! $logoHtml($logo) !!}</li>
         @endforeach

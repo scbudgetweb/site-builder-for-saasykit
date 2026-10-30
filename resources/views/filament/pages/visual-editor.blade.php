@@ -707,7 +707,10 @@
         .sb-canvas-menu .fi-dropdown-list-item-label { white-space: normal; }
     </style>
 
+    {{-- wire:ignore.self: Livewire leaves this element's attributes as they are, so a change to the page's nodes doesn't
+         start a new canvas component that has lost the iframe (its load event has gone). Updates bring the nodes. --}}
     <div
+        wire:ignore.self
         x-data="siteBuilderCanvas({ nodes: @js($this->canvasNodes()), colour: '#2563eb', levels: @js(\ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel::LEVEL_COLOURS), clipboard: @js($this->styleClipboardLabel()), topLevel: @js($this->allowsTopLevelChanges()) })"
         x-on:site-builder-canvas-updated.window="update($event.detail)"
         x-on:site-builder-style-copied.window="clipboard = $event.detail.label"

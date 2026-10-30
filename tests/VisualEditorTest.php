@@ -326,4 +326,11 @@ class VisualEditorTest extends PageTestCase
         $draft->delete();
         $this->assertFalse(app(PageService::class)->isUploadInUse('site-builder/pages/draft.jpg'));
     }
+
+    public function test_livewire_leaves_the_canvas_component_in_place_when_the_page_changes(): void
+    {
+        $view = (string) file_get_contents(__DIR__.'/../resources/views/filament/pages/visual-editor.blade.php');
+
+        $this->assertMatchesRegularExpression('/<div\s+wire:ignore\.self\s+x-data="siteBuilderCanvas\(/', $view, 'A new nodes list in x-data would start a canvas component without the iframe, so a moved block would stay where it was until a reload.');
+    }
 }

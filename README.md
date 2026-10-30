@@ -1,10 +1,43 @@
 # Site Builder for SaaSykit
 
-Branding (site identity), a plain base theme, pages built from blocks, a block library, page revisions, navigation menus and legal pages for [SaaSykit](https://saasykit.com) apps, all managed in the Filament admin panel.
+Branding (site identity), a plain base theme, pages built from blocks in a visual builder or a form, a block library, a Theme Builder for headers and footers, page revisions, navigation menus, mailing list sign-ups and legal pages for [SaaSykit](https://saasykit.com) apps, all managed in the Filament admin panel.
 
 > An independent add-on for SaaSykit. It isn't made or endorsed by SaaSykit. You need your own SaaSykit licence.
 
 <a href="https://buymeacoffee.com/shaunn" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="40"></a>
+
+![The visual builder showing a page for a flower subscription shop, with the Hero block outlined](docs/images/visual-builder.jpg)
+
+## In action
+
+The page in these pictures, *Bloom & Stem*, is a made-up flower subscription shop built only from the package's blocks.
+
+**Live preview.** Click a block to open its settings in a floating panel. The page changes as you type, and *Cancel* puts it back.
+
+![Changing the Hero's heading in its panel, and the page following as it's typed](docs/images/live-preview.gif)
+
+**Drag and drop.** Move blocks by their *Move* handle and rows by their *Row* handle. Every change can be undone.
+
+![Dragging the steps block above this month's bouquet, then undoing it](docs/images/drag-and-drop.gif)
+
+**Sections, rows and columns.** A row's panel lists its columns. Each column opens its own settings, with a back arrow to the row.
+
+![Opening a row's settings, then a column's, then going back to the row](docs/images/rows-and-columns.gif)
+
+**Every screen size.** Check the page at desktop, tablet and phone width. Sizes and spacing can be set for each.
+
+![Switching the canvas between tablet, phone and desktop](docs/images/screen-sizes.gif)
+
+| | |
+|---|---|
+| ![A Features block's panel, with Content, Design and Advanced tabs](docs/images/block-panel.png) | ![A row's panel, listing its three columns](docs/images/row-panel.png) |
+| Each block's panel has **Content**, **Design** and **Advanced** tabs, a search across them and presets. | A row's panel: column structure, its columns, link and background. |
+| ![The right-click menu on the Hero block](docs/images/context-menu.jpg) | ![The page at phone width](docs/images/phone.jpg) |
+| Right-click to add, duplicate, move or delete, and to copy and paste styles. | The same page at phone width. |
+
+Prefer a form? **Edit as a form** shows the same blocks, Sections, rows and columns, with the same panels. The coloured edges show the level: Sections blue, rows green, columns purple, blocks grey.
+
+![A Section in the form editor, showing a row of three columns, each holding a block](docs/images/form-builder-section.png)
 
 ## Requirements
 

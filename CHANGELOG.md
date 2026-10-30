@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.2 - 2026-10-30
+
+- **Fixed:** in the visual builder, a block or row moved by drag and drop stayed where it was on the canvas until the page was reloaded, although the move was saved. Any change that redraws the whole canvas had the same problem.
+- The README has screenshots and short recordings of the visual builder and the form editor. They're left out of Composer installs.
+
 ## 1.6.1 - 2026-10-30
 
 - **Fixed:** `Colour::isReadableTextOn()` treated any colour that wasn't `#rrggbb` as readable, including the `oklch()` shades `Colour::palette()` returns, so a pale colour under white text wasn't flagged. It now also reads `oklch()`, `rgb()` and `#rgb` colours. Only a global colour that isn't set, or a value that isn't a colour (including out-of-range numbers such as `rgb(999, 0, 0)`), still counts as readable.

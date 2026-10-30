@@ -18,11 +18,11 @@
             <dd @class(['sb-item-value text-4xl sm:text-5xl font-extrabold', $isDark ? 'text-inherit' : 'text-primary-600'])>
                 {{ $item['prefix'] ?? '' }}<span
                     @if ($animate)
-                        x-data="{ shown: 0, target: {{ (float) $number }} }"
-                        x-intersect.once="if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { shown = target; return; } const start = performance.now(); const step = (now) => { const progress = Math.min((now - start) / 1200, 1); shown = Math.round(target * progress); if (progress < 1) requestAnimationFrame(step); }; requestAnimationFrame(step);"
-                        x-text="shown.toLocaleString()"
+                        x-data="{ shown: 0, target: {{ (float) $number }}, format: {{ \ScBudgetWeb\SiteBuilder\Support\NumberFormat::JS }} }"
+                        x-intersect.once="if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { shown = target; return; } const start = performance.now(); const step = (now) => { const progress = Math.min((now - start) / 1200, 1); shown = progress < 1 ? target * progress : target; if (progress < 1) requestAnimationFrame(step); }; requestAnimationFrame(step);"
+                        x-text="format(shown, @js($item['format']), {{ $item['decimals'] }})"
                     @endif
-                >{{ number_format((float) $number) }}</span>{{ $item['suffix'] ?? '' }}
+                >{{ $item['shown'] }}</span>{{ $item['suffix'] ?? '' }}
             </dd>
             <p class="sb-item-label mt-2 text-sm font-medium opacity-80" aria-hidden="true">{{ $item['label'] ?? '' }}</p>
         </div>

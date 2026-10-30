@@ -14,6 +14,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
+use ScBudgetWeb\SiteBuilder\Support\NumberFormat;
 
 class StatsBlock extends PageBlock
 {
@@ -66,11 +67,26 @@ class StatsBlock extends PageBlock
                         TextInput::make('value')
                             ->label(__('Value'))
                             ->numeric()
+                            ->step('any')
                             ->required()
                             ->visible(fn (Get $get): bool => $get('source') === 'custom'),
                         TextInput::make('prefix')->label(__('Before the number'))->maxLength(5)->placeholder('£')
                             ->hintIcon(self::HELP_ICON, __('Optional, e.g. £ to show £500, or + after it to show 500+.')),
                         TextInput::make('suffix')->label(__('After the number'))->maxLength(5)->placeholder('+'),
+                        Select::make('format')
+                            ->label(__('Number format'))
+                            ->hintIcon(self::HELP_ICON, __('How the number is written: 9,000, plain for a year such as 2040, or short such as 2m or 300k.'))
+                            ->options(array_map(fn (string $label): string => __($label), NumberFormat::FORMATS))
+                            ->default('thousands')
+                            ->selectablePlaceholder(false),
+                        TextInput::make('decimals')
+                            ->label(__('Decimal places'))
+                            ->hintIcon(self::HELP_ICON, __('e.g. 2 to show 1.25. With the short format, 1 shows 1.5m (and 2m stays 2m).'))
+                            ->numeric()
+                            ->integer()
+                            ->minValue(0)
+                            ->maxValue(NumberFormat::MAX_DECIMALS)
+                            ->default(0),
                     ]),
                     TextInput::make('label')->label(__('Label'))->required()->maxLength(80),
                     static::iconSelect('icon', __('Icon (optional)'))
@@ -115,6 +131,12 @@ class StatsBlock extends PageBlock
                 return $item;
             })
             ->filter(fn (array $item): bool => $item['number'] !== null)
+            ->map(fn (array $item): array => [
+                ...$item,
+                'format' => NumberFormat::formatName($item['format'] ?? null),
+                'decimals' => NumberFormat::decimals($item['decimals'] ?? null),
+                'shown' => NumberFormat::format($item['number'], $item['format'] ?? null, $item['decimals'] ?? null),
+            ])
             ->values()
             ->all();
 

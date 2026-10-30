@@ -51,6 +51,11 @@ final class Items implements DesignGroup
 
     public const BORDER_STYLES = ['solid' => 'Solid', 'dashed' => 'Dashed', 'dotted' => 'Dotted', 'double' => 'Double'];
 
+    public const MAX_COLUMNS = 6;
+
+    /** Screen size => the suffix of its columns class and property. Each applies on that size only (items.css). */
+    private const COLUMN_SCREENS = ['desktop' => 'd', 'tablet' => 't', 'phone' => 'p'];
+
     public static function key(): string
     {
         return 'items';
@@ -104,6 +109,12 @@ final class Items implements DesignGroup
                 ->label(__('Gradient direction'))
                 ->options(self::translated(self::GRADIENTS))
                 ->placeholder(__('Top to bottom')),
+            DeviceValue::make('columns')
+                ->label(__('Columns'))
+                ->hintIcon(PageBlock::HELP_ICON, __('How many items sit side by side on computers, tablets and phones (e.g. 2 on phones for a 2 × 2 grid). Blank: the block\'s standard, fewer on smaller screens. On computers it replaces Layout › Columns.'))
+                ->units([''])
+                ->range(1, self::MAX_COLUMNS)
+                ->columnSpanFull(),
             DeviceValue::make('padding')
                 ->label(__('Padding'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The space inside each item, around its content.'))
@@ -254,6 +265,27 @@ final class Items implements DesignGroup
     }
 
     /**
+     * The items' columns on each screen size that has its own (desktop, tablet, phone => 1 to MAX_COLUMNS). Unlike
+     * other sizes, each applies on that screen size only, so a blank one keeps the block's standard there.
+     *
+     * @param  array<string, mixed>|null  $items  data.design.items
+     * @return array<string, int>
+     */
+    public static function columns(mixed $items): array
+    {
+        $saved = is_array($items) && is_array($items['box'] ?? null) ? DesignValue::devices($items['box']['columns'] ?? null) : [];
+        $columns = [];
+
+        foreach (array_keys(self::COLUMN_SCREENS) as $screen) {
+            if (($count = DesignValue::integer($saved[$screen] ?? null, 1, self::MAX_COLUMNS)) !== null) {
+                $columns[$screen] = $count;
+            }
+        }
+
+        return $columns;
+    }
+
+    /**
      * Whether the items have a shadow of their own (so a block's standard card shadow gives way).
      *
      * @param  array<string, mixed>|null  $items  data.design.items
@@ -284,6 +316,11 @@ final class Items implements DesignGroup
 
         if (($colour = DesignValue::colour($box['background_hover'] ?? null)) !== null) {
             $output->addClass('section', 'sb-d-ibg-h')->setProperty('section', '--sb-ibg-h', $colour);
+        }
+
+        foreach (self::columns(['box' => $box]) as $screen => $count) {
+            $suffix = self::COLUMN_SCREENS[$screen];
+            $output->addClass('section', "sb-d-icol{$suffix}")->setProperty('section', "--sb-icol{$suffix}", (string) $count);
         }
 
         DesignValue::addLength($output, 'section', 'ip', $box['padding'] ?? null, ['px', 'rem'], 0, 200);

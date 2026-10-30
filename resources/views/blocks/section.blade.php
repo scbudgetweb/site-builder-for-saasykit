@@ -32,7 +32,10 @@
         @continue(! $marksNodes && array_merge(...array_column($row['columns'], 'blocks')) === [])
 
         @php
-            $layout = $layouts[$row['layout']];
+            // Side by side on phones too: the layout's columns without a screen size, so they never stack.
+            $layout = $row['sideBySide'] && isset(\ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock::SIDE_BY_SIDE_LAYOUTS[$row['layout']])
+                ? [$layouts[$row['layout']][0], ...\ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock::SIDE_BY_SIDE_LAYOUTS[$row['layout']]]
+                : $layouts[$row['layout']];
             $spans = $layout[2];
             $isStacked = $row['layout'] === 'stacked';
             $columnGap = $row['gap'] ?? $gap[2];
@@ -53,7 +56,8 @@
         @endphp
 
         <div @class([
-            'grid grid-cols-1',
+            'grid',
+            'grid-cols-1' => ! $row['sideBySide'],
             $columnGap,
             $layout[1],
             \ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock::ALIGNMENTS[$row['align']][1] => ! $isStacked,

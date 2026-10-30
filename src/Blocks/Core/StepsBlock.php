@@ -51,7 +51,7 @@ class StepsBlock extends PageBlock
                         ->hintIcon(self::HELP_ICON, __('Marks the step, e.g. where the visitor is now: its marker is ringed and a little larger.')),
                 ])
                 ->minItems(2)
-                ->maxItems(6)
+                ->maxItems(12)
                 ->defaultItems(3)
                 ->collapsible()
                 ->itemLabel(fn (array $state): ?string => $state['title'] ?? null)

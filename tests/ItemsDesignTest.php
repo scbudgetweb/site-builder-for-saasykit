@@ -198,7 +198,7 @@ class ItemsDesignTest extends PageTestCase
         ])]]);
 
         $html = $this->get('/about-us')->assertSuccessful()->getContent();
-        $this->assertMatchesRegularExpression('/<ol class="[^"]*sb-items[^"]*sb-steps-lg-3 sb-steps-line"/', $html);
+        $this->assertMatchesRegularExpression('/<ol class="[^"]*sb-items[^"]*sb-steps-d-3 sb-steps-t-2 sb-steps-p-1 sb-steps-line"/', $html);
         $this->assertSame(1, substr_count($html, 'sb-item-highlight'));
         $this->assertStringContainsString('sb-item-icon sb-item-marker', $html);
     }

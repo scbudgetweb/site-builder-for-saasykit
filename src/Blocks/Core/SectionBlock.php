@@ -69,6 +69,24 @@ class SectionBlock extends PageBlock
         '5' => ['Five equal columns', 'md:grid-cols-3 lg:grid-cols-5', []],
     ];
 
+    /**
+     * Layout => [grid classes, column spans] for a row that stays side by side on phones too ("Side by side on phones
+     * too"), e.g. a header's logo | menu | account links. Written out here so Tailwind finds the classes.
+     */
+    public const SIDE_BY_SIDE_LAYOUTS = [
+        '2' => ['grid-cols-2', []],
+        '1-2' => ['grid-cols-3', ['col-span-1', 'col-span-2']],
+        '2-1' => ['grid-cols-3', ['col-span-2', 'col-span-1']],
+        '1-3' => ['grid-cols-4', ['col-span-1', 'col-span-3']],
+        '3-1' => ['grid-cols-4', ['col-span-3', 'col-span-1']],
+        '2-3' => ['grid-cols-5', ['col-span-2', 'col-span-3']],
+        '3-2' => ['grid-cols-5', ['col-span-3', 'col-span-2']],
+        '3' => ['grid-cols-3', []],
+        '1-2-1' => ['grid-cols-4', ['col-span-1', 'col-span-2', 'col-span-1']],
+        '4' => ['grid-cols-4', []],
+        '5' => ['grid-cols-5', []],
+    ];
+
     /** Layout => how many columns it has. */
     public const COLUMN_COUNTS = [
         'stacked' => 1,
@@ -430,7 +448,7 @@ class SectionBlock extends PageBlock
      */
     public static function rowSettingsPanel(bool $inForm = false): array
     {
-        [$layout, $align, $gap, $reverse] = self::rowLayoutFields();
+        [$layout, $align, $gap, $reverse, $sideBySide] = self::rowLayoutFields();
         $grid = fn (array $fields): Grid => Grid::make(['default' => 1, 'sm' => 2])->schema($fields);
 
         return [...SettingsPanel::schema([
@@ -440,7 +458,7 @@ class SectionBlock extends PageBlock
             ]),
             PanelToggle::content('background', __('Background'), [$grid(BlockAppearance::backgroundFields())], 80),
             ...self::nodeToggles(__('row')),
-            PanelToggle::design('sizing', __('Sizing'), [$grid([$align, $gap, $reverse])], 80),
+            PanelToggle::design('sizing', __('Sizing'), [$grid([$align, $gap, $reverse, $sideBySide])], 80),
             PanelToggle::design('spacing', __('Spacing'), [self::paddingField(__('Automatic: some space when the row has a border or shadow.'))], 90),
             PanelToggle::design('border', __('Border'), [$grid([...BorderShadow::borderFields(), self::cornersField()])], 95),
             PanelToggle::design('box_shadow', __('Box shadow'), [$grid(BorderShadow::shadowFields())], 100),
@@ -502,7 +520,7 @@ class SectionBlock extends PageBlock
     /**
      * A row's layout, line-up, gap and phone order.
      *
-     * @return array{0: Select, 1: Select, 2: Select, 3: Toggle}
+     * @return array{0: Select, 1: Select, 2: Select, 3: Toggle, 4: Toggle}
      */
     private static function rowLayoutFields(): array
     {
@@ -538,6 +556,12 @@ class SectionBlock extends PageBlock
                 ->label(__('Last column first on phones'))
                 ->helperText(__('E.g. so an image on the right shows above its text.'))
                 ->inline(false)
+                ->visible(fn (Get $get): bool => self::columnCount($get('layout')) > 1 && ! $get('side_by_side_on_phones')),
+            Toggle::make('side_by_side_on_phones')
+                ->label(__('Side by side on phones too'))
+                ->helperText(__('The columns never stack, e.g. a header\'s logo, menu and account links in one line.'))
+                ->inline(false)
+                ->live()
                 ->visible(fn (Get $get): bool => self::columnCount($get('layout')) > 1),
         ];
     }
@@ -591,7 +615,7 @@ class SectionBlock extends PageBlock
      * section's.
      *
      * @param  array<string, mixed>  $data
-     * @return array<int, array{uid: ?string, layout: string, align: string, gap: ?string, reverse: bool, class: string, style: string, textScheme: ?string, id: ?string, link: ?array{url: string, newTab: bool}, image: ?string, overlayStyle: ?string, adminLabel: ?string, columns: array<int, array{uid: ?string, blocks: array<int, array{type: string, data: array<string, mixed>}>, class: string, style: string, textScheme: ?string, id: ?string, link: ?array{url: string, newTab: bool}, image: ?string, overlayStyle: ?string, adminLabel: ?string}>, blocks: array<int, array{type: string, data: array<string, mixed>}>}>
+     * @return array<int, array{uid: ?string, layout: string, align: string, gap: ?string, sideBySide: bool, reverse: bool, class: string, style: string, textScheme: ?string, id: ?string, link: ?array{url: string, newTab: bool}, image: ?string, overlayStyle: ?string, adminLabel: ?string, columns: array<int, array{uid: ?string, blocks: array<int, array{type: string, data: array<string, mixed>}>, class: string, style: string, textScheme: ?string, id: ?string, link: ?array{url: string, newTab: bool}, image: ?string, overlayStyle: ?string, adminLabel: ?string}>, blocks: array<int, array{type: string, data: array<string, mixed>}>}>
      */
     public static function rows(array $data): array
     {
@@ -620,7 +644,8 @@ class SectionBlock extends PageBlock
                     'layout' => $layout,
                     'align' => static::pick($row['align'] ?? null, self::ALIGNMENTS, 'start'),
                     'gap' => self::ROW_GAPS[static::pick($row['gap'] ?? null, self::ROW_GAPS, 'section')][1],
-                    'reverse' => (bool) ($row['reverse_on_phones'] ?? false),
+                    'sideBySide' => $layout !== 'stacked' && (bool) ($row['side_by_side_on_phones'] ?? false),
+                    'reverse' => (bool) ($row['reverse_on_phones'] ?? false) && ! ($row['side_by_side_on_phones'] ?? false),
                     'class' => $rowLook['class'],
                     'style' => $rowLook['style'],
                     'textScheme' => $background['textScheme'],

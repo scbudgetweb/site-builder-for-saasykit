@@ -15,6 +15,19 @@
 .sb-d-igap .sb-items { gap: var(--sb-igap); }
 .sb-d-ir .sb-item { border-radius: var(--sb-ir); }
 
+/* Columns, each on its own screen size only (Items::columns()); a list that isn't a grid (a carousel, a strip) ignores them. */
+@media (min-width: 64rem) {
+    .sb-d-icold .sb-items { grid-template-columns: repeat(var(--sb-icold), minmax(0, 1fr)); }
+}
+
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+    .sb-d-icolt .sb-items { grid-template-columns: repeat(var(--sb-icolt), minmax(0, 1fr)); }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-d-icolp .sb-items { grid-template-columns: repeat(var(--sb-icolp), minmax(0, 1fr)); }
+}
+
 /* Lines between items instead of gaps: each item draws a line on its left and top, and the list clips the outer ones. */
 .sb-d-idiv .sb-items { gap: 0; overflow: hidden; }
 .sb-d-idiv .sb-item {
@@ -101,7 +114,8 @@
 
 /*
  * Steps' connector line (StepsBlock): each step's head draws half a line either side of its marker, reaching into the
- * gap, so neighbours join up. The first and last step in each row hide their outer half; on phones they stack, so none.
+ * gap, so neighbours join up. The list says how many columns it has on each screen size (.sb-steps-{d|t|p}-{n}), so the
+ * first and last step in each row hide their outer half; with one column, none show.
  */
 .sb-steps-line .sb-step-head::before,
 .sb-steps-line .sb-step-head::after {
@@ -114,23 +128,57 @@
 .sb-steps-line .sb-step-head::after { margin-right: calc(var(--sb-igap, 2rem) / -2); }
 .sb-steps-line .sb-step-head .sb-item-icon { margin-inline: 0.75rem; }
 
-@media (min-width: 40rem) and (max-width: 63.99rem) {
-    .sb-steps-line .sb-step-head::before,
-    .sb-steps-line .sb-step-head::after { visibility: visible; }
-    .sb-steps-line .sb-item:nth-child(2n+1) .sb-step-head::before,
-    .sb-steps-line .sb-item:nth-child(2n) .sb-step-head::after,
-    .sb-steps-line .sb-item:last-child .sb-step-head::after { visibility: hidden; }
-}
-
 @media (min-width: 64rem) {
     .sb-steps-line .sb-step-head::before,
     .sb-steps-line .sb-step-head::after { visibility: visible; }
-    .sb-steps-line.sb-steps-lg-2 .sb-item:nth-child(2n+1) .sb-step-head::before,
-    .sb-steps-line.sb-steps-lg-2 .sb-item:nth-child(2n) .sb-step-head::after,
-    .sb-steps-line.sb-steps-lg-3 .sb-item:nth-child(3n+1) .sb-step-head::before,
-    .sb-steps-line.sb-steps-lg-3 .sb-item:nth-child(3n) .sb-step-head::after,
-    .sb-steps-line.sb-steps-lg-4 .sb-item:nth-child(4n+1) .sb-step-head::before,
-    .sb-steps-line.sb-steps-lg-4 .sb-item:nth-child(4n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-1 .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-1 .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-2 .sb-item:nth-child(2n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-2 .sb-item:nth-child(2n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-3 .sb-item:nth-child(3n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-3 .sb-item:nth-child(3n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-4 .sb-item:nth-child(4n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-4 .sb-item:nth-child(4n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-5 .sb-item:nth-child(5n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-5 .sb-item:nth-child(5n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-d-6 .sb-item:nth-child(6n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-d-6 .sb-item:nth-child(6n) .sb-step-head::after,
+    .sb-steps-line .sb-item:last-child .sb-step-head::after { visibility: hidden; }
+}
+
+@media (min-width: 48rem) and (max-width: 63.99rem) {
+    .sb-steps-line .sb-step-head::before,
+    .sb-steps-line .sb-step-head::after { visibility: visible; }
+    .sb-steps-line.sb-steps-t-1 .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-1 .sb-step-head::after,
+    .sb-steps-line.sb-steps-t-2 .sb-item:nth-child(2n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-2 .sb-item:nth-child(2n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-t-3 .sb-item:nth-child(3n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-3 .sb-item:nth-child(3n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-t-4 .sb-item:nth-child(4n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-4 .sb-item:nth-child(4n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-t-5 .sb-item:nth-child(5n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-5 .sb-item:nth-child(5n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-t-6 .sb-item:nth-child(6n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-t-6 .sb-item:nth-child(6n) .sb-step-head::after,
+    .sb-steps-line .sb-item:last-child .sb-step-head::after { visibility: hidden; }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-steps-line .sb-step-head::before,
+    .sb-steps-line .sb-step-head::after { visibility: visible; }
+    .sb-steps-line.sb-steps-p-1 .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-1 .sb-step-head::after,
+    .sb-steps-line.sb-steps-p-2 .sb-item:nth-child(2n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-2 .sb-item:nth-child(2n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-p-3 .sb-item:nth-child(3n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-3 .sb-item:nth-child(3n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-p-4 .sb-item:nth-child(4n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-4 .sb-item:nth-child(4n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-p-5 .sb-item:nth-child(5n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-5 .sb-item:nth-child(5n) .sb-step-head::after,
+    .sb-steps-line.sb-steps-p-6 .sb-item:nth-child(6n+1) .sb-step-head::before,
+    .sb-steps-line.sb-steps-p-6 .sb-item:nth-child(6n) .sb-step-head::after,
     .sb-steps-line .sb-item:last-child .sb-step-head::after { visibility: hidden; }
 }
 

@@ -1,11 +1,13 @@
 {{--
     Steps, each with its number (or an icon) in a marker. Design › Items styles them; a connector line can join the
-    markers across each row (.sb-steps-line, items.css), so the list knows its columns on wide screens.
+    markers across each row (.sb-steps-line, items.css), so the list says its columns on each screen size.
 --}}
 @php
     $steps = $block['items'] ?? [];
     $wideColumns = count($steps) === 4 ? 4 : (count($steps) >= 3 ? 3 : 2);
     [$connectorClass, $connectorStyle] = \ScBudgetWeb\SiteBuilder\Blocks\Core\StepsBlock::connector($block);
+    // Columns on each screen size, for the connector: Design › Items' own, or the standard grid's.
+    $screenColumns = [...['desktop' => $wideColumns, 'tablet' => 2, 'phone' => 1], ...\ScBudgetWeb\SiteBuilder\Blocks\Design\Items::columns($block['design']['items'] ?? null)];
 @endphp
 
 @include('site-builder::blocks.partials.heading')
@@ -14,7 +16,7 @@
     'sb-items grid gap-8 sm:grid-cols-2',
     'lg:grid-cols-3' => $wideColumns === 3,
     'lg:grid-cols-4' => $wideColumns === 4,
-    "sb-steps-lg-{$wideColumns}",
+    "sb-steps-d-{$screenColumns['desktop']} sb-steps-t-{$screenColumns['tablet']} sb-steps-p-{$screenColumns['phone']}",
     $connectorClass,
 ]) @if ($connectorStyle !== '') style="{{ $connectorStyle }}" @endif>
     @foreach ($steps as $step)

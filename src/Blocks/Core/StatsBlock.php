@@ -93,7 +93,7 @@ class StatsBlock extends PageBlock
                         ->helperText(__('Shown above the number.')),
                 ])
                 ->minItems(1)
-                ->maxItems(6)
+                ->maxItems(12)
                 ->defaultItems(3)
                 ->collapsible()
                 ->itemLabel(fn (array $state): ?string => $state['label'] ?? null)

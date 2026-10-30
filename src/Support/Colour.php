@@ -175,15 +175,44 @@ class Colour
     }
 
     /**
-     * Either colour may be a block colour (with transparency, or a global colour); one that can't be worked out counts
-     * as readable, so nothing is flagged or changed for it.
+     * Either colour may be a block colour (with transparency, or a global colour) or a CSS colour Filament gives out
+     * (oklch() or rgb(), as palette() shades are, or #rgb). A global colour that isn't set, or a value that isn't a
+     * colour, counts as readable, so nothing is flagged or changed for it.
      */
     public static function isReadableTextOn(string $textHex, string $backgroundHex): bool
     {
-        $text = self::hex($textHex);
-        $background = self::hex($backgroundHex);
+        $text = self::contrastHex($textHex);
+        $background = self::contrastHex($backgroundHex);
 
         return $text === null || $background === null || Color::isTextContrastRatioAccessible($text, $background);
+    }
+
+    /**
+     * A colour as #rrggbb for working out contrast, or null when it can't be worked out.
+     */
+    private static function contrastHex(string $value): ?string
+    {
+        $value = trim($value);
+
+        if (($hex = self::hex($value)) !== null || self::isReference($value)) {
+            return $hex;
+        }
+
+        if (preg_match('/^#([0-9a-f])([0-9a-f])([0-9a-f])\z/i', $value, $digits)) {
+            return strtolower("#{$digits[1]}{$digits[1]}{$digits[2]}{$digits[2]}{$digits[3]}{$digits[3]}");
+        }
+
+        $isConvertible = preg_match('/^rgb\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\s*\)\z/', $value)
+            || preg_match('/^oklch\(\s*[\d.]+\s+[\d.]+\s+[\d.]+\s*\)\z/', $value);
+
+        if (! $isConvertible) {
+            return null;
+        }
+
+        // Out-of-range numbers (rgb(999, 0, 0)) convert to something that isn't a colour.
+        $hex = Color::convertToHex($value);
+
+        return self::isValidHex($hex) ? $hex : null;
     }
 
     /**

@@ -60,6 +60,27 @@ class PresetsColoursDynamicTest extends PageTestCase
         $this->assertStringContainsString('color-mix(in srgb, var(--color-primary-500) 40%, transparent)', $shadow);
     }
 
+    public function test_readability_is_checked_for_palette_shades_and_css_colours_too(): void
+    {
+        // A pale brand colour's shades, as Filament gives them out (oklch), can't carry white text.
+        $pale = Colour::palette('#fde68a');
+        $this->assertStringStartsWith('oklch(', $pale[300]);
+        $this->assertFalse(Colour::isReadableTextOn('#ffffff', $pale[300]));
+        $this->assertTrue(Colour::isReadableTextOn('#111827', $pale[300]));
+        $this->assertTrue(Colour::isReadableTextOn('#ffffff', Colour::palette('#1d41d5')[700]));
+
+        $this->assertFalse(Colour::isReadableTextOn('rgb(255, 255, 255)', 'rgb(250, 250, 250)'));
+        $this->assertFalse(Colour::isReadableTextOn('#fff', '#fafafa'));
+        // See-through colours are checked as solid.
+        $this->assertFalse(Colour::isReadableTextOn('#ffffff', '#fafafa80'));
+
+        // A global colour that isn't set, or something that isn't a colour, can't be worked out: nothing is flagged.
+        $this->assertTrue(Colour::isReadableTextOn('#ffffff', 'gc:k3x9a2bc'));
+        $this->assertTrue(Colour::isReadableTextOn('#ffffff', 'red'));
+        $this->assertTrue(Colour::isReadableTextOn('#ffffff', 'oklch(1 0 0); color: red'));
+        $this->assertTrue(Colour::isReadableTextOn('#ffffff', 'rgb(999, 0, 0)'));
+    }
+
     public function test_global_colours_are_set_in_branding_and_followed_by_blocks(): void
     {
         Filament::setCurrentPanel(Filament::getPanel('admin'));

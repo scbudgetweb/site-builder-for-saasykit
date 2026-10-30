@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.6.1 - 2026-10-30
+
+- **Fixed:** `Colour::isReadableTextOn()` treated any colour that wasn't `#rrggbb` as readable, including the `oklch()` shades `Colour::palette()` returns, so a pale colour under white text wasn't flagged. It now also reads `oklch()`, `rgb()` and `#rgb` colours. Only a global colour that isn't set, or a value that isn't a colour (including out-of-range numbers such as `rgb(999, 0, 0)`), still counts as readable.
+
 ## 1.6.0 - 2026-10-29
 
 **Upgrading:** run your migrations (`php artisan migrate`: page drafts, Theme Builder templates and mailing list providers) and rebuild your CSS (`npm run build`). Then check the changes listed under *Changes to existing pages and settings* below.

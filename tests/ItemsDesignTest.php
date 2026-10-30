@@ -179,7 +179,7 @@ class ItemsDesignTest extends PageTestCase
 
     public function test_items_styles_copy_and_paste_as_a_group(): void
     {
-        $this->assertSame(['design.items'], StyleClipboard::paths('items'));
+        $this->assertSame(['design.items', 'style_presets.items'], StyleClipboard::paths('items'), 'With its saved style.');
         $this->assertContains('design.items', StyleClipboard::paths('all'));
 
         $copied = StyleClipboard::extract(['heading' => 'Why us', 'design' => ['items' => ['box' => ['background' => '#0b1f44']]]], StyleClipboard::paths('items'));

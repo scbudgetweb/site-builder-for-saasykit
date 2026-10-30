@@ -251,7 +251,7 @@ class PageEditorTest extends PageTestCase
         );
 
         $this->assertSame(['Image + text', 'Link', 'Background', 'Admin label'], $toggles('image_text', 0));
-        $this->assertSame(['Layout', 'Image', 'Text', 'Heading text', 'Body text', 'Link text', 'Lists & quotes', 'Dividers', 'Buttons', 'Sizing', 'Spacing', 'Border', 'Box shadow', 'Filters', 'Transform', 'Animation'], $toggles('image_text', 1), 'No Hover toggle: hover values sit with their settings.');
+        $this->assertSame(['Layout', 'Image', 'Small heading', 'Text', 'Heading text', 'Body text', 'Link text', 'Lists & quotes', 'Dividers', 'Buttons', 'Sizing', 'Spacing', 'Border', 'Box shadow', 'Filters', 'Transform', 'Animation'], $toggles('image_text', 1), 'No Hover toggle: hover values sit with their settings.');
         $this->assertSame(['CSS ID & classes', 'Conditions', 'Visibility', 'Transitions', 'Position', 'Scroll effects'], $toggles('image_text', 2));
         $this->assertSame(['Banner', 'Social proof', 'Image', 'Background', 'Admin label'], $toggles('banner', 0), 'A Banner\'s own background is on the Content tab too.');
     }

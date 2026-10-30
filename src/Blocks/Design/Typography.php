@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Blocks\Design;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\ToggleButtons;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\HoverMode;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
@@ -177,11 +178,14 @@ final class Typography implements DesignGroup
                     ->multiple()
                     ->inline()
                     ->columnSpanFull(),
-                HoverMode::normal(SiteColour::make('colour')
-                    ->label(__('Colour'))
-                    ->hintIcon(PageBlock::HELP_ICON, __('Replaces the automatic dark or light text colour.'))),
-                HoverMode::only(SiteColour::make('colour_hover')
-                    ->label(__('Colour on hover'))),
+                // The colour and its hover value share a cell: only one shows at a time.
+                Group::make()->gap(false)->schema([
+                    HoverMode::normal(SiteColour::make('colour')
+                        ->label(__('Colour'))
+                        ->hintIcon(PageBlock::HELP_ICON, __('Replaces the automatic dark or light text colour.'))),
+                    HoverMode::only(SiteColour::make('colour_hover')
+                        ->label(__('Colour on hover'))),
+                ]),
                 Select::make('shadow')
                     ->label(__('Shadow'))
                     ->hintIcon(PageBlock::HELP_ICON, __('A soft shadow behind the letters, which helps text stand out on a picture.'))

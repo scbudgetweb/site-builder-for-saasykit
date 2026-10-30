@@ -25,6 +25,7 @@ final class StyleClipboard
         'all' => 'All styles',
         'background' => 'Background',
         'spacing' => 'Spacing & size',
+        'eyebrow' => 'Small heading',
         'heading' => 'Heading text',
         'body' => 'Body text',
         'links' => 'Links',
@@ -38,6 +39,7 @@ final class StyleClipboard
     private const PATHS = [
         'background' => ['appearance.background', 'appearance.text', 'appearance.background_color', 'appearance.gradient_*', 'appearance.background_image', 'appearance.overlay_*', 'appearance.image_*', 'design.dividers'],
         'spacing' => ['appearance.width', 'appearance.spacing', 'appearance.background_area', 'appearance.corners', 'appearance.overlap', 'design.spacing'],
+        'eyebrow' => ['eyebrow_style', 'design.eyebrow'],
         'heading' => ['appearance.heading_size', 'appearance.heading_decoration', 'appearance.heading_align', 'design.typography.heading'],
         'body' => ['appearance.text_size', 'design.typography.body'],
         'links' => ['design.typography.links'],
@@ -57,10 +59,21 @@ final class StyleClipboard
     public static function paths(string $group, ?string $blockClass = null): array
     {
         if ($group !== 'all') {
-            return self::PATHS[$group] ?? [];
+            // With the group's saved style (BlockPresets), so a pasted look keeps following it.
+            return isset(self::PATHS[$group]) ? [...self::PATHS[$group], "style_presets.{$group}"] : [];
         }
 
-        return array_values(array_unique([...array_merge(...array_values(self::PATHS)), ...($blockClass ? $blockClass::ownStyleKeys() : [])]));
+        return array_values(array_unique([...array_merge(...array_values(self::PATHS)), 'style_presets', ...($blockClass ? $blockClass::ownStyleKeys() : [])]));
+    }
+
+    /**
+     * The keys a group's own settings are saved under, without its saved style: what a saved style holds.
+     *
+     * @return array<int, string>
+     */
+    public static function settingPaths(string $group): array
+    {
+        return self::PATHS[$group] ?? [];
     }
 
     /**

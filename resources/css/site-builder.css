@@ -20,6 +20,7 @@
 @import './design/motion.css';
 @import './design/hover.css';
 @import './design/items.css';
+@import './design/eyebrow.css';
 
 /* Branding's site and secondary colours by name, for custom CSS (Branding::colourVariables()). */
 :root {

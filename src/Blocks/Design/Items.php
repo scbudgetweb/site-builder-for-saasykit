@@ -6,6 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Utilities\Get;
 use ScBudgetWeb\SiteBuilder\Blocks\BorderShadow;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
@@ -88,11 +89,14 @@ final class Items implements DesignGroup
         $hasDividers = fn (Get $get): bool => (bool) $get('dividers');
 
         return Grid::make(['default' => 1, 'sm' => 2])->schema([
-            HoverMode::normal(SiteColour::make('background')
-                ->label(__('Background'))
-                ->hintIcon(PageBlock::HELP_ICON, __('Each item\'s background. The text turns light on a dark colour. Blank: the standard look.'))),
-            HoverMode::only(SiteColour::make('background_hover')
-                ->label(__('Background on hover'))),
+            // A setting and its hover value share a cell: only one shows at a time.
+            Group::make()->gap(false)->schema([
+                HoverMode::normal(SiteColour::make('background')
+                    ->label(__('Background'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('Each item\'s background. The text turns light on a dark colour. Blank: the standard look.'))),
+                HoverMode::only(SiteColour::make('background_hover')
+                    ->label(__('Background on hover'))),
+            ]),
             SiteColour::make('background_to')
                 ->label(__('Gradient to'))
                 ->hintIcon(PageBlock::HELP_ICON, __('A second colour, for a gradient from the background colour. Blank: a plain colour.')),
@@ -104,12 +108,14 @@ final class Items implements DesignGroup
                 ->label(__('Padding'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The space inside each item, around its content.'))
                 ->units(['px', 'rem'])
-                ->range(0, 200),
+                ->range(0, 200)
+                ->columnSpanFull(),
             DeviceValue::make('gap')
                 ->label(__('Space between'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The space between one item and the next.'))
                 ->units(['px', 'rem'])
-                ->range(0, 200),
+                ->range(0, 200)
+                ->columnSpanFull(),
             DeviceValue::make('radius')
                 ->label(__('Corners'))
                 ->hintIcon(PageBlock::HELP_ICON, __('How rounded each item\'s corners are. 0 is square.'))
@@ -128,10 +134,12 @@ final class Items implements DesignGroup
                 ->label(__('Border line'))
                 ->options(self::translated(self::BORDER_STYLES))
                 ->placeholder(__('Solid')),
-            HoverMode::normal(SiteColour::make('border_colour')
-                ->label(__('Border colour'))),
-            HoverMode::only(SiteColour::make('border_colour_hover')
-                ->label(__('Border colour on hover'))),
+            Group::make()->gap(false)->schema([
+                HoverMode::normal(SiteColour::make('border_colour')
+                    ->label(__('Border colour'))),
+                HoverMode::only(SiteColour::make('border_colour_hover')
+                    ->label(__('Border colour on hover'))),
+            ]),
             Select::make('accent')
                 ->label(__('Accent edge'))
                 ->hintIcon(PageBlock::HELP_ICON, __('A thicker line of colour along one side of each item.'))
@@ -151,23 +159,31 @@ final class Items implements DesignGroup
                 ->label(__('Accent colour'))
                 ->helperText(__('Blank: the site colour.'))
                 ->visible(fn (Get $get): bool => filled($get('accent'))),
-            ...array_map(
-                fn (mixed $field): mixed => $field instanceof Select ? HoverMode::normal($field) : $field,
-                BorderShadow::shadowFields('', __('Standard')),
-            ),
-            HoverMode::only(Select::make('shadow_hover')
-                ->label(__('Shadow on hover'))
-                ->options(BorderShadow::shadowOptions(withCustom: false))
-                ->placeholder(__('No change'))),
-            HoverMode::only(Select::make('lift')
-                ->label(__('Lift on hover'))
-                ->hintIcon(PageBlock::HELP_ICON, __('The item rises a little while it\'s pointed at.'))
-                ->options(array_map(fn (array $lift): string => __($lift[0]), self::LIFTS))
-                ->placeholder(__('None'))),
-            Toggle::make('dividers')
-                ->label(__('Lines between items'))
-                ->hintIcon(PageBlock::HELP_ICON, __('Thin lines between the items instead of gaps, like a grid. Takes the place of the shadow.'))
-                ->live(),
+            ...(function (): array {
+                [$shadow, $custom] = BorderShadow::shadowFields('', __('Standard'));
+
+                return [
+                    Group::make()->gap(false)->schema([
+                        HoverMode::normal($shadow),
+                        HoverMode::only(Select::make('shadow_hover')
+                            ->label(__('Shadow on hover'))
+                            ->options(BorderShadow::shadowOptions(withCustom: false))
+                            ->placeholder(__('No change'))),
+                    ]),
+                    Group::make()->gap(false)->schema([
+                        Toggle::make('dividers')
+                            ->label(__('Lines between items'))
+                            ->hintIcon(PageBlock::HELP_ICON, __('Thin lines between the items instead of gaps, like a grid. Takes the place of the shadow.'))
+                            ->live(),
+                        HoverMode::only(Select::make('lift')
+                            ->label(__('Lift on hover'))
+                            ->hintIcon(PageBlock::HELP_ICON, __('The item rises a little while it\'s pointed at.'))
+                            ->options(array_map(fn (array $lift): string => __($lift[0]), self::LIFTS))
+                            ->placeholder(__('None'))),
+                    ]),
+                    $custom,
+                ];
+            })(),
             SiteColour::make('divider_colour')
                 ->label(__('Line colour'))
                 ->helperText(__('Blank: a faint line in the text colour.'))
@@ -191,12 +207,15 @@ final class Items implements DesignGroup
                 ->label(__('Size'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The icon\'s size. A tile grows with it.'))
                 ->units(['px', 'rem'])
-                ->range(8, 200),
-            HoverMode::normal(SiteColour::make('colour')
-                ->label(__('Colour'))
-                ->hintIcon(PageBlock::HELP_ICON, __('The icon\'s (or number\'s) colour.'))),
-            HoverMode::only(SiteColour::make('colour_hover')
-                ->label(__('Colour on hover'))),
+                ->range(8, 200)
+                ->columnSpanFull(),
+            Group::make()->gap(false)->schema([
+                HoverMode::normal(SiteColour::make('colour')
+                    ->label(__('Colour'))
+                    ->hintIcon(PageBlock::HELP_ICON, __('The icon\'s (or number\'s) colour.'))),
+                HoverMode::only(SiteColour::make('colour_hover')
+                    ->label(__('Colour on hover'))),
+            ]),
             SiteColour::make('background')
                 ->label(__('Tile colour'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The tile\'s colour, or the ring\'s with Outline. Blank: the site colour.')),

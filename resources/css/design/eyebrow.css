@@ -1,0 +1,62 @@
+/*
+ * Design › Small heading (Design\Eyebrow): the eyebrow's text style, a pill's colour, and a decoration beside it. Every
+ * class is on the block's section and reaches .sb-eyebrow. Text rules are written three times over, so they beat the
+ * eyebrow's standard look (site-builder.css) and the block's Heading and Body text.
+ */
+.sb-d-ebf.sb-d-ebf.sb-d-ebf .sb-eyebrow { font-family: var(--sb-ebf); }
+.sb-d-ebw.sb-d-ebw.sb-d-ebw .sb-eyebrow { font-weight: var(--sb-ebw); }
+.sb-d-ebc.sb-d-ebc.sb-d-ebc .sb-eyebrow { color: var(--sb-ebc); }
+.sb-d-ebs.sb-d-ebs.sb-d-ebs .sb-eyebrow { font-size: var(--sb-ebs); }
+.sb-d-eblh.sb-d-eblh.sb-d-eblh .sb-eyebrow { line-height: var(--sb-eblh); }
+.sb-d-ebls.sb-d-ebls.sb-d-ebls .sb-eyebrow { letter-spacing: var(--sb-ebls); }
+.sb-d-eb-italic.sb-d-eb-italic.sb-d-eb-italic .sb-eyebrow { font-style: italic; }
+.sb-d-eb-upper.sb-d-eb-upper.sb-d-eb-upper .sb-eyebrow { text-transform: uppercase; }
+.sb-d-eb-underline.sb-d-eb-underline.sb-d-eb-underline .sb-eyebrow { text-decoration-line: underline; }
+.sb-d-eb-smallcaps.sb-d-eb-smallcaps.sb-d-eb-smallcaps .sb-eyebrow { text-transform: none; font-variant-caps: small-caps; }
+.sb-d-eb-shadow-soft.sb-d-eb-shadow-soft.sb-d-eb-shadow-soft .sb-eyebrow { text-shadow: 0 1px 2px rgb(0 0 0 / 0.25); }
+.sb-d-eb-shadow-medium.sb-d-eb-shadow-medium.sb-d-eb-shadow-medium .sb-eyebrow { text-shadow: 0 2px 6px rgb(0 0 0 / 0.35); }
+.sb-d-eb-shadow-strong.sb-d-eb-shadow-strong.sb-d-eb-shadow-strong .sb-eyebrow { text-shadow: 0 3px 12px rgb(0 0 0 / 0.55); }
+
+/* Alignment: the eyebrow is a block of its own, so it lines up by itself. */
+.sb-d-eb-align-left.sb-d-eb-align-left.sb-d-eb-align-left .sb-eyebrow { display: flex; align-items: center; justify-content: flex-start; text-align: left; }
+.sb-d-eb-align-center.sb-d-eb-align-center.sb-d-eb-align-center .sb-eyebrow { display: flex; align-items: center; justify-content: center; text-align: center; }
+.sb-d-eb-align-right.sb-d-eb-align-right.sb-d-eb-align-right .sb-eyebrow { display: flex; align-items: center; justify-content: flex-end; text-align: right; }
+
+@media (max-width: 63.99rem) {
+    .sb-d-ebs-t.sb-d-ebs-t.sb-d-ebs-t .sb-eyebrow { font-size: var(--sb-ebs-t); }
+    .sb-d-ebls-t.sb-d-ebls-t.sb-d-ebls-t .sb-eyebrow { letter-spacing: var(--sb-ebls-t); }
+}
+
+@media (max-width: 47.99rem) {
+    .sb-d-ebs-p.sb-d-ebs-p.sb-d-ebs-p .sb-eyebrow { font-size: var(--sb-ebs-p); }
+    .sb-d-ebls-p.sb-d-ebls-p.sb-d-ebls-p .sb-eyebrow { letter-spacing: var(--sb-ebls-p); }
+}
+
+.sb-d-ebc-h.sb-d-ebc-h.sb-d-ebc-h:hover .sb-eyebrow { color: var(--sb-ebc-h); }
+
+/* A pill's colour. */
+.sb-d-ebbg.sb-d-ebbg .sb-eyebrow-pill { background-color: var(--sb-ebbg); }
+
+/* A line on both sides, a line before it, or a dot before it, in the eyebrow's colour unless another is chosen. */
+:is(.sb-d-eb-both, .sb-d-eb-before, .sb-d-eb-dot) .sb-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75em;
+}
+.sb-d-eb-both .sb-eyebrow::before,
+.sb-d-eb-both .sb-eyebrow::after,
+.sb-d-eb-before .sb-eyebrow::before {
+    content: '';
+    flex: none;
+    width: var(--sb-ebdw, 2rem);
+    height: 2px;
+    background-color: var(--sb-ebdc, currentColor);
+}
+.sb-d-eb-dot .sb-eyebrow::before {
+    content: '';
+    flex: none;
+    width: 0.5em;
+    height: 0.5em;
+    border-radius: 9999px;
+    background-color: var(--sb-ebdc, currentColor);
+}

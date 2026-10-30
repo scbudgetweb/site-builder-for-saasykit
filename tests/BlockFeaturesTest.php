@@ -144,10 +144,11 @@ class BlockFeaturesTest extends PageTestCase
     {
         $method = new \ReflectionMethod($blockClass, 'toggles');
 
-        return array_values(array_map(fn ($toggle): string => $toggle->key, array_filter(
+        // Several parts can make one toggle (a saved style picker and its settings), so each key once.
+        return array_values(array_unique(array_map(fn ($toggle): string => $toggle->key, array_filter(
             $method->invoke(null, false),
             fn ($toggle): bool => $toggle !== null && $toggle->fields !== [],
-        )));
+        ))));
     }
 
     /**

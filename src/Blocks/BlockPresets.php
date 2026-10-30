@@ -15,6 +15,11 @@ use ScBudgetWeb\SiteBuilder\Settings\Settings;
  * always win. Changing a preset changes every block using it (saving a setting makes cached pages stale).
  *
  * Saved in the package's settings as "presets.{type}": {default: id|null, items: {id: {name, values}}}.
+ *
+ * Saved styles are the same for one group of settings (StyleClipboard's groups: Items, Heading text, Buttons, Border…)
+ * and any kind of block: e.g. "Stat grid with dividers" or "Gold line eyebrow". A block saves its choice per group as
+ * "style_presets": {group: id}, and the style fills in that group's settings the block leaves blank, before the type's
+ * preset does. Saved as "style_presets.{group}": {items: {id: {name, values}}}.
  */
 class BlockPresets
 {
@@ -89,8 +94,79 @@ class BlockPresets
     public function apply(string $blockClass, array $data, bool $isNested = false): array
     {
         $values = $this->valuesFor($blockClass::name(), $data);
+        // The block's saved styles, then those its preset chose.
+        $styles = [
+            ...(is_array($values['style_presets'] ?? null) ? $values['style_presets'] : []),
+            ...(is_array($data['style_presets'] ?? null) ? array_filter($data['style_presets'], fn (mixed $id): bool => is_string($id) && $id !== '') : []),
+        ];
+
+        foreach ($styles as $group => $id) {
+            if (is_string($group) && is_string($id) && ($style = $this->styleItems($group)[$id] ?? null) !== null) {
+                $data = self::fillBlanks($data, $style['values'], $blockClass::fieldDefaults($isNested));
+            }
+        }
 
         return $values === [] ? $data : self::fillBlanks($data, $values, $blockClass::fieldDefaults($isNested));
+    }
+
+    /**
+     * The group's saved styles, id => name, in the order they were made.
+     *
+     * @return array<string, string>
+     */
+    public function styleNames(string $group): array
+    {
+        return array_map(fn (array $style): string => $style['name'], $this->styleItems($group));
+    }
+
+    /**
+     * A saved style's values, or [] when there's no such style.
+     *
+     * @return array<string, mixed>
+     */
+    public function styleValues(string $group, string $id): array
+    {
+        return $this->styleItems($group)[$id]['values'] ?? [];
+    }
+
+    /**
+     * Saves a new style for a group of settings and returns its id. Only the group's settings are kept.
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function createStyle(string $group, string $name, array $values): string
+    {
+        $stored = $this->storedStyles($group);
+        $id = Str::lower(Str::random(8));
+        $stored['items'][$id] = ['name' => self::cleanName($name), 'values' => self::withoutBlanks(StyleClipboard::extract($values, StyleClipboard::settingPaths($group)))];
+        $this->saveStyles($group, $stored);
+
+        return $id;
+    }
+
+    /**
+     * Replaces a saved style's values (its name stays).
+     *
+     * @param  array<string, mixed>  $values
+     */
+    public function updateStyle(string $group, string $id, array $values): void
+    {
+        $stored = $this->storedStyles($group);
+
+        if (isset($this->styleItems($group)[$id])) {
+            $stored['items'][$id]['values'] = self::withoutBlanks(StyleClipboard::extract($values, StyleClipboard::settingPaths($group)));
+            $this->saveStyles($group, $stored);
+        }
+    }
+
+    /**
+     * Deletes a saved style. Blocks that used it keep their own settings for the group.
+     */
+    public function deleteStyle(string $group, string $id): void
+    {
+        $stored = $this->storedStyles($group);
+        unset($stored['items'][$id]);
+        $this->saveStyles($group, $stored);
     }
 
     /**
@@ -206,6 +282,68 @@ class BlockPresets
         }
 
         return $items;
+    }
+
+    /**
+     * The values without the blank settings a panel saves (null, '' and empty lists), which would fill nothing in.
+     *
+     * @param  array<string, mixed>  $values
+     * @return array<string, mixed>
+     */
+    private static function withoutBlanks(array $values): array
+    {
+        foreach ($values as $key => $value) {
+            if (is_array($value)) {
+                $value = self::withoutBlanks($value);
+            }
+
+            if ($value === null || $value === '' || $value === []) {
+                unset($values[$key]);
+            } else {
+                $values[$key] = $value;
+            }
+        }
+
+        return $values;
+    }
+
+    /**
+     * @return array<string, array{name: string, values: array<string, mixed>}>
+     */
+    private function styleItems(string $group): array
+    {
+        if (StyleClipboard::settingPaths($group) === []) {
+            return [];
+        }
+
+        $items = [];
+
+        foreach ((array) ($this->storedStyles($group)['items'] ?? []) as $id => $style) {
+            if (is_string($id) && preg_match(self::ID_PATTERN, $id) === 1 && is_array($style) && is_string($style['name'] ?? null)) {
+                // Only the group's own settings, however it was saved.
+                $items[$id] = ['name' => $style['name'], 'values' => StyleClipboard::extract(is_array($style['values'] ?? null) ? $style['values'] : [], StyleClipboard::settingPaths($group))];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function storedStyles(string $group): array
+    {
+        $stored = $this->settings()->get('style_presets.'.$group);
+
+        return is_array($stored) ? $stored : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $stored
+     */
+    private function saveStyles(string $group, array $stored): void
+    {
+        $this->settings()->set(['style_presets.'.$group => ($stored['items'] ?? []) === [] ? null : $stored]);
     }
 
     /**

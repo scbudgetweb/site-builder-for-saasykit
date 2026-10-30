@@ -30,12 +30,15 @@ use Filament\Schemas\Components\View;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\Eyebrow;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Items;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
+use ScBudgetWeb\SiteBuilder\Blocks\Panel\SavedStyles;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\ButtonsRepeater;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\EyebrowInput;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\HeadingInput;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteRichEditor;
@@ -154,6 +157,15 @@ abstract class PageBlock
     public static function headingSettings(): array
     {
         return static::uses(HeadingInput::class) ? ['align', 'decoration', 'size'] : [];
+    }
+
+    /**
+     * Whether the block has a small heading (eyebrow) for Design › Small heading. Found from its fields: eyebrowFields()
+     * (EyebrowInput), which the shared heading includes. A block that draws an eyebrow of its own overrides this.
+     */
+    public static function hasEyebrow(): bool
+    {
+        return static::uses(EyebrowInput::class);
     }
 
     /**
@@ -444,7 +456,7 @@ abstract class PageBlock
      */
     protected static function toggles(bool $isNested = false): array
     {
-        return [
+        $toggles = [
             PanelToggle::content('main', static::label(), static::fields(), isOpen: true),
             ...static::blockToggles(),
             static::hasButtons() ? PanelToggle::design('button', __('Buttons'), [static::buttonDesignFields()], 70) : null,
@@ -452,10 +464,14 @@ abstract class PageBlock
                 ...BlockAppearance::toggles($isNested ? 'full' : static::defaultWidth(), $isNested ? 'none' : 'medium', static::defaultBackground(), static::headingSettings(), static::hasBodyText()),
                 ...BlockDesign::toggles(static::designWithout()),
                 ...(($parts = static::itemParts()) !== null ? Items::togglesFor($parts) : []),
+                ...(static::hasEyebrow() ? Eyebrow::panelToggles() : []),
             ] : []),
             PanelToggle::content('admin_label', __('Admin label'), [static::adminLabelField()], 99),
             BlockConditions::toggle(),
         ];
+
+        // A saved style picker at the top of each toggle that has saved styles (Items, Heading text, Buttons…).
+        return static::hasAppearance() ? SavedStyles::withPickers($toggles) : $toggles;
     }
 
     /**
@@ -570,7 +586,7 @@ abstract class PageBlock
     public static function eyebrowFields(): Grid
     {
         return Grid::make(['default' => 1, 'sm' => 3])->schema([
-            TextInput::make('eyebrow')
+            EyebrowInput::make('eyebrow')
                 ->label(__('Small heading (optional)'))
                 ->hintIcon(self::HELP_ICON, __('A short label above the heading, e.g. "New" or "Most popular".'))
                 ->maxLength(60)

@@ -7,6 +7,8 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use League\Flysystem\FileAttributes;
+use League\Flysystem\StorageAttributes;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
@@ -23,6 +25,9 @@ use Throwable;
 class PageService
 {
     public const UPLOAD_SUBFOLDER = 'pages';
+
+    /** The image types a page upload can be, besides SVG (PageBlock::IMAGE_FILE_TYPES). */
+    public const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'avif'];
 
     private const CACHE_KEY = 'site-builder.published-pages';
 
@@ -123,6 +128,32 @@ class PageService
     public function isPageUpload(mixed $path): bool
     {
         return is_string($path) && str_starts_with($path, $this->uploadDirectory().'/') && ! str_contains($path, '..');
+    }
+
+    /**
+     * The images already in the pages upload folder, newest first, so an image field can reuse one instead of a
+     * second upload (PageBlock::imageUpload()). Read in one listing, so it stays quick on a cloud disk.
+     *
+     * @return array<int, string>
+     */
+    public function uploadedImages(bool $withSvg = true): array
+    {
+        $extensions = $withSvg ? [...self::IMAGE_EXTENSIONS, 'svg'] : self::IMAGE_EXTENSIONS;
+
+        try {
+            $files = Storage::disk($this->uploadDisk())->getDriver()->listContents($this->uploadDirectory(), false);
+
+            return collect($files)
+                ->filter(fn (StorageAttributes $file): bool => $file instanceof FileAttributes
+                    && in_array(Str::lower(pathinfo($file->path(), PATHINFO_EXTENSION)), $extensions, true))
+                ->sortByDesc(fn (FileAttributes $file): int => $file->lastModified() ?? 0)
+                ->map(fn (FileAttributes $file): string => $file->path())
+                ->filter(fn (string $path): bool => $this->isPageUpload($path))
+                ->values()
+                ->all();
+        } catch (Throwable) {
+            return [];
+        }
     }
 
     /**

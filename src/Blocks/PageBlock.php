@@ -61,6 +61,9 @@ abstract class PageBlock
     /** Block images may also be SVGs, checked on upload (SafeSvg), except where only a picture file works (a share image). */
     public const SVG_FILE_TYPE = 'image/svg+xml';
 
+    /** How many uploaded images "Choose from uploads" lists before a search. */
+    private const UPLOADED_IMAGES_SHOWN = 60;
+
     /** The icon beside a setting whose tooltip explains it (->hintIcon(PageBlock::HELP_ICON, __('…'))). */
     public const HELP_ICON = Heroicon::OutlinedQuestionMarkCircle;
 
@@ -721,7 +724,61 @@ abstract class PageBlock
             // Filament only trusts existing paths from a model attribute, but block images live inside the blocks JSON,
             // and a block's panel stores its upload before the page is saved. So trust any file in the pages upload
             // folder, and nothing else on the disk (Branding files, other uploads…) (lesson 1).
-            ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => app(PageService::class)->isPageUpload($file));
+            ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => app(PageService::class)->isPageUpload($file))
+            ->hintAction(self::chooseUploadedImage($allowsSvg));
+    }
+
+    /**
+     * "Choose from uploads" beside an image field: reuse an image already uploaded to a page, newest first, instead
+     * of uploading it again. Only page uploads are offered (and accepted), so the field still only holds those.
+     */
+    private static function chooseUploadedImage(bool $allowsSvg): Action
+    {
+        $images = fn (): array => app(PageService::class)->uploadedImages($allowsSvg);
+        $options = fn (array $paths): array => collect($paths)
+            ->mapWithKeys(fn (string $path): array => [$path => self::uploadedImageOption($path)])
+            ->all();
+
+        return Action::make('chooseUploadedImage')
+            ->label(__('Choose from uploads'))
+            ->icon(Heroicon::OutlinedPhoto)
+            ->modalHeading(__('Choose an uploaded image'))
+            ->modalDescription(__('Images already uploaded to your pages, newest first. Using one again doesn\'t make a copy.'))
+            ->modalSubmitActionLabel(__('Use image'))
+            ->modalWidth('lg')
+            ->schema([
+                Select::make('image')
+                    ->label(__('Image'))
+                    ->searchable()
+                    ->allowHtml()
+                    ->required()
+                    ->placeholder(__('Choose an image'))
+                    ->helperText(fn (): ?string => $images() === []
+                        ? __('Nothing uploaded yet. Upload an image here once, and it can be chosen in any image field.')
+                        : __('Type part of a file name to search them all.'))
+                    ->options(fn (): array => $options(array_slice($images(), 0, self::UPLOADED_IMAGES_SHOWN)))
+                    ->getSearchResultsUsing(fn (string $search): array => $options(array_slice(array_values(array_filter(
+                        $images(),
+                        fn (string $path): bool => Str::contains(basename($path), $search, ignoreCase: true),
+                    )), 0, self::UPLOADED_IMAGES_SHOWN)))
+                    ->getOptionLabelUsing(fn (?string $value): ?string => is_string($value) ? self::uploadedImageOption($value) : null)
+                    ->in(fn (): array => $images()),
+            ])
+            ->action(function (array $data, FileUpload $component): void {
+                $component->state([(string) Str::uuid() => $data['image']]);
+                $component->callAfterStateUpdated();
+            });
+    }
+
+    /**
+     * An uploaded image's thumbnail and file name, for the "Choose from uploads" picker.
+     */
+    private static function uploadedImageOption(string $path): string
+    {
+        return '<span style="display:flex;align-items:center;gap:0.75rem">'
+            .'<img src="'.e((string) self::imageUrl($path)).'" alt="" loading="lazy" style="width:4rem;height:3rem;flex-shrink:0;object-fit:cover;border-radius:0.25rem;background:#f4f4f5">'
+            .'<span style="overflow-wrap:anywhere">'.e(basename($path)).'</span>'
+            .'</span>';
     }
 
     /**

@@ -13,96 +13,27 @@ use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\CreateTemplate;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\TemplateVisualEditor;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
-use ScBudgetWeb\SiteBuilder\Tests\Fixtures\Blog\Author;
-use ScBudgetWeb\SiteBuilder\Tests\Fixtures\Blog\Category;
-use ScBudgetWeb\SiteBuilder\Tests\Fixtures\Blog\Post;
 
 /**
  * The Theme Builder's Blog post template: offered when the app has a blog, applied by the post's category, its blocks
  * showing the post being viewed (drawn on each request, the rest cached), and the latest post on its canvas.
  */
-class BlogPostTemplateTest extends PageTestCase
+class BlogPostTemplateTest extends BlogTestCase
 {
-    private Category $news;
-
-    private Category $events;
-
-    /** Each new post is a day newer. */
-    private int $days = 0;
-
-    protected function getPackageProviders($app): array
-    {
-        return [
-            ...parent::getPackageProviders($app),
-            Fixtures\AdminPanelProvider::class,
-        ];
-    }
-
-    protected function defineEnvironment($app): void
-    {
-        parent::defineEnvironment($app);
-
-        $app['config']->set('site-builder.blog.post_model', Post::class);
-        $app['config']->set('site-builder.blog.category_model', Category::class);
-        // SaaSykit's.
-        $app['config']->set('app.date_format', 'd/m/Y');
-    }
-
-    protected function defineRoutes($router): void
-    {
-        parent::defineRoutes($router);
-
-        $router->get('/blog/category/{slug}', fn () => 'Category')->name('blog.category');
-        $router->get('/blog/{slug}', fn () => 'Post')->name('blog.view');
-    }
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-
-        Post::createTables();
-        $this->news = Category::query()->create(['name' => 'News', 'slug' => 'news']);
-        $this->events = Category::query()->create(['name' => 'Events', 'slug' => 'events']);
-    }
-
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    private function blogPost(array $attributes = []): Post
-    {
-        return Post::query()->create([
-            'author_id' => Author::query()->firstOrCreate(['name' => 'Sam Jones'], ['public_name' => 'Sam from the Village Hall'])->id,
-            'blog_post_category_id' => $this->news->id,
-            'title' => 'New kitchen opens',
-            'slug' => 'new-kitchen-opens',
-            'description' => 'Our hall has a new kitchen.',
-            'body' => '<h2>All new</h2><p>Cookers & fridges.</p>',
-            'image' => 'https://example.com/kitchen.jpg',
-            'is_published' => true,
-            'published_at' => Carbon::parse('2026-06-01')->addDays($this->days++),
-            ...$attributes,
-        ]);
-    }
-
     /**
      * @param  array<string, mixed>  $attributes
      */
     private function template(array $attributes = []): Template
     {
-        return Template::query()->create([
-            'name' => 'Posts',
-            'type' => Templates::BLOG_POST,
-            'blocks' => Templates::starterBlocks(Templates::BLOG_POST),
-            ...$attributes,
-        ]);
+        return $this->blogTemplate(Templates::BLOG_POST, ['name' => 'Posts', ...$attributes]);
     }
 
     public function test_it_is_offered_when_the_app_has_a_blog(): void
     {
-        $this->assertSame(['header' => 'Header', 'footer' => 'Footer', 'blog_post' => 'Blog post'], app(Templates::class)->types());
+        $this->assertSame(['header' => 'Header', 'footer' => 'Footer', 'blog_post' => 'Blog post', 'blog_archive' => 'Blog archive'], app(Templates::class)->types());
 
         config(['site-builder.blog.post_model' => 'App\\Models\\NoSuchModel']);
-        $this->assertArrayNotHasKey('blog_post', app(Templates::class)->types(), 'Without a blog, no blog templates.');
+        $this->assertSame(['header', 'footer'], array_keys(app(Templates::class)->types()), 'Without a blog, no blog templates.');
     }
 
     public function test_the_post_shows_in_its_template(): void

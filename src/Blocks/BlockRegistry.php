@@ -61,6 +61,7 @@ class BlockRegistry
         Core\LogoStripBlock::class,
         Core\SocialFollowBlock::class,
         Core\DividerBlock::class,
+        Core\LatestPostsBlock::class,
         // Theme Builder (templates only)
         Core\SiteLogoBlock::class,
         Core\SiteMenuBlock::class,
@@ -73,6 +74,8 @@ class BlockRegistry
         Core\PostContentBlock::class,
         Core\PostShareBlock::class,
         Core\RelatedPostsBlock::class,
+        Core\ArchiveTitleBlock::class,
+        Core\PostListBlock::class,
         // Block library
         Core\SavedBlockBlock::class,
     ];
@@ -105,8 +108,8 @@ class BlockRegistry
      */
     public function offered(): array
     {
-        return array_filter($this->all(), fn (string $block): bool => $block::templateTypes() === null
-            || ($this->templateType !== null && in_array($this->templateType, $block::templateTypes(), true)));
+        return array_filter($this->all(), fn (string $block): bool => $block::isOffered() && ($block::templateTypes() === null
+            || ($this->templateType !== null && in_array($this->templateType, $block::templateTypes(), true))));
     }
 
     /**

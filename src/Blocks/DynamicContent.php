@@ -44,7 +44,7 @@ final class DynamicContent
     }
 
     /**
-     * The blog post being shown (Blog post templates), when the app has a blog.
+     * The blog post or archive being shown (Blog post and Blog archive templates), when the app has a blog.
      *
      * @return array<string, array{0: string, 1: Closure(Page): mixed, 2: bool}>
      */
@@ -62,6 +62,7 @@ final class DynamicContent
             'post_date' => [__('Post date'), fn (): ?string => $blog->post()?->date(), true],
             'post_author' => [__('Post author'), fn (): ?string => $blog->post()?->author, true],
             'post_category' => [__('Post category'), fn (): ?string => $blog->post()?->category, true],
+            'archive_title' => [__('Archive title'), fn (): ?string => $blog->archiveTitle(), true],
         ];
     }
 

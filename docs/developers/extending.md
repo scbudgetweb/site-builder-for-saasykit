@@ -294,12 +294,14 @@ The Contact form block keeps each message in `site_builder_contact_messages` (`M
 
 ## Blog templates
 
-The Blog post template type is offered when the post model exists and the app has a `blog.view` route. The models are SaaSykit's by default (`site-builder.blog.post_model` and `category_model`).
+The Blog post and Blog archive template types are offered when the post model exists and the app has a `blog.view` route. The models are SaaSykit's by default (`site-builder.blog.post_model` and `category_model`).
 
 - The theme shadows SaaSykit's `blog/view.blade.php`. It calls `Blog\Blog::renderPost($post)`, which sets the post being shown and returns the template's HTML, or null for SaaSykit's standard post (no template applies, or it failed). If you override that view, keep that call.
-- `Blog\Blog` (bound per request) holds the post being shown (`post()`), and runs the queries: `latest()`, `related()` and `categories()`. Blocks get posts as `Blog\BlogPost` (title, URL, description, body, date, author, category and its URL, image URL), read by `BlogPost::fromModel()` from the post's `title`, `slug`, `description`, `body`, `published_at`, `is_published`, its `author` (`getPublicName()`) and `blogPostCategory`, and `getFirstMediaUrl('blog-images')`. A different blog model needs those fields.
-- Templates apply by the post's category: `category_ids` on `site_builder_templates`, matched as `page_ids` are for headers and footers (`Templates::isBlogType()`). `Templates::starterBlocks()` gives a new template its standard layout.
-- The post blocks (`PostTitleBlock`, `PostMetaBlock`, `PostImageBlock`, `PostContentBlock`, `PostShareBlock`, `RelatedPostsBlock`) aren't cacheable, so they're drawn for each post while the rest of the template stays cached. `PostCardsBlock` is the base for blocks that show posts as cards: give it `posts()`.
+- Likewise `blog/all.blade.php` calls `Blog\Blog::renderArchive()` and `blog/category.blade.php` calls `renderArchive($category)`.
+- `Blog\Blog` (bound per request) holds the post being shown (`post()`) or the archive (`isArchive()`, `archiveTitle()`, `categoryId()`), and runs the queries: `latest()`, `related()`, `archivePosts()` (a page of them) and `categories()`. Blocks get posts as `Blog\BlogPost` (title, URL, description, body, date, author, category and its URL, image URL), read by `BlogPost::fromModel()` from the post's `title`, `slug`, `description`, `body`, `published_at`, `is_published`, its `author` (`getPublicName()`) and `blogPostCategory`, and `getFirstMediaUrl('blog-images')`. A different blog model needs those fields.
+- Templates apply by the post's or archive's category: `category_ids` on `site_builder_templates`, matched as `page_ids` are for headers and footers (`Templates::isBlogType()`). `Templates::starterBlocks()` gives a new template its standard layout.
+- The post and archive blocks (`PostTitleBlock`, `PostMetaBlock`, `PostImageBlock`, `PostContentBlock`, `PostShareBlock`, `RelatedPostsBlock`, `ArchiveTitleBlock`, `PostListBlock`) aren't cacheable, so they're drawn for each post or page of posts while the rest of the template stays cached. `PostCardsBlock` is the base for blocks that show posts as cards (those, and `LatestPostsBlock`): give it `posts()`.
+- `PageBlock::isOffered()` keeps a block out of the picker (Latest posts without a blog); one already on a page still draws.
 
 ## Settings, caching and scheduling
 

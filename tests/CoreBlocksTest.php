@@ -23,9 +23,9 @@ class CoreBlocksTest extends PageTestCase
     {
         $this->assertSame([
             'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'pricing_table', 'call_to_action', 'mailing_list', 'contact_form',
-            'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider',
+            'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider', 'latest_posts',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright',
-            'post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'related_posts', 'saved',
+            'post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'related_posts', 'archive_title', 'post_list', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));
     }
 

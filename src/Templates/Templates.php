@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Templates;
 
 use Illuminate\Database\QueryException;
 use Illuminate\Support\HtmlString;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\PostListBlock;
 use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\Template;
@@ -26,8 +27,10 @@ class Templates
 
     public const BLOG_POST = 'blog_post';
 
+    public const BLOG_ARCHIVE = 'blog_archive';
+
     /** Offered when the app has a blog (Blog::isAvailable()). They apply by category, not by page. */
-    public const BLOG_TYPES = [self::BLOG_POST => 'Blog post'];
+    public const BLOG_TYPES = [self::BLOG_POST => 'Blog post', self::BLOG_ARCHIVE => 'Blog archive'];
 
     /** The request attribute holding the site builder page being shown, set by PageController. */
     public const PAGE_ATTRIBUTE = 'site-builder.page';
@@ -55,7 +58,8 @@ class Templates
 
     /**
      * The blocks a new template of this type starts with: the standard layout (for a blog post, its title, details,
-     * image, text, share links and related posts), so it's changed rather than built from nothing. Empty for the rest.
+     * image, text, share links and related posts; for the blog's archive, its title and posts), so it's changed rather
+     * than built from nothing. Empty for the rest.
      *
      * @return array<int, array{type: string, data: array<string, mixed>}>
      */
@@ -81,6 +85,19 @@ class Templates
                 ]],
                 ['type' => 'related_posts', 'data' => ['heading' => __('You might also like'), 'count' => 3]],
             ],
+            self::BLOG_ARCHIVE => [
+                ['type' => 'section', 'data' => [
+                    'gap' => 'medium',
+                    'rows' => [
+                        ['layout' => 'stacked', 'blocks' => [
+                            ['type' => 'archive_title', 'data' => ['level' => 'h1', 'intro' => __('Check out our latest news and updates.')]],
+                        ]],
+                        ['layout' => 'stacked', 'blocks' => [
+                            ['type' => 'post_list', 'data' => ['per_page' => PostListBlock::DEFAULT_PER_PAGE]],
+                        ]],
+                    ],
+                ]],
+            ],
             default => [],
         };
     }
@@ -95,7 +112,8 @@ class Templates
 
     /**
      * The template of this type for the page being shown ($page, or the one PageController set), or null. A blog type
-     * goes by the category of the post or archive being shown (Blog::categoryId()).
+     * goes by the category of the post or archive being shown (Blog::categoryId()); the blog's own archive (/blog) has
+     * none, so only templates for every category, or every one except some, apply there.
      *
      * @return array{id: int, updated_at: int}|null
      */

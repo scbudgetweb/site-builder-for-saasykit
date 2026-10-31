@@ -36,6 +36,12 @@ class TemplateForm
         Template::EXCEPT => 'Every post except those in the categories chosen',
     ];
 
+    public const APPLIES_TO_ARCHIVES = [
+        Template::EVERYWHERE => 'The blog and every category',
+        Template::ONLY => 'The categories chosen',
+        Template::EXCEPT => 'The blog and every category except those chosen',
+    ];
+
     /**
      * Where a template of this type can apply, translated.
      *
@@ -45,6 +51,7 @@ class TemplateForm
     {
         return array_map(fn (string $label): string => __($label), match ($type) {
             Templates::BLOG_POST => self::APPLIES_TO_POSTS,
+            Templates::BLOG_ARCHIVE => self::APPLIES_TO_ARCHIVES,
             default => self::APPLIES_TO,
         });
     }

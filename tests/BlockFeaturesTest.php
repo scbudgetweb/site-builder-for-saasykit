@@ -63,6 +63,9 @@ class BlockFeaturesTest extends PageTestCase
         'post_content' => [false, [], true],
         'post_share' => [false, ['decoration', 'size'], false],
         'related_posts' => [false, ['align', 'decoration', 'size'], true],
+        'latest_posts' => [false, ['align', 'decoration', 'size'], true],
+        'archive_title' => [false, ['decoration', 'size'], true],
+        'post_list' => [false, ['align', 'decoration', 'size'], true],
     ];
 
     public function test_core_blocks_offer_what_they_did_when_they_declared_it(): void

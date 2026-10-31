@@ -3,7 +3,7 @@
 **Where:** Admin › Website › Theme builder
 **Who can use it:** administrators with the page permissions (*view*, *create*, *update* and *delete pages*), as for pages and the block library.
 
-The Theme builder lets you build the site's **header** and **footer** from blocks, as you build a page, and choose where each one is shown. With a blog, it can also lay out **blog posts** (see [Blog post templates](#blog-post-templates)). Wherever a template applies, it's shown in place of the standard header or footer. With no template, the standard ones show, styled in [Branding](branding.md) and filled from [Navigation](navigation.md), so the site looks right without any templates at all.
+The Theme builder lets you build the site's **header** and **footer** from blocks, as you build a page, and choose where each one is shown. With a blog, it can also lay out **blog posts** and the **blog's pages of posts** (see [Blog post templates](#blog-post-templates) and [Blog archive templates](#blog-archive-templates)). Wherever a template applies, it's shown in place of the standard header or footer. With no template, the standard ones show, styled in [Branding](branding.md) and filled from [Navigation](navigation.md), so the site looks right without any templates at all.
 
 ## Making a template
 
@@ -58,6 +58,27 @@ Its own blocks:
 | **Related posts** | Cards for more posts, from the same category first (or just the latest), up to 12, in 2 to 4 columns. Each card can show its image, date, category and description; Design › Items styles them. **When empty** decides what shows when there are no other posts |
 
 Any text can also show the post's details as [dynamic content](pages.md#block-settings): `{{ post_title }}`, `{{ post_excerpt }}` (its description), `{{ post_date }}`, `{{ post_author }}` and `{{ post_category }}`. On other pages they're blank, or their fallback (`{{ post_title | our news }}`).
+
+## Blog archive templates
+
+A **Blog archive** template lays out the blog's own page (`/blog`) and each category's page, in the same way.
+
+- **Shown on:** the blog and every category, only the categories chosen, or the blog and every category except those chosen. The blog's own page has no category, so a template for chosen categories never shows there. With no Blog archive template, they show as they always have.
+- **A new one starts with the standard layout:** a Section with the archive's title, then its posts.
+- **On the canvas,** the whole blog's posts fill it.
+
+Its own blocks:
+
+| Block | What it shows and its settings |
+|---|---|
+| **Archive title** | The category's name on a category's page; on the blog's own page, *The blog's title* (*Blog* if blank). An optional line under it, its level (H1 as standard), alignment (centre as standard) and Design › Heading text |
+| **Post list** | The archive's posts, newest first, as cards (as Related posts'), a page at a time: *Posts per page* (12 as standard, up to 48) and *Links to more pages*, with Previous and Next and the page numbers (on phones, Previous, Next and *Page 1 of 3*). Off, only the latest show. **When empty** decides what shows when there are none |
+
+Any text can show `{{ archive_title }}`: the category's name, or *Blog* on the blog's own page.
+
+### Latest posts on any page
+
+The **Latest posts** block, in the block picker whenever your app has a blog, shows the newest posts as the same cards on any page or template: how many (up to 12), from every category or one, and what each card shows. A home page's *From our blog*, say.
 
 ## Speed
 

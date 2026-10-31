@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Blog;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\HtmlString;
 use ScBudgetWeb\SiteBuilder\Models\Page;
@@ -11,14 +12,17 @@ use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
  * The app's blog, for the Theme Builder's Blog post and Blog archive templates: what's being shown on this request (a
- * post, set by the theme's blog view, or a sample on a template's canvas), and the queries the blog blocks run. Bound
- * per request (scoped).
+ * post or an archive, set by the theme's blog views, or a sample on a template's canvas), and the queries the blog
+ * blocks run. Bound per request (scoped).
  *
  * The models are SaaSykit's (config site-builder.blog), read into BlogPost so the blocks don't depend on them.
  */
 class Blog
 {
     private ?BlogPost $post = null;
+
+    /** @var array{categoryId: int|null, category: string|null}|null The archive being shown: the blog's, or a category's. */
+    private ?array $archive = null;
 
     /**
      * Whether the app has a blog: its post model and the blog.view route.
@@ -42,8 +46,41 @@ class Blog
     public function showPost(?BlogPost $post): static
     {
         $this->post = $post;
+        $this->archive = null;
 
         return $this;
+    }
+
+    /**
+     * Shows the blog's archive (/blog), or $category's, with its template (the Blog archive type, for that category),
+     * or null for the theme's standard view.
+     */
+    public function renderArchive(?Model $category = null): ?HtmlString
+    {
+        $this->showArchive($category?->getKey() === null ? null : (int) $category->getKey(), $category === null ? null : (string) $category->getAttribute('name'));
+
+        return app(Templates::class)->render(Templates::BLOG_ARCHIVE, $this->page());
+    }
+
+    public function showArchive(?int $categoryId = null, ?string $category = null): static
+    {
+        $this->post = null;
+        $this->archive = ['categoryId' => $categoryId, 'category' => $category];
+
+        return $this;
+    }
+
+    public function isArchive(): bool
+    {
+        return $this->archive !== null;
+    }
+
+    /**
+     * The archive's title: the category's name, or "Blog" for the whole blog. Null when it isn't an archive.
+     */
+    public function archiveTitle(): ?string
+    {
+        return $this->archive === null ? null : ($this->archive['category'] ?? __('Blog'));
     }
 
     /**
@@ -59,19 +96,20 @@ class Blog
      */
     public function categoryId(): ?int
     {
-        return $this->post?->categoryId;
+        return $this->post?->categoryId ?? $this->archive['categoryId'] ?? null;
     }
 
     /**
-     * A template's canvas shows the latest published post, or a sample when there isn't one yet.
+     * A template's canvas shows the latest published post, or a sample when there isn't one yet; an archive's shows the
+     * whole blog's.
      */
     public function useSampleFor(string $templateType): static
     {
-        if ($templateType === Templates::BLOG_POST) {
-            $this->showPost($this->latest(1)[0] ?? self::samplePost());
-        }
-
-        return $this;
+        return match ($templateType) {
+            Templates::BLOG_POST => $this->showPost($this->latest(1)[0] ?? self::samplePost()),
+            Templates::BLOG_ARCHIVE => $this->showArchive(),
+            default => $this,
+        };
     }
 
     public static function samplePost(): BlogPost
@@ -94,7 +132,7 @@ class Blog
      */
     public function page(): Page
     {
-        return (new Page)->forceFill(['title' => $this->post?->title ?? '', 'slug' => 'blog']);
+        return (new Page)->forceFill(['title' => $this->post?->title ?? $this->archiveTitle() ?? '', 'slug' => 'blog']);
     }
 
     /**
@@ -117,6 +155,28 @@ class Blog
             ->get()
             ->map(fn (Model $post): BlogPost => BlogPost::fromModel($post))
             ->all();
+    }
+
+    /**
+     * The archive's published posts, newest first, a page at a time ($page, or the request's ?page=). Empty when the app
+     * has no blog.
+     *
+     * @return LengthAwarePaginator<int, BlogPost>
+     */
+    public function archivePosts(int $perPage, ?int $page = null): LengthAwarePaginator
+    {
+        $categoryId = $this->archive['categoryId'] ?? null;
+        $query = $this->published();
+
+        if ($query === null) {
+            return new LengthAwarePaginator([], 0, max(1, $perPage));
+        }
+
+        $posts = $query
+            ->when($categoryId !== null, fn (Builder $query) => $query->where('blog_post_category_id', $categoryId))
+            ->paginate(max(1, $perPage), page: $page);
+
+        return $posts->through(fn (Model $post): BlogPost => BlogPost::fromModel($post));
     }
 
     /**

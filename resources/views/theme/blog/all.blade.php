@@ -1,25 +1,34 @@
-{{-- Site builder theme: shadows SaaSykit's blog/all.blade.php (the heading and share links in the inner banner). --}}
+{{--
+    Site builder theme: shadows SaaSykit's blog/all.blade.php. A Blog archive template (Website › Theme builder)
+    that applies to it is the page's body; without one (or if it fails), the heading and share links in the inner
+    banner, then the posts.
+--}}
+@php($blogTemplate = app(\ScBudgetWeb\SiteBuilder\Blog\Blog::class)->renderArchive(null))
+
 <x-layouts.app>
-    <x-slot name="title">
-        {{ __('Blog') }}
-    </x-slot>
-    <x-site-builder::banner variant="inner" class="py-14 sm:py-20">
-        <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
-            <h1 class="sb-h1 text-sb-banner-heading">{{ __('From our blog') }}</h1>
-            <p class="mt-4 text-lg text-sb-banner-subtitle">{{ __('Check out our latest news and updates.') }}</p>
+    <x-slot name="title">{{ __('Blog') }}</x-slot>
 
-            <div class="mt-6 flex justify-center gap-3 text-sb-banner-subtitle">
-                <x-link.social-icon name="x" title="{{ __('Share on X') }}" link="https://x.com/intent/post?text={{ urlencode(__('Check out the latest news and updates :app blog!', ['app' => config('app.name')])) }}&url={{ urlencode(url()->current()) }}" class="border-current/40 hover:border-current" />
-                <x-link.social-icon name="linkedin" title="{{ __('Share on LinkedIn') }}" link="https://www.linkedin.com/shareArticle?url={{ urlencode(url()->current()) }}&title={{ urlencode(__('Check out the latest news and updates :app blog!', ['app' => config('app.name')])) }}" class="border-current/40 hover:border-current" />
+    @if ($blogTemplate !== null)
+        {{ $blogTemplate }}
+    @else
+        <x-site-builder::banner variant="inner" class="py-14 sm:py-20">
+            <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
+                <h1 class="sb-h1 text-sb-banner-heading">{{ __('From our blog') }}</h1>
+                <p class="mt-4 text-lg text-sb-banner-subtitle">{{ __('Check out our latest news and updates.') }}</p>
+
+                <div class="mt-6 flex justify-center gap-3 text-sb-banner-subtitle">
+                    <x-link.social-icon name="x" title="{{ __('Share on X') }}" link="https://x.com/intent/post?text={{ urlencode(__('Check out the latest news and updates :app blog!', ['app' => config('app.name')])) }}&url={{ urlencode(url()->current()) }}" class="border-current/40 hover:border-current" />
+                    <x-link.social-icon name="linkedin" title="{{ __('Share on LinkedIn') }}" link="https://www.linkedin.com/shareArticle?url={{ urlencode(url()->current()) }}&title={{ urlencode(__('Check out the latest news and updates :app blog!', ['app' => config('app.name')])) }}" class="border-current/40 hover:border-current" />
+                </div>
             </div>
+        </x-site-builder::banner>
+
+        <div class="pt-10">
+            <x-blog.post-cards :posts="$posts" />
         </div>
-    </x-site-builder::banner>
 
-    <div class="pt-10">
-        <x-blog.post-cards :posts="$posts" />
-    </div>
-
-    <div class="mx-auto p-4 text-center md:max-w-lg">
-        {{ $posts->links() }}
-    </div>
+        <div class="mx-auto p-4 text-center md:max-w-lg">
+            {{ $posts->links() }}
+        </div>
+    @endif
 </x-layouts.app>

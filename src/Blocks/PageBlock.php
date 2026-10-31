@@ -1001,6 +1001,15 @@ abstract class PageBlock
     }
 
     /**
+     * Whether the editor offers the block at all, e.g. only when the app has what it shows (Latest posts needs a blog).
+     * A block already on a page still draws.
+     */
+    public static function isOffered(): bool
+    {
+        return true;
+    }
+
+    /**
      * Whether the block has buttons, so its panel offers Design › Buttons. Found from its fields: a buttonsRepeater()
      * (ButtonsRepeater) anywhere. A block that draws buttons of its own overrides this.
      */

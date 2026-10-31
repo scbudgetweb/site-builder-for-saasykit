@@ -48,4 +48,8 @@
             </article>
         @endforeach
     </div>
+
+    @if (! empty($pagination))
+        <nav class="sb-pagination mt-10" aria-label="{{ __('Pages of posts') }}">{{ $pagination }}</nav>
+    @endif
 @endif

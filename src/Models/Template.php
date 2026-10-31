@@ -18,6 +18,7 @@ use ScBudgetWeb\SiteBuilder\Templates\Templates;
  * @property bool $is_active
  * @property string $applies_to
  * @property array<int, int>|null $page_ids
+ * @property array<int, int>|null $category_ids
  * @property array<int|string, mixed>|null $blocks
  * @property Carbon|null $updated_at
  */
@@ -31,7 +32,7 @@ class Template extends Model
 
     protected $table = 'site_builder_templates';
 
-    protected $fillable = ['name', 'type', 'is_active', 'applies_to', 'page_ids', 'blocks'];
+    protected $fillable = ['name', 'type', 'is_active', 'applies_to', 'page_ids', 'category_ids', 'blocks'];
 
     protected $attributes = [
         'is_active' => true,
@@ -43,6 +44,7 @@ class Template extends Model
         return [
             'is_active' => 'boolean',
             'page_ids' => 'array',
+            'category_ids' => 'array',
             'blocks' => StoredBlocks::class,
         ];
     }

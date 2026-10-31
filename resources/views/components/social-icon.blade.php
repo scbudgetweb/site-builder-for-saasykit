@@ -1,5 +1,5 @@
 @props([
-    // facebook, x, linkedin, instagram, youtube, github, discord or tiktok.
+    // facebook, x, linkedin, instagram, youtube, github, discord, tiktok or email.
     'network',
     'class' => 'h-5 w-5',
 ])
@@ -19,6 +19,7 @@
         'github' => 'bx:logos/bxl-github',
         'discord' => 'bx:logos/bxl-discord-alt',
         'tiktok' => 'bx:logos/bxl-tiktok',
+        'email' => 'bx:regular/bx-envelope',
         default => null,
     }, $class) }}
 @endif

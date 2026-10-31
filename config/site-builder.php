@@ -96,6 +96,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Blog
+    |--------------------------------------------------------------------------
+    |
+    | SaaSykit's blog models, for the Theme Builder's Blog post and Blog
+    | archive templates and their blocks. Those templates are only offered
+    | when the post model exists and the app has its blog.view route.
+    |
+    */
+
+    'blog' => [
+        'post_model' => 'App\\Models\\BlogPost',
+        'category_model' => 'App\\Models\\BlogPostCategory',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pages
     |--------------------------------------------------------------------------
     |

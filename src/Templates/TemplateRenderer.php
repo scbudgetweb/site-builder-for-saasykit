@@ -18,7 +18,10 @@ class TemplateRenderer
 {
     public function __construct(private PageRenderer $renderer) {}
 
-    public function render(int $templateId, int $updatedAt): ?HtmlString
+    /**
+     * $page is what's being shown (for its holes, e.g. {{ page_title }}): the page PageController set, by default.
+     */
+    public function render(int $templateId, int $updatedAt, ?Page $page = null): ?HtmlString
     {
         $built = RenderCache::isEnabled()
             ? cache()->remember(RenderCache::templateKey($templateId, $updatedAt), now()->addDay(), fn (): ?array => $this->build($templateId))
@@ -28,7 +31,7 @@ class TemplateRenderer
             return null;
         }
 
-        $page = request()->attributes->get(Templates::PAGE_ATTRIBUTE);
+        $page ??= request()->attributes->get(Templates::PAGE_ATTRIBUTE);
 
         return new HtmlString($this->renderer->fillHoles($built, $page instanceof Page ? $page : new Page));
     }

@@ -4,13 +4,20 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages;
 
 use Filament\Resources\Pages\CreateRecord;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
+use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
- * A new template starts empty, with its name, type and where it applies, then opens in the visual builder.
+ * A new template starts with its name, type and where it applies, and its type's standard layout in blocks (a blog
+ * post's title, text and so on; a header or footer starts empty), then opens in the visual builder.
  */
 class CreateTemplate extends CreateRecord
 {
     protected static string $resource = TemplateResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        return [...$data, 'blocks' => Templates::starterBlocks(is_string($data['type'] ?? null) ? $data['type'] : '')];
+    }
 
     protected function getRedirectUrl(): string
     {

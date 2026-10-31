@@ -57,6 +57,12 @@ class BlockFeaturesTest extends PageTestCase
         'site_footer_links' => [false, [], true],
         'site_logo' => [false, [], false],
         'site_menu' => [false, [], false],
+        'post_title' => [false, ['decoration', 'size'], false],
+        'post_meta' => [false, [], true],
+        'post_image' => [false, [], false],
+        'post_content' => [false, [], true],
+        'post_share' => [false, ['decoration', 'size'], false],
+        'related_posts' => [false, ['align', 'decoration', 'size'], true],
     ];
 
     public function test_core_blocks_offer_what_they_did_when_they_declared_it(): void

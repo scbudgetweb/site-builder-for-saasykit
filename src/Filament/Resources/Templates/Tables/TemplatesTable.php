@@ -37,9 +37,14 @@ class TemplatesTable
                     ->formatStateUsing(fn (string $state): string => app(Templates::class)->types()[$state] ?? $state),
                 TextColumn::make('applies_to')
                     ->label(__('Shown on'))
-                    ->formatStateUsing(fn (Template $record): string => match ($record->applies_to) {
-                        Template::ONLY, Template::EXCEPT => __(TemplateForm::APPLIES_TO[$record->applies_to]).' ('.count((array) $record->page_ids).')',
-                        default => __(TemplateForm::APPLIES_TO[Template::EVERYWHERE]),
+                    ->formatStateUsing(function (Template $record): string {
+                        $options = TemplateForm::appliesToOptions($record->type);
+                        $chosen = Templates::isBlogType($record->type) ? $record->category_ids : $record->page_ids;
+
+                        return match ($record->applies_to) {
+                            Template::ONLY, Template::EXCEPT => $options[$record->applies_to].' ('.count((array) $chosen).')',
+                            default => $options[Template::EVERYWHERE],
+                        };
                     }),
                 ToggleColumn::make('is_active')
                     ->label(__('On'))

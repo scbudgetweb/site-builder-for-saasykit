@@ -3,7 +3,7 @@
 **Where:** Admin › Website › Theme builder
 **Who can use it:** administrators with the page permissions (*view*, *create*, *update* and *delete pages*), as for pages and the block library.
 
-The Theme builder lets you build the site's **header** and **footer** from blocks, as you build a page, and choose where each one is shown. Wherever a template applies, it's shown in place of the standard header or footer. With no template, the standard ones show, styled in [Branding](branding.md) and filled from [Navigation](navigation.md), so the site looks right without any templates at all.
+The Theme builder lets you build the site's **header** and **footer** from blocks, as you build a page, and choose where each one is shown. With a blog, it can also lay out **blog posts** (see [Blog post templates](#blog-post-templates)). Wherever a template applies, it's shown in place of the standard header or footer. With no template, the standard ones show, styled in [Branding](branding.md) and filled from [Navigation](navigation.md), so the site looks right without any templates at all.
 
 ## Making a template
 
@@ -38,8 +38,31 @@ Besides every ordinary block (text, buttons, images, social icons…), templates
 
 Everything else works as on a page: design options, copying and pasting styles, undo and redo, and *Edit as a form*.
 
+## Blog post templates
+
+When your app has SaaSykit's blog, the Theme builder offers a third kind of template, **Blog post**. It lays out each post's page: the template's blocks are the page, between the site's header and footer, and the post's title, description and image still go to search engines and share previews.
+
+- **Shown on:** every post, only posts in the categories chosen, or every post except those in the categories chosen. As with pages, one for chosen categories wins, then the most recently saved. With no Blog post template, posts show as they always have.
+- **A new one starts with the standard layout:** a narrow Section holding the post's title, details, image, text and share links, then Related posts under it. Change, move or remove any of them, or add any other block (a Mailing list sign-up, say).
+- **On the canvas,** your latest published post fills the blocks, or a sample post before there are any.
+
+Its own blocks:
+
+| Block | What it shows and its settings |
+|---|---|
+| **Post title** | The post's title, as a Heading block draws one: its level (H1 as standard), alignment and Design › Heading text |
+| **Post details** | The date, author and category on one line, each optional; the category, as a pill or a link, goes to its posts |
+| **Featured image** | The post's first image, as uploaded or trimmed to a shape, with corners, border and shadow. Nothing shows for a post without one |
+| **Post content** | The post's text, as written in Blog › Posts, styled by Design › Heading text and Body text |
+| **Share links** | Icons to share the post on X, LinkedIn or Facebook, or by email, with an optional heading |
+| **Related posts** | Cards for more posts, from the same category first (or just the latest), up to 12, in 2 to 4 columns. Each card can show its image, date, category and description; Design › Items styles them. **When empty** decides what shows when there are no other posts |
+
+Any text can also show the post's details as [dynamic content](pages.md#block-settings): `{{ post_title }}`, `{{ post_excerpt }}` (its description), `{{ post_date }}`, `{{ post_author }}` and `{{ post_category }}`. On other pages they're blank, or their fallback (`{{ post_title | our news }}`).
+
 ## Speed
 
 A template is cached, so a header and footer on every page add almost nothing to it. Parts that are different for each visitor (the account links, and which menu link is the current page) are filled in on each request. A template is cached again whenever it, a page, the block library, Branding or Navigation is saved.
 
-A template that can't be shown (because of a broken block, say) is skipped, and the standard header or footer shows instead.
+The post's own blocks are drawn for each post, while the rest of a Blog post template stays cached.
+
+A template that can't be shown (because of a broken block, say) is skipped, and the standard header, footer or post shows instead.

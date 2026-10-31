@@ -6,6 +6,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
@@ -83,12 +84,13 @@ class PageController extends Controller
 
     /**
      * A Theme Builder template's canvas: its blocks as the page's content, with the site's header and footer hidden, so
-     * a header template is edited on its own.
+     * a header template is edited on its own. A blog template shows the latest post (or a sample) in its blocks.
      */
     public function templateCanvas(Template $template, int $user): Response
     {
         $draft = PageDraft::query()->where('template_id', $template->getKey())->where('user_id', $user)->first();
         request()->attributes->set(Templates::HIDE_CHROME_ATTRIBUTE, true);
+        app(Blog::class)->useSampleFor($template->type);
 
         return self::private(view('site-builder::pages.show', ['page' => $template->previewPage($draft?->blocks), 'isPreview' => true, 'isCanvas' => true]));
     }

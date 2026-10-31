@@ -15,6 +15,7 @@ use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockPresets;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
+use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
@@ -47,6 +48,7 @@ class SiteBuilderServiceProvider extends ServiceProvider
 
         // Scoped: it keeps the settings it reads for the request (or queue job) only.
         $this->app->scoped(Settings::class);
+        $this->app->scoped(Blog::class);
         $this->app->singleton(SiteBuilder::class);
         $this->app->singleton(Branding::class);
         $this->app->singleton(BrandingStyle::class);

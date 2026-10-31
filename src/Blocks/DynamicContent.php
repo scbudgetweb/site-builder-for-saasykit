@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
 use Closure;
+use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use Throwable;
@@ -12,8 +13,9 @@ use Throwable;
  * value when the page is drawn. A tag can have a fallback for when there's no value: {{ user_name | there }}. In rich
  * text they're Filament's merge tags (type {{ or use the toolbar).
  *
- * Built in: the page title, the site name, today's date, the year and the signed-in visitor's name. Apps add their own
- * with SiteBuilder::dynamicContent() (the blog templates add the post's fields). A tag that isn't known is left as it is.
+ * Built in: the page title, the site name, today's date, the year and the signed-in visitor's name, and, when the app
+ * has a blog, the fields of the post being shown (blank elsewhere). Apps add their own with SiteBuilder::dynamicContent().
+ * A tag that isn't known is left as it is.
  *
  * Values are replaced in the block's finished HTML, escaped, so a value can never add markup (and braces in a value
  * can't make another tag). A block with a tag that differs by visitor, time or page (any but the site name) is drawn
@@ -36,7 +38,30 @@ final class DynamicContent
             'current_date' => [__('Today\'s date'), fn (): string => now()->translatedFormat('j F Y'), true],
             'current_year' => [__('This year'), fn (): string => now()->format('Y'), true],
             'user_name' => [__('Visitor\'s name (signed in)'), fn (): mixed => auth()->user()?->name ?? null, true],
+            ...self::postTags(),
             ...app(SiteBuilder::class)->registeredDynamicContent(),
+        ];
+    }
+
+    /**
+     * The blog post being shown (Blog post templates), when the app has a blog.
+     *
+     * @return array<string, array{0: string, 1: Closure(Page): mixed, 2: bool}>
+     */
+    private static function postTags(): array
+    {
+        $blog = app(Blog::class);
+
+        if (! $blog->isAvailable()) {
+            return [];
+        }
+
+        return [
+            'post_title' => [__('Post title'), fn (): ?string => $blog->post()?->title, true],
+            'post_excerpt' => [__('Post description'), fn (): ?string => $blog->post()?->excerpt, true],
+            'post_date' => [__('Post date'), fn (): ?string => $blog->post()?->date(), true],
+            'post_author' => [__('Post author'), fn (): ?string => $blog->post()?->author, true],
+            'post_category' => [__('Post category'), fn (): ?string => $blog->post()?->category, true],
         ];
     }
 

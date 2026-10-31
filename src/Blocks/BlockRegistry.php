@@ -67,6 +67,12 @@ class BlockRegistry
         Core\SiteAccountLinksBlock::class,
         Core\SiteFooterLinksBlock::class,
         Core\SiteCopyrightBlock::class,
+        Core\PostTitleBlock::class,
+        Core\PostMetaBlock::class,
+        Core\PostImageBlock::class,
+        Core\PostContentBlock::class,
+        Core\PostShareBlock::class,
+        Core\RelatedPostsBlock::class,
         // Block library
         Core\SavedBlockBlock::class,
     ];

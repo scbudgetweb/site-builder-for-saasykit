@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages;
 
 use Illuminate\Contracts\Support\Htmlable;
+use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Schemas\TemplateForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
@@ -43,15 +44,21 @@ class TemplateVisualEditor extends VisualEditor
             : __('Click a block to change it, or use + to add the logo, menu and more.');
     }
 
+    /**
+     * A blog template's canvas shows the latest post (or a sample) in its blocks.
+     */
     protected function canvasPage(array $blocks): Page
     {
+        app(Blog::class)->useSampleFor($this->template()->type);
+
         return $this->template()->previewPage($blocks);
     }
 
     protected function publishTexts(): array
     {
         $template = $this->template();
-        $where = __(TemplateForm::APPLIES_TO[$template->applies_to] ?? TemplateForm::APPLIES_TO[Template::EVERYWHERE]);
+        $options = TemplateForm::appliesToOptions($template->type);
+        $where = $options[$template->applies_to] ?? $options[Template::EVERYWHERE];
         $isOutOfDate = app(VisualDrafts::class)->isOutOfDate($this->draft(), $template);
 
         $warning = implode(' ', array_filter([

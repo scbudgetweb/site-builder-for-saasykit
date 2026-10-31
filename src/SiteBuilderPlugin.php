@@ -10,6 +10,7 @@ use Illuminate\Contracts\View\View;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageBranding;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageLegalPages;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\ContactMessages\ContactMessageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\MailingLists\MailingListProviderResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
@@ -45,6 +46,7 @@ class SiteBuilderPlugin implements Plugin
             SavedBlockResource::class,
             TemplateResource::class,
             MailingListProviderResource::class,
+            ContactMessageResource::class,
         ]);
 
         $panel->pages([

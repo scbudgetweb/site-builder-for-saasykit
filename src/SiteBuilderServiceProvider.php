@@ -23,6 +23,7 @@ use ScBudgetWeb\SiteBuilder\Console\GeneratePageSitemapCommand;
 use ScBudgetWeb\SiteBuilder\Console\ImportPageCommand;
 use ScBudgetWeb\SiteBuilder\Console\InstallCommand;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
+use ScBudgetWeb\SiteBuilder\Livewire\ContactForm;
 use ScBudgetWeb\SiteBuilder\Livewire\MailingListSignup;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
@@ -99,6 +100,7 @@ class SiteBuilderServiceProvider extends ServiceProvider
 
         // The mailing list sign-up form (Website › Mailing lists, the Mailing list block), and its Branding section.
         Livewire::component('site-builder.mailing-list-signup', MailingListSignup::class);
+        Livewire::component('site-builder.contact-form', ContactForm::class);
         $this->app->make(SiteBuilder::class)->brandingSection('newsletter', __('Mailing list'), self::mailingListBrandingFields(),
             description: __('The mailing list sign-up form: its wording, button and colours. It shows once Website › Mailing lists has a service and list in use.'),
             icon: 'heroicon-o-envelope-open');

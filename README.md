@@ -116,7 +116,7 @@ The site's look in one place: logos, colours, fonts, buttons, corners and shadow
 
    Tailwind only includes classes it finds in its sources, and some of the package's classes are chosen in PHP, so both `@source` lines are needed.
 
-5. Schedule the package's two commands in `routes/console.php`:
+5. Schedule the package's commands in `routes/console.php`:
 
    ```php
    // Straight after SaaSykit's sitemap, which rewrites robots.txt.
@@ -124,6 +124,9 @@ The site's look in one place: logos, colours, fonts, buttons, corners and shadow
 
    // Page and Branding images nothing uses (older than a day).
    Schedule::command('site-builder:clean-uploads')->daily();
+
+   // Contact form messages older than site-builder.contact.keep_days.
+   Schedule::command('model:prune', ['--model' => [\ScBudgetWeb\SiteBuilder\Models\ContactMessage::class]])->daily();
    ```
 
 ## Admin

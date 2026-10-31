@@ -22,7 +22,7 @@ class CoreBlocksTest extends PageTestCase
     public function test_every_core_block_is_in_the_picker(): void
     {
         $this->assertSame([
-            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'pricing_table', 'call_to_action', 'mailing_list',
+            'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'pricing_table', 'call_to_action', 'mailing_list', 'contact_form',
             'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));

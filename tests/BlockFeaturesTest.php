@@ -49,6 +49,7 @@ class BlockFeaturesTest extends PageTestCase
         'testimonials' => [false, ['align', 'decoration', 'size'], true],
         'video' => [false, ['align', 'decoration', 'size'], true],
         'mailing_list' => [false, [], false],
+        'contact_form' => [true, ['align', 'decoration', 'size'], true],
         'section' => [false, [], false],
         'social_follow' => [false, ['decoration', 'size'], false],
         'site_account_links' => [false, [], false],

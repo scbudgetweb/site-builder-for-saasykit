@@ -47,6 +47,7 @@ class BlockRegistry
         Core\PricingTableBlock::class,
         Core\CallToActionBlock::class,
         Core\MailingListBlock::class,
+        Core\ContactFormBlock::class,
         Core\ButtonsBlock::class,
         Core\IconBlock::class,
         Core\TestimonialsBlock::class,

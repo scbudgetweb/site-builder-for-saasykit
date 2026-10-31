@@ -284,17 +284,26 @@ cat about.json | php artisan site-builder:page -
 - A setting that another one hides (e.g. a custom background colour when the background isn't *Custom*) is left out with a warning.
 - In code: `app(PageImport::class)->import($array, $folderForFiles, update: false, dryRun: false)` returns a `PageImportResult` (`errors`, `warnings`, `page`, `isNew`).
 
+## Contact forms
+
+The Contact form block keeps each message in `site_builder_contact_messages` (`Models\ContactMessage`), shown in **Website › Contact messages** to users with `site-builder.permissions.contact_messages` (`update settings` by default), with the unread count beside it in the menu.
+
+- Each block chooses whether messages are emailed (**Email messages**, on as standard) and where: its **Deliver to** address, or SaaSykit's Support Email (`config('app.support_email')`, General settings › Application) when that's blank (`ContactFormBlock::deliverTo()`). The email is `Mail\ContactMessageReceived` (plain text), with Reply-To set to the visitor. The address is locked into the form, so a visitor can't change it. If the email fails, the message is still kept and the failure is logged.
+- `SITE_BUILDER_CONTACT_KEEP_DAYS` (`site-builder.contact.keep_days`, 365): older messages are deleted when `model:prune` runs. No IP address is kept.
+- The form is the `site-builder.contact-form` Livewire component (`Livewire\ContactForm`). The block's choices are locked in Livewire's snapshot, as the mailing list form's are, and it has the same spam checks: a honeypot, at least 3 seconds on the page, and 5 messages an hour per IP address.
+
 ## Settings, caching and scheduling
 
 Settings and caching:
 - **Settings** (Branding, Navigation, Legal pages) live in one cached key/value table. Read them through `SiteBuilder::settings()`, and expect a key to be missing: a forever cache can outlive a deploy that adds one (lesson 9).
 - **Page HTML is cached** when every block is cacheable. Saving any page, library block or setting makes every cached page stale. Turn it off with `SITE_BUILDER_PAGE_CACHE=false`.
 
-Schedule these two commands in the host:
+Schedule these commands in the host:
 
 | Command | When |
 |---|---|
 | `site-builder:sitemap` | Straight after SaaSykit's `app:generate-sitemap`, which rewrites `robots.txt` |
 | `site-builder:clean-uploads` | Once a day. It deletes images nothing uses that are older than a day: page images no page, library block or revision uses, and Branding images no Branding setting uses (the package's or the app's sections'). `--dry-run` lists them |
+| `model:prune` | Once a day (Laravel's own). It deletes Contact form messages older than `site-builder.contact.keep_days` (365 by default; `SITE_BUILDER_CONTACT_KEEP_DAYS`, 0 keeps them) |
 
 If your host's cron can skip minutes, avoid schedules pinned to one minute (`dailyAt()`, `hourly()`). Hall Booker uses its own `atMostEvery()` macro for this.

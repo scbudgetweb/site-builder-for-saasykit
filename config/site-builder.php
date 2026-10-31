@@ -51,6 +51,8 @@ return [
         'branding' => 'update settings',
         'legal' => 'update settings',
         'mailing_lists' => 'update settings',
+        // Reading and deleting what visitors sent through Contact form blocks.
+        'contact_messages' => 'update settings',
         // Making, changing and deleting block presets (anyone who can edit a page can pick one).
         'presets' => 'update settings',
         'pages' => [
@@ -74,6 +76,22 @@ return [
 
     'mailing_lists' => [
         'notify_email' => env('SITE_BUILDER_MAILING_LIST_NOTIFY_EMAIL'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Contact forms
+    |--------------------------------------------------------------------------
+    |
+    | Contact form blocks keep each message in Website › Contact messages
+    | (and email it, as each block chooses: to its own address, or SaaSykit's
+    | Support Email). Messages are deleted after keep_days (0 keeps them)
+    | when Laravel's model:prune runs.
+    |
+    */
+
+    'contact' => [
+        'keep_days' => (int) env('SITE_BUILDER_CONTACT_KEEP_DAYS', 365),
     ],
 
     /*

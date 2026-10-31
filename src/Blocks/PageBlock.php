@@ -325,9 +325,21 @@ abstract class PageBlock
         $isContentOnly = count($toggles) === 1 && $toggles[0]->key === 'main';
 
         return [
-            // Not saved: only gives the admin preview card the block's name.
+            // Not saved: only gives the admin preview card the block's name. First in the panel, so it also fills in each
+            // toggle that's on as standard where the block has no value (just added, or saved before the toggle was):
+            // Filament's Toggle reads a blank as off, so the panel would show it off and save it off.
             Hidden::make('preview_label')
-                ->afterStateHydrated(fn (Hidden $component) => $component->state(static::label()))
+                ->afterStateHydrated(function (Hidden $component, Set $set) use ($isNested): void {
+                    $component->state(static::label());
+                    // The raw values: Get gives a toggle's state already read as off.
+                    $raw = $component->getContainer()->getRawState();
+
+                    foreach (static::fieldDefaults($isNested) as $key => $default) {
+                        if ($default === true && data_get($raw, $key) === null) {
+                            $set($key, true);
+                        }
+                    }
+                })
                 ->dehydrated(false),
             ...($isContentOnly ? $toggles[0]->fields : [
                 View::make('site-builder::filament.blocks.panel-tools'),

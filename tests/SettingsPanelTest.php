@@ -10,6 +10,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
 
@@ -33,6 +34,38 @@ class SettingsPanelTest extends PageTestCase
 
         Filament::setCurrentPanel(Filament::getPanel('admin'));
         $this->actingAs($this->user());
+    }
+
+    public function test_a_toggle_thats_on_as_standard_shows_and_saves_on_for_a_block_without_a_value(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->user());
+        // Just added, or saved before these toggles existed: no value for "Count up" or "Email messages".
+        $page = $this->page(['blocks' => [
+            self::block('stats', ['items' => [['source' => 'custom', 'value' => 120, 'label' => 'Seats']]]),
+            self::block('stats', ['items' => [['source' => 'custom', 'value' => 120, 'label' => 'Seats']], 'animate' => false]),
+            self::block('contact_form', []),
+        ]]);
+        $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()]);
+
+        $editor->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
+            ->assertSet('mountedActions.0.data.animate', true)
+            ->callMountedAction()
+            ->assertHasNoFormErrors();
+        $editor->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[1]['uid']]))
+            ->assertSet('mountedActions.0.data.animate', false, 'A choice made stays.')
+            ->unmountAction();
+        $editor->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[2]['uid']]))
+            ->assertSet('mountedActions.0.data.send_email', true)
+            ->assertSet('mountedActions.0.data.require_consent', false, 'Off as standard stays off.')
+            ->unmountAction();
+
+        $this->assertTrue(app(VisualDrafts::class)->find($page, $this->user())->blocks[0]['data']['animate'], 'Saved on, as it showed.');
+
+        // The form editor's block panel too.
+        $form = Livewire::test(EditPage::class, ['record' => $page->getRouteKey()]);
+        $form->mountAction(TestAction::make('edit')->schemaComponent('blocks')->arguments(['item' => array_key_first($form->get('data.blocks'))]))
+            ->assertSet('mountedActions.0.data.animate', true);
     }
 
     public function test_toggles_merge_by_key_and_follow_their_order(): void

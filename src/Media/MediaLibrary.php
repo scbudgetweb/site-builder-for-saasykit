@@ -7,6 +7,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
@@ -16,14 +17,17 @@ use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
 use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
+use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use Throwable;
 
 /**
  * Website › Media's Library tab: every file uploaded to pages has a row (MediaFile), made as it's stored (store()), and stays
- * until someone deletes it there (delete()), which is refused while a page, library block, template or draft uses it.
+ * until someone deletes it there (delete()), which is refused while a page, library block, template, draft or the
+ * mobile menu's background uses it.
  * Photos are shrunk and saved without their location data on the way in, when Website › Media › Images says so.
  */
 class MediaLibrary
@@ -156,6 +160,7 @@ class MediaLibrary
         SavedBlock::query()->select(['id', 'blocks'])->lazyById()->each(fn (SavedBlock $block) => $collect($block->blocks ?? []));
         Template::query()->select(['id', 'blocks'])->lazyById()->each(fn (Template $template) => $collect($template->blocks ?? []));
         PageDraft::query()->select(['id', 'blocks', 'history', 'future'])->lazyById()->each(fn (PageDraft $draft) => $collect([$draft->blocks ?? [], $draft->history ?? [], $draft->future ?? []]));
+        $collect(app(Settings::class)->get(NavigationMenus::MOBILE_KEY));
 
         return $this->usedPaths = $used;
     }
@@ -189,6 +194,10 @@ class MediaLibrary
 
         foreach (Template::query()->where('blocks', 'like', $pattern)->orderBy('name')->get(['id', 'name']) as $template) {
             $uses[] = ['label' => __('Template: :name', ['name' => $template->name]), 'url' => self::urlOr(fn (): string => TemplateResource::getUrl('edit', ['record' => $template]))];
+        }
+
+        if (in_array($path, $this->pages->uploadedPaths([app(Settings::class)->get(NavigationMenus::MOBILE_KEY)]), true)) {
+            $uses[] = ['label' => __('Website › Navigation › Mobile menu (its background)'), 'url' => self::urlOr(fn (): string => ManageNavigation::getUrl())];
         }
 
         $drafts = PageDraft::query()->where(fn ($query) => $query->where('blocks', 'like', $pattern)->orWhere('history', 'like', $pattern)->orWhere('future', 'like', $pattern))->count();

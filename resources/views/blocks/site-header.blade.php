@@ -78,5 +78,6 @@
         'showGuestLinks' => false,
         'loginLabel' => $showsAccount ? $loginLabel : null,
         'cta' => $cta,
+        'hasOwnColours' => $hasOwnMobileColours,
     ])
 </div>

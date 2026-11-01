@@ -60,7 +60,7 @@ class SiteHeaderBlockTest extends PageTestCase
         $this->assertMatchesRegularExpression('/<nav class="hidden lg:flex items-center gap-8" aria-label="Main">.*Pricing.*Blog/s', $html);
         $this->assertStringContainsString('>Log in</a>', $html);
         $this->assertMatchesRegularExpression('/<a href="http:\/\/localhost#pricing"\s+class="hidden lg:inline-flex[^"]*bg-sb-header-button[^"]*">Get started<\/a>/', $html);
-        $this->assertMatchesRegularExpression('/<button type="button" class="inline-flex lg:hidden h-10 w-10/', $html);
+        $this->assertMatchesRegularExpression('/<button type="button"[^>]*class="inline-flex lg:hidden text-sb-header-link sb-menu-button/', $html);
         // The mobile menu ends with Log in and the button too.
         $this->assertSame(2, substr_count($html, '>Get started</a>'));
     }
@@ -117,7 +117,7 @@ class SiteHeaderBlockTest extends PageTestCase
 
         $menuOnly = $this->headerHtml(['style' => 'menu_only']);
         $this->assertStringNotContainsString('aria-label="Main">', substr($menuOnly, 0, (int) strpos($menuOnly, 'role="dialog"')), 'No links in the bar.');
-        $this->assertMatchesRegularExpression('/<button type="button" class="inline-flex h-10 w-10/', $menuOnly, 'The menu button at every size.');
+        $this->assertMatchesRegularExpression('/<button type="button"[^>]*class="inline-flex text-sb-header-link sb-menu-button/', $menuOnly, 'The menu button at every size.');
         $this->assertDoesNotMatchRegularExpression('/role="dialog"[^>]*class="[^"]*lg:hidden/s', $menuOnly, 'Nor is the mobile menu hidden on wide screens.');
     }
 

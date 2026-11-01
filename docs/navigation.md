@@ -35,13 +35,21 @@ Dropdowns and mega menus open when the mouse is over the link, or when its arrow
 
 ## Mobile menu
 
-On phones and tablets, the ☰ button opens a menu that covers the screen and scrolls on its own. Dropdowns and mega menus open and close inside it, and one holding the current page starts open.
+On phones and tablets, the menu button opens a menu that scrolls on its own. Dropdowns and mega menus open and close inside it, and one holding the current page starts open. These settings apply to every mobile menu on the site: the standard header's, a Menu block's and a Header bar's.
 
 | Setting | What it does |
 |---|---|
-| **Opens from** | The top (slides down) or the right (slides in) |
+| **Opens as** | Drops down from the top, slides in from the right or the left (a panel, with the page still showing beside it on tablets, dimmed), or fills the screen with large links in the middle |
+| **Blur the page beside it** | For the side panels: the page behind is blurred as well as dimmed. A tap on it closes the menu |
 | **Show the logo at the top** | The header logo from Branding, or the site name when none is uploaded |
-| **Text under the logo** | An optional short line, for example *Book your local hall* |
+| **Text under the logo** | An optional short line, for example *Book online in minutes* |
+| **Links: Size** | Normal, Large or Extra large (both in the heading font) |
+| **Links: Line up** | Left or centre (filling the screen, always centre) |
+| **Lines between the links** | A thin line between each link |
+| **Slide the links in one after another** | As the menu opens, each link fades and slides up just after the one before. Visitors who turn off animations see them straight away |
+| **Background** | The header colours from Branding, a colour, a gradient (start and end colours) or an image (with an overlay colour and strength, so the links stay readable), plus a **Text colour** (blank: white, or near-black on a light colour). A Header bar or Menu block with mobile menu colours of its own keeps those |
+| **At the bottom** | **Log in** for visitors who aren't signed in, **the header's button** at full width (Get started, or a Header bar's own button), **social icons** (from Settings › General Settings › Social Links), and an optional **phone number** and **email**, which can be tapped |
+| **Menu button** | Its **Icon** (three lines, two lines or three dots), **Shape** (plain, in a circle or in a rounded square) and whether **"Menu"** shows beside it. Inside the menu, its lines turn into an X to close it |
 
 ## Footer
 

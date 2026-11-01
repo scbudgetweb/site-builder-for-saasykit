@@ -23,6 +23,9 @@
 @import './design/items.css';
 @import './design/eyebrow.css';
 
+/* The mobile menu's entrance (Website › Navigation › Mobile menu). */
+@import './mobile-menu.css';
+
 /* Branding's site and secondary colours by name, for custom CSS (Branding::colourVariables()). */
 :root {
     --sb-colour-site: var(--color-primary-500);

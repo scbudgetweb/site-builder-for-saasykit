@@ -23,6 +23,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Models\Page as SitePage;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -242,25 +243,138 @@ class ManageNavigation extends Page
     }
 
     /**
-     * @return array<int, Select|Toggle|TextInput>
+     * The mobile menu's look, for the standard header, the Menu block and the Header bar alike.
+     *
+     * @return array<int, Section>
      */
     private function mobileFields(): array
     {
+        $options = fn (array $labels): array => array_map(fn (string $label): string => __($label), $labels);
+        $isSide = fn (Get $get): bool => in_array($get('mobile.open_from'), ['left', 'right'], true);
+        $background = fn (Get $get): string => (string) ($get('mobile.background') ?? 'header');
+
         return [
-            Select::make('mobile.open_from')
-                ->label(__('Opens from'))
-                ->options(array_map(fn (string $label): string => __($label), NavigationMenus::MOBILE_OPEN_FROM))
-                ->helperText(__('The menu (☰) on phones and tablets covers the screen and scrolls on its own. Dropdowns and mega menus open and close inside it.'))
-                ->selectablePlaceholder(false),
-            Toggle::make('mobile.show_logo')
-                ->label(__('Show the logo at the top'))
-                ->helperText(__('The header logo (Branding › Brand), or the site name when none is uploaded.'))
-                ->live(),
-            TextInput::make('mobile.tagline')
-                ->label(__('Text under the logo (optional)'))
-                ->placeholder(__('e.g. Book your local hall'))
-                ->maxLength(60)
-                ->visible(fn (Get $get): bool => (bool) $get('mobile.show_logo')),
+            Section::make(__('How it opens'))
+                ->description(__('The menu button (☰) on phones and tablets opens it. Dropdowns and mega menus open and close inside it.'))
+                ->compact()
+                ->columns(['default' => 1, 'sm' => 2])
+                ->schema([
+                    Select::make('mobile.open_from')
+                        ->label(__('Opens as'))
+                        ->options($options(NavigationMenus::MOBILE_OPEN_FROM))
+                        ->selectablePlaceholder(false)
+                        ->live(),
+                    Toggle::make('mobile.blur')
+                        ->label(__('Blur the page beside it'))
+                        ->helperText(__('The page stays in view, dimmed, beside the panel; a tap on it closes the menu.'))
+                        ->inline(false)
+                        ->visible($isSide),
+                    Toggle::make('mobile.show_logo')
+                        ->label(__('Show the logo at the top'))
+                        ->helperText(__('The header logo (Branding › Brand), or the site name when none is uploaded.'))
+                        ->live(),
+                    TextInput::make('mobile.tagline')
+                        ->label(__('Text under the logo (optional)'))
+                        ->placeholder(__('e.g. Book online in minutes'))
+                        ->maxLength(60)
+                        ->visible(fn (Get $get): bool => (bool) $get('mobile.show_logo')),
+                ]),
+            Section::make(__('Links'))
+                ->compact()
+                ->columns(['default' => 1, 'sm' => 2])
+                ->schema([
+                    Select::make('mobile.link_size')
+                        ->label(__('Size'))
+                        ->options($options(NavigationMenus::MOBILE_LINK_SIZES))
+                        ->selectablePlaceholder(false),
+                    Select::make('mobile.link_align')
+                        ->label(__('Line up'))
+                        ->helperText(__('Filling the screen, they\'re always in the middle.'))
+                        ->options($options(NavigationMenus::MOBILE_LINK_ALIGNMENTS))
+                        ->selectablePlaceholder(false),
+                    Toggle::make('mobile.link_lines')
+                        ->label(__('Lines between the links')),
+                    Toggle::make('mobile.animate_links')
+                        ->label(__('Slide the links in one after another'))
+                        ->helperText(__('As the menu opens. Visitors who turn off animations see them straight away.')),
+                ]),
+            Section::make(__('Background'))
+                ->compact()
+                ->columns(['default' => 1, 'sm' => 2])
+                ->schema([
+                    Select::make('mobile.background')
+                        ->label(__('Background'))
+                        ->helperText(__('A Header bar or Menu block with mobile menu colours of its own keeps those.'))
+                        ->options($options(NavigationMenus::MOBILE_BACKGROUNDS))
+                        ->selectablePlaceholder(false)
+                        ->live()
+                        ->columnSpanFull(),
+                    SiteColour::make('mobile.background_color')
+                        ->label(fn (Get $get): string => $background($get) === 'gradient' ? __('Start colour') : __('Colour'))
+                        ->visible(fn (Get $get): bool => in_array($background($get), ['colour', 'gradient'], true)),
+                    SiteColour::make('mobile.background_color_2')
+                        ->label(__('End colour'))
+                        ->visible(fn (Get $get): bool => $background($get) === 'gradient'),
+                    PageBlock::imageUpload('mobile.background_image', __('Image'))
+                        ->visible(fn (Get $get): bool => $background($get) === 'image')
+                        ->columnSpanFull(),
+                    SiteColour::make('mobile.overlay_color')
+                        ->label(__('Overlay colour'))
+                        ->helperText(__('Over the image, so the links read well. Blank: black.'))
+                        ->visible(fn (Get $get): bool => $background($get) === 'image'),
+                    TextInput::make('mobile.overlay_opacity')
+                        ->label(__('Overlay strength'))
+                        ->numeric()
+                        ->integer()
+                        ->minValue(0)
+                        ->maxValue(90)
+                        ->suffix('%')
+                        ->visible(fn (Get $get): bool => $background($get) === 'image'),
+                    SiteColour::make('mobile.text_color')
+                        ->label(__('Text colour'))
+                        ->helperText(__('Blank: white, or near-black on a light colour.'))
+                        ->visible(fn (Get $get): bool => $background($get) !== 'header'),
+                ]),
+            Section::make(__('At the bottom'))
+                ->compact()
+                ->columns(['default' => 1, 'sm' => 2])
+                ->schema([
+                    Toggle::make('mobile.show_account')
+                        ->label(__('Log in, for visitors who aren\'t signed in')),
+                    Toggle::make('mobile.show_cta')
+                        ->label(__('The header\'s button'))
+                        ->helperText(__('Get started, or a Header bar\'s own button, at full width.')),
+                    Toggle::make('mobile.show_social')
+                        ->label(__('Social icons'))
+                        ->helperText(__('From Settings › General Settings › Social Links.')),
+                    Grid::make(['default' => 1, 'sm' => 2])->columnSpanFull()->schema([
+                        TextInput::make('mobile.contact_phone')
+                            ->label(__('Phone number (optional)'))
+                            ->tel()
+                            ->maxLength(40),
+                        TextInput::make('mobile.contact_email')
+                            ->label(__('Email (optional)'))
+                            ->email()
+                            ->maxLength(120),
+                    ]),
+                ]),
+            Section::make(__('Menu button'))
+                ->description(__('It turns into an X when the menu is open.'))
+                ->compact()
+                ->columns(['default' => 1, 'sm' => 3])
+                ->schema([
+                    Select::make('mobile.button_icon')
+                        ->label(__('Icon'))
+                        ->options($options(NavigationMenus::MENU_BUTTON_ICONS))
+                        ->selectablePlaceholder(false),
+                    Select::make('mobile.button_shape')
+                        ->label(__('Shape'))
+                        ->options($options(NavigationMenus::MENU_BUTTON_SHAPES))
+                        ->selectablePlaceholder(false),
+                    Toggle::make('mobile.button_label')
+                        ->label(__('Show "Menu" beside it'))
+                        ->inline(false),
+                ]),
         ];
     }
 

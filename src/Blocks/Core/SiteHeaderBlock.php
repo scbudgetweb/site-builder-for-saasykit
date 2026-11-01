@@ -343,6 +343,7 @@ class SiteHeaderBlock extends PageBlock
             'hasHeaderBackground' => ! $hasOwnBackground && static::pick($data['header_background'] ?? null, self::BACKGROUNDS, 'header') === 'header',
             'hasBorder' => ($data['border'] ?? true) !== false,
             'colourStyle' => trim($colourStyle),
+            'hasOwnMobileColours' => Colour::css($data['mobile_background'] ?? null) !== null,
         ];
     }
 

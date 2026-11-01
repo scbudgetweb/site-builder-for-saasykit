@@ -34,7 +34,7 @@ class NavigationMenusTest extends PageTestCase
         $this->assertSame('Book your local hall.', $footer['tagline']);
         $this->assertSame([['Blog', 'http://localhost/blog'], ['Privacy Policy', 'http://localhost/privacy-policy'], ['Terms of Service', 'http://localhost/terms-of-service']], $this->labelsAndUrls($footer['columns'][0]['links']));
         $this->assertSame('© '.date('Y').' Example Site. All rights reserved.', $footer['copyright']);
-        $this->assertSame(['open_from' => 'top', 'show_logo' => true, 'tagline' => ''], $this->menus()->mobile());
+        $this->assertSame([...NavigationMenus::defaultMobile(), ...['open_from' => 'top', 'show_logo' => true, 'tagline' => '']], $this->menus()->mobile());
     }
 
     public function test_built_in_links_follow_their_condition_and_apps_can_add_or_replace_them(): void
@@ -122,7 +122,7 @@ class NavigationMenusTest extends PageTestCase
         $this->assertArrayNotHasKey('extra', $saved[0]);
         $this->assertCount(NavigationMenus::MAX_FOOTER_COLUMNS, $this->menus()->footer()['columns']);
         $this->assertSame(['Hello', 'Example Site '.date('Y')], [$this->menus()->footer()['tagline'], $this->menus()->footer()['copyright']]);
-        $this->assertSame(['open_from' => 'top', 'show_logo' => false, 'tagline' => 'Hi'], $this->menus()->mobile());
+        $this->assertSame([...NavigationMenus::defaultMobile(), ...['open_from' => 'top', 'show_logo' => false, 'tagline' => 'Hi']], $this->menus()->mobile());
 
         $this->menus()->reset();
 

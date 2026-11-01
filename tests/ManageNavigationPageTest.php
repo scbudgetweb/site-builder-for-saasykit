@@ -77,7 +77,7 @@ class ManageNavigationPageTest extends PageTestCase
         $menus = app(NavigationMenus::class);
         $this->assertSame(['Our rooms', 'More'], array_column($menus->header(), 'label'));
         $this->assertSame('Blog', $menus->header()[1]['children'][0]['label']);
-        $this->assertSame(['open_from' => 'right', 'show_logo' => true, 'tagline' => 'Book your hall'], $menus->mobile());
+        $this->assertSame([...NavigationMenus::defaultMobile(), ...['open_from' => 'right', 'show_logo' => true, 'tagline' => 'Book your hall']], $menus->mobile());
         $this->assertSame('Find us', $menus->footer()['columns'][0]['links'][0]['label']);
     }
 

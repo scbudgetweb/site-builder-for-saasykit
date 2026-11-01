@@ -5,8 +5,10 @@ namespace ScBudgetWeb\SiteBuilder\Navigation;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
+use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
 use Throwable;
 
@@ -31,11 +33,23 @@ class NavigationMenus
     /** The mobile menu's settings: where it opens from, and the logo and tagline at its top. */
     public const MOBILE_KEY = 'navigation.mobile';
 
-    /** Mobile menu opens from => label. */
+    /** How the mobile menu opens => label. The side panels leave the page showing (dimmed, optionally blurred) beside them. */
     public const MOBILE_OPEN_FROM = [
-        'top' => 'The top (slides down)',
-        'right' => 'The right (slides in)',
+        'top' => 'Drops down from the top',
+        'right' => 'Slides in from the right',
+        'left' => 'Slides in from the left',
+        'full' => 'Fills the screen, with large links in the middle',
     ];
+
+    public const MOBILE_LINK_SIZES = ['normal' => 'Normal', 'large' => 'Large, in the heading font', 'xlarge' => 'Extra large, in the heading font'];
+
+    public const MOBILE_LINK_ALIGNMENTS = ['left' => 'Left', 'center' => 'Centre'];
+
+    public const MOBILE_BACKGROUNDS = ['header' => 'The header colours from Branding', 'colour' => 'A colour', 'gradient' => 'A gradient', 'image' => 'An image'];
+
+    public const MENU_BUTTON_ICONS = ['lines' => 'Three lines', 'two_lines' => 'Two lines', 'dots' => 'Three dots'];
+
+    public const MENU_BUTTON_SHAPES = ['plain' => 'Plain', 'circle' => 'In a circle', 'square' => 'In a rounded square'];
 
     public const TYPE_PAGE = 'page';
 
@@ -287,7 +301,7 @@ class NavigationMenus
     /**
      * The mobile menu's settings (standard: opens from the top, with the logo).
      *
-     * @return array{open_from: string, show_logo: bool, tagline: string}
+     * @return array<string, mixed>
      */
     public function mobile(): array
     {
@@ -384,7 +398,7 @@ class NavigationMenus
     /**
      * The standard mobile menu: the app's or the package's (defaultMobile()), checked like a saved one.
      *
-     * @return array{open_from: string, show_logo: bool, tagline: string}
+     * @return array<string, mixed>
      */
     public function standardMobile(): array
     {
@@ -392,13 +406,68 @@ class NavigationMenus
     }
 
     /**
-     * The standard mobile menu: opens from the top, with the logo and no tagline.
+     * The standard mobile menu: drops down from the top, with the logo, links that slide in one after another with
+     * lines between them, the header colours, Log in and the button at the bottom, and a plain three-line menu button.
      *
-     * @return array{open_from: string, show_logo: bool, tagline: string}
+     * @return array<string, mixed>
      */
     public static function defaultMobile(): array
     {
-        return ['open_from' => 'top', 'show_logo' => true, 'tagline' => ''];
+        return [
+            'open_from' => 'top',
+            'show_logo' => true,
+            'tagline' => '',
+            'link_size' => 'normal',
+            'link_align' => 'left',
+            'link_lines' => true,
+            'animate_links' => true,
+            'background' => 'header',
+            'background_color' => null,
+            'background_color_2' => null,
+            'background_image' => null,
+            'overlay_color' => null,
+            'overlay_opacity' => 50,
+            'text_color' => null,
+            'blur' => true,
+            'show_account' => true,
+            'show_cta' => true,
+            'show_social' => false,
+            'contact_phone' => '',
+            'contact_email' => '',
+            'button_icon' => 'lines',
+            'button_shape' => 'plain',
+            'button_label' => false,
+        ];
+    }
+
+    /**
+     * The mobile menu panel's colours and background as an inline style (empty for the header colours): the header
+     * tokens it draws with, set to the chosen text colour, and the background, with an image under its overlay.
+     *
+     * @param  array<string, mixed>  $mobile
+     */
+    public static function mobileStyle(array $mobile): string
+    {
+        $background = (string) ($mobile['background'] ?? 'header');
+        $colour = Colour::css($mobile['background_color'] ?? null);
+        $image = $background === 'image' ? PageBlock::imageUrl($mobile['background_image'] ?? null) : null;
+
+        $css = match (true) {
+            $background === 'colour' && $colour !== null => "background-color: {$colour};",
+            $background === 'gradient' && $colour !== null => 'background-image: linear-gradient(160deg, '.$colour.', '.(Colour::css($mobile['background_color_2'] ?? null) ?? $colour).');',
+            $image !== null => 'background-color: #111827; background-image: linear-gradient('.($overlay = Colour::withOpacity(Colour::hex($mobile['overlay_color'] ?? null) ?? '#000000', Colour::overlayOpacity($mobile['overlay_opacity'] ?? 50) / 100)).', '.$overlay."), url('".str_replace(["'", '"', '\\', '(', ')'], '', $image)."'); background-size: cover; background-position: center;",
+            default => '',
+        };
+
+        if ($css === '') {
+            return '';
+        }
+
+        // Text: the colour chosen, or white (or near-black on a light colour).
+        $text = Colour::css($mobile['text_color'] ?? null)
+            ?? ($background === 'colour' && ($hex = Colour::hex($mobile['background_color'] ?? null)) !== null && ! Colour::isReadableTextOn('#ffffff', $hex) ? '#111827' : '#ffffff');
+
+        return $css." --color-sb-header-bg: transparent; --color-sb-header-text: {$text}; --color-sb-header-link: {$text}; --color-sb-header-link-hover: color-mix(in oklab, {$text} 75%, transparent); --color-sb-header-account-link: {$text}; --color-sb-header-account-link-hover: color-mix(in oklab, {$text} 75%, transparent);";
     }
 
     /**
@@ -542,14 +611,41 @@ class NavigationMenus
      * The mobile menu's settings as they're saved (standard: opens from the top, with the logo).
      *
      * @param  array<string, mixed>  $mobile
-     * @return array{open_from: string, show_logo: bool, tagline: string}
+     * @return array<string, mixed>
      */
     private function cleanMobile(array $mobile): array
     {
+        $standard = self::defaultMobile();
+        $choice = fn (string $key, array $options): string => is_string($mobile[$key] ?? null) && array_key_exists($mobile[$key], $options) ? $mobile[$key] : $standard[$key];
+        $toggle = fn (string $key): bool => array_key_exists($key, $mobile) && $mobile[$key] !== null ? (bool) $mobile[$key] : $standard[$key];
+        $colour = fn (string $key): ?string => Colour::isValidBlockColour($mobile[$key] ?? null) ? $mobile[$key] : null;
+        $text = fn (string $key, int $max): string => is_string($mobile[$key] ?? null) ? mb_substr(trim($mobile[$key]), 0, $max) : '';
+        $image = is_array($mobile['background_image'] ?? null) ? (array_values($mobile['background_image'])[0] ?? null) : ($mobile['background_image'] ?? null);
+
         return [
-            'open_from' => is_string($mobile['open_from'] ?? null) && array_key_exists($mobile['open_from'], self::MOBILE_OPEN_FROM) ? $mobile['open_from'] : 'top',
-            'show_logo' => (bool) ($mobile['show_logo'] ?? true),
-            'tagline' => is_string($mobile['tagline'] ?? null) ? trim($mobile['tagline']) : '',
+            'open_from' => $choice('open_from', self::MOBILE_OPEN_FROM),
+            'show_logo' => $toggle('show_logo'),
+            'tagline' => $text('tagline', 60),
+            'link_size' => $choice('link_size', self::MOBILE_LINK_SIZES),
+            'link_align' => $choice('link_align', self::MOBILE_LINK_ALIGNMENTS),
+            'link_lines' => $toggle('link_lines'),
+            'animate_links' => $toggle('animate_links'),
+            'background' => $choice('background', self::MOBILE_BACKGROUNDS),
+            'background_color' => $colour('background_color'),
+            'background_color_2' => $colour('background_color_2'),
+            'background_image' => $this->pages->isPageUpload($image) ? $image : null,
+            'overlay_color' => $colour('overlay_color'),
+            'overlay_opacity' => Colour::overlayOpacity($mobile['overlay_opacity'] ?? $standard['overlay_opacity']),
+            'text_color' => $colour('text_color'),
+            'blur' => $toggle('blur'),
+            'show_account' => $toggle('show_account'),
+            'show_cta' => $toggle('show_cta'),
+            'show_social' => $toggle('show_social'),
+            'contact_phone' => $text('contact_phone', 40),
+            'contact_email' => filter_var($text('contact_email', 120), FILTER_VALIDATE_EMAIL) ? $text('contact_email', 120) : '',
+            'button_icon' => $choice('button_icon', self::MENU_BUTTON_ICONS),
+            'button_shape' => $choice('button_shape', self::MENU_BUTTON_SHAPES),
+            'button_label' => $toggle('button_label'),
         ];
     }
 

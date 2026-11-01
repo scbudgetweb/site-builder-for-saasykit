@@ -20,10 +20,6 @@
     </header>
 @else
 @php
-    $menus = app(\ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus::class);
-    $mobileMenu = $menus->mobile();
-    $mobileFromRight = $mobileMenu['open_from'] === 'right';
-    $mobileLinkColors = 'text-sb-header-link transition-colors hover:text-sb-header-link-hover focus-visible:text-sb-header-link-hover';
     $buttonColors = 'bg-sb-header-button text-sb-header-button-text transition-colors hover:bg-sb-header-button-hover hover:text-sb-header-button-text-hover focus-visible:bg-sb-header-button-hover focus-visible:text-sb-header-button-text-hover';
 @endphp
 
@@ -48,11 +44,7 @@
                 <a href="{{ route('home') }}#pricing" class="hidden rounded-sb-button px-4 py-2 font-semibold sm:inline-flex {{ $buttonColors }}">{{ __('Get started') }}</a>
             @endauth
 
-            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-md hover:bg-current/10 focus-visible:bg-current/10 lg:hidden"
-                    @click="open = true" :aria-expanded="open.toString()" aria-controls="site-mobile-menu" aria-expanded="false">
-                <span class="sr-only">{{ __('Menu') }}</span>
-                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
+            @include('site-builder::theme.partials.menu-button', ['menuId' => 'site-mobile-menu', 'class' => 'inline-flex lg:hidden'])
         </div>
     </div>
 

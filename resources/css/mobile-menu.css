@@ -1,0 +1,70 @@
+/*
+ * The mobile menu (theme partial mobile-menu): large links in the heading font, links that slide in one after another
+ * as it opens (.sb-mm-animate, with each item's place in --sb-mm-i), and its close button, whose two lines turn from
+ * the menu button's into an X. Nothing moves for visitors who turn off animations.
+ */
+.sb-mm-heading {
+    font-family: var(--font-sb-heading, inherit);
+}
+
+@keyframes sb-mm-in {
+    from {
+        opacity: 0;
+        transform: translateY(0.75rem);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.sb-mm-animate .sb-mm-item {
+    animation: sb-mm-in 0.4s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+    animation-delay: calc(var(--sb-mm-i, 0) * 45ms + 120ms);
+}
+
+.sb-mm-close-line {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1.25rem;
+    height: 2px;
+    margin: -1px 0 0 -0.625rem;
+    border-radius: 1px;
+    background: currentColor;
+}
+
+@keyframes sb-mm-x-1 {
+    from { transform: translateY(-5px); }
+    to { transform: rotate(45deg); }
+}
+
+@keyframes sb-mm-x-2 {
+    from { transform: translateY(5px); }
+    to { transform: rotate(-45deg); }
+}
+
+.sb-mm-close-line-1 {
+    animation: sb-mm-x-1 0.35s 0.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+.sb-mm-close-line-2 {
+    animation: sb-mm-x-2 0.35s 0.1s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-mm-animate .sb-mm-item {
+        animation: none;
+    }
+
+    .sb-mm-close-line-1 {
+        animation: none;
+        transform: rotate(45deg);
+    }
+
+    .sb-mm-close-line-2 {
+        animation: none;
+        transform: rotate(-45deg);
+    }
+}

@@ -59,7 +59,7 @@ class DefaultMenusTest extends PageTestCase
         $this->assertSame('Example Site, est. '.date('Y'), $footer['copyright']);
         $this->assertSame(['About', 'Legal'], array_column($footer['columns'], 'heading'));
         $this->assertSame(['Privacy Policy', 'Cookie settings'], array_column($footer['columns'][1]['links'], 'label'));
-        $this->assertSame(['open_from' => 'right', 'show_logo' => false, 'tagline' => 'Book a room'], $this->menus()->mobile());
+        $this->assertSame([...NavigationMenus::defaultMobile(), ...['open_from' => 'right', 'show_logo' => false, 'tagline' => 'Book a room']], $this->menus()->mobile());
     }
 
     public function test_reset_lists_the_apps_standard_menus_and_saves_them(): void
@@ -99,7 +99,7 @@ class DefaultMenusTest extends PageTestCase
         // A later call that leaves the header null doesn't undo it.
         app(SiteBuilder::class)->defaultMenus(mobile: ['open_from' => 'right']);
         $this->assertSame(['What\'s on'], array_column($this->menus()->header(), 'label'));
-        $this->assertSame(['open_from' => 'right', 'show_logo' => true, 'tagline' => ''], $this->menus()->mobile());
+        $this->assertSame([...NavigationMenus::defaultMobile(), ...['open_from' => 'right', 'show_logo' => true, 'tagline' => '']], $this->menus()->mobile());
     }
 
     public function test_links_that_dont_apply_are_left_out_of_the_apps_defaults(): void

@@ -107,6 +107,8 @@ class SiteMenuBlock extends PageBlock
             'align' => static::pick($data['align'] ?? null, self::ALIGNMENTS, 'right'),
             'breakpoint' => static::pick($data['breakpoint'] ?? null, self::BREAKPOINTS, 'lg'),
             'colourStyle' => trim($style),
+            // Its own mobile menu colours win over Navigation › Mobile menu's background.
+            'hasOwnMobileColours' => Colour::css($data['mobile_background'] ?? null) !== null,
         ];
     }
 

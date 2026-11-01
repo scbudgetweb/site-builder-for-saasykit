@@ -174,8 +174,7 @@ class NavigationMenus
             ->values()
             ->all();
 
-        $copyright = filled($footer['copyright']) ? $footer['copyright'] : self::defaultCopyright();
-        $copyright = strtr($copyright, ['{year}' => date('Y'), '{site_name}' => (string) config('app.name')]);
+        $copyright = self::withYearAndName(filled($footer['copyright']) ? $footer['copyright'] : self::defaultCopyright());
 
         return [
             'tagline' => trim((string) $footer['tagline']),
@@ -312,6 +311,16 @@ class NavigationMenus
     }
 
     /**
+     * Saves the header links only (the Header bar block's Edit links), keeping the footer and mobile menu.
+     *
+     * @param  array<int|string, mixed>  $headerItems
+     */
+    public function saveHeader(array $headerItems): void
+    {
+        $this->siteBuilder->settings()->set([self::HEADER_KEY => $this->cleanHeader($headerItems)]);
+    }
+
+    /**
      * Replaces the header, footer and mobile menu with the standard ones (the standard links that apply to this site),
      * saved as the site's own, so later package updates or newly available links don't change them.
      */
@@ -444,9 +453,21 @@ class NavigationMenus
         ];
     }
 
+    /**
+     * The copyright line with {{ current_year }} and {{ site_name }} filled in, as everywhere else, and the older
+     * {year} and {site_name} too.
+     */
+    public static function withYearAndName(string $line): string
+    {
+        $values = ['current_year' => date('Y'), 'site_name' => (string) config('app.name')];
+        $line = (string) preg_replace_callback('/\{\{\s*(current_year|site_name)\s*\}\}/', fn (array $match): string => $values[$match[1]], $line);
+
+        return strtr($line, ['{year}' => $values['current_year'], '{site_name}' => $values['site_name']]);
+    }
+
     public static function defaultCopyright(): string
     {
-        return __('© {year} {site_name}. All rights reserved.');
+        return __('© {{ current_year }} {{ site_name }}. All rights reserved.');
     }
 
     /**

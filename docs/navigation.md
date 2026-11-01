@@ -49,7 +49,7 @@ On phones and tablets, the ☰ button opens a menu that covers the screen and sc
 |---|---|
 | **Tagline** | A line under the footer logo. Leave it empty to hide it |
 | **Link columns** | Up to **4 columns** beside the logo, each with an optional heading and up to 10 links |
-| **Copyright line** | The line at the very bottom. `{year}` becomes the current year and `{site_name}` the site name. It can hold links, written like `<a href="https://example.com">Example</a>`, with an address starting with `https://`, `/`, `#`, `mailto:` or `tel:`. Links are underlined, in the footer's link colours from [Branding](branding.md), and links to other sites open in a new tab. Any other HTML shows as plain text. Leave it empty for the standard line |
+| **Copyright line** | The line at the very bottom. `{{ current_year }}` becomes this year and `{{ site_name }}` the site name, as in any text (the older `{year}` and `{site_name}` still work). It can hold links, written like `<a href="https://example.com">Example</a>`, with an address starting with `https://`, `/`, `#`, `mailto:` or `tel:`. Links are underlined, in the footer's link colours from [Branding](branding.md), and links to other sites open in a new tab. Any other HTML shows as plain text. Leave it empty for the standard line |
 
 Social media icons in the footer come from the app's general settings (only web addresses starting with `https://` or `http://` are linked), and the footer's colours from [Branding](branding.md).
 

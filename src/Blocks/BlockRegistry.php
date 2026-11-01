@@ -65,6 +65,7 @@ class BlockRegistry
         Core\DividerBlock::class,
         Core\LatestPostsBlock::class,
         // Theme Builder (templates only)
+        Core\SiteHeaderBlock::class,
         Core\SiteLogoBlock::class,
         Core\SiteMenuBlock::class,
         Core\SiteAccountLinksBlock::class,

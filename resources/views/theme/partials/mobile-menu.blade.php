@@ -1,7 +1,9 @@
 {{--
     The mobile menu (Website › Navigation), shared by the standard header and the Theme Builder's Menu block. Opened by
     an `open` flag in the surrounding x-data. $menuId: its element id; $breakpoint: "lg" or "md", the width it hides
-    above; $showGuestLinks: whether it ends with Log in and Get started for guests.
+    above (anything else: never hidden); $showGuestLinks: whether it ends with Log in and Get started for guests.
+    Optionally (the Header bar block) $loginLabel, a Log in link for guests, and $cta (label, url, newTab, classes), a
+    button, at the end at every width.
 --}}
 @php
     $menus = app(\ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus::class);
@@ -94,6 +96,20 @@
                 </div>
             @endif
         @endforeach
+
+        @if (($loginLabel ?? null) !== null || ($cta ?? null) !== null)
+            <div class="mt-6 flex flex-col gap-2">
+                @if (($loginLabel ?? null) !== null && \Illuminate\Support\Facades\Route::has('login'))
+                    @guest
+                        <a href="{{ route('login') }}" class="rounded-md px-3 py-3 text-base font-medium text-sb-header-account-link hover:bg-current/5">{{ $loginLabel }}</a>
+                    @endguest
+                @endif
+                @if (($cta ?? null) !== null)
+                    <a href="{{ $cta['url'] }}" @click="open = false" @if ($cta['newTab']) target="_blank" rel="noopener" @endif
+                       class="inline-flex justify-center text-center text-base {{ $cta['classes'] }}">{{ $cta['label'] }}</a>
+                @endif
+            </div>
+        @endif
 
         @if ($showGuestLinks)
         @guest

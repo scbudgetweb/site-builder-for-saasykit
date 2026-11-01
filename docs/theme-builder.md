@@ -13,7 +13,7 @@ The Theme builder lets you build the site's **header** and **footer** from block
    - **Only the pages chosen**;
    - **Every page except those chosen**.
 3. Click **Create**. It opens in the visual builder, on its own (the site's current header and footer are hidden while you work on it).
-4. Add blocks with **+**, as on a page. A header usually starts with a **Section** with a row of columns (for example ¼ + ½ + ¼): the **Logo** in the first column, the **Menu** in the middle and the **Account links** at the end.
+4. Add blocks with **+**, as on a page. The quickest header is one **Header bar** block: the logo, links, account links and a button, laid out by its Style. For a layout of your own, use a **Section** with a row of columns (for example ¼ + ½ + ¼): the **Logo** in the first column, the **Menu** in the middle and the **Account links** at the end.
 5. **Save**. If the template is on, visitors see it straight away wherever it applies.
 
 **On** (in the list, and in the template's form) turns a template on and off. Turn it off to work on it without visitors seeing it.
@@ -30,11 +30,12 @@ Besides every ordinary block (text, buttons, images, social icons…), templates
 
 | Block | In | What it shows and its settings |
 |---|---|---|
+| **Header bar** | Header | A whole header in one block. **Style:** logo on the left with the links on the right; logo on the left with the links in the middle; logo in the middle with the links underneath; logo in the middle of the links; or the logo and a menu button only (the mobile menu at every size). Each part can be turned off: the **logo** (and its height), the **links** from Navigation (**Edit links** changes them there and then, for the whole site), **Log in** (the account menu once signed in) and a **button** (its text and link, shown to visitors who aren't signed in or to everyone, in the Branding header button's colours or one of the site's button styles, and optionally kept beside the menu button on phones). **Show the menu button** below desktop or tablet width; the links, Log in and the button then move into the mobile menu. Layout: its height, content width, background (the Branding header colours, or see-through) and a line underneath. Its own link and mobile menu colours, as the Menu block's |
 | **Logo** | Header, footer | The Branding logo (the header's or the footer's), linking to the home page; its height and line-up. With no logo uploaded, the site's name |
 | **Menu** | Header, footer | The header links from Navigation, with dropdowns and mega menus, and a menu button for the mobile menu on smaller screens. Its line-up, where the menu button takes over (tablet or desktop size), and its own link, hover and mobile menu colours (blank: the Branding header colours) |
 | **Account links** | Header, footer | *Log in* and a button (e.g. *Get started*) for visitors, and the account menu once signed in. Their text, the button's link, and whether to show the button |
 | **Footer links** | Footer | The link columns from Navigation › Footer, in up to four columns |
-| **Copyright** | Header, footer | The copyright line from Navigation › Footer, or your own text (`:year` becomes the current year) |
+| **Copyright** | Header, footer | The copyright line from Navigation › Footer, or your own text: `{{ current_year }}` becomes this year and `{{ site_name }}` the site's name (the older `:year` still works) |
 
 Everything else works as on a page: design options, copying and pasting styles, undo and redo, and *Edit as a form*.
 

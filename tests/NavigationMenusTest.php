@@ -238,4 +238,10 @@ class NavigationMenusTest extends PageTestCase
     {
         return array_map(fn (array $item): array => [$item['label'], $item['url']], $items);
     }
+
+    public function test_the_copyright_line_takes_the_current_year_and_site_name_tags(): void
+    {
+        $this->assertSame('© '.date('Y').' Example Site. Est. '.date('Y'), NavigationMenus::withYearAndName('© {{ current_year }} {{site_name}}. Est. {year}'));
+        $this->assertSame('© '.date('Y').' Example Site. All rights reserved.', $this->menus()->footer()['copyright'], 'The standard line uses them.');
+    }
 }

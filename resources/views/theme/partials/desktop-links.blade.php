@@ -1,6 +1,7 @@
 {{--
     The desktop header links (Website › Navigation): shared by the standard header (layouts/app/navigation-links) and the
-    Theme Builder's Menu block. See navigation-links for how dropdowns and mega menus open.
+    Theme Builder's Menu and Header bar blocks. See navigation-links for how dropdowns and mega menus open. $items: only
+    these header links (the Header bar's split style), otherwise all of them.
 --}}
 @php
     $menus = app(\ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus::class);
@@ -8,7 +9,7 @@
     $menuLinkColors = 'text-sb-header-menu-link transition-colors hover:bg-current/5 hover:text-sb-header-menu-link-hover focus-visible:bg-current/5 focus-visible:text-sb-header-menu-link-hover';
 @endphp
 
-@foreach ($menus->header() as $item)
+@foreach ($items ?? $menus->header() as $item)
     @php
         $menuLinks = $item['mega'] ? collect($item['mega']['columns'])->flatMap(fn (array $column): array => $column['links']) : collect($item['children']);
         $isCurrent = $menus->isCurrent($item['url']) || $menuLinks->contains(fn (array $child): bool => $menus->isCurrent($child['url']));

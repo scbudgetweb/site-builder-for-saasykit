@@ -100,6 +100,7 @@ class TemplateBlocksTest extends PageTestCase
             self::block('site_footer_links', ['columns' => 3]),
             self::block('site_copyright', ['align' => 'center']),
             self::block('site_copyright', ['source' => 'own', 'text' => '© :year Village Hall <b>bold</b>', 'align' => 'right']),
+            self::block('site_copyright', ['source' => 'own', 'text' => 'Copyright {{ current_year }} {{ site_name }}']),
         ]]);
 
         $html = $this->get('/about-us')->assertSuccessful()->getContent();
@@ -108,5 +109,6 @@ class TemplateBlocksTest extends PageTestCase
         $this->assertStringContainsString('© '.date('Y').' Example Site. All rights reserved.', $html);
         $this->assertStringContainsString('© '.date('Y').' Village Hall &lt;b&gt;bold&lt;/b&gt;', $html, 'Its own text is escaped.');
         $this->assertMatchesRegularExpression('/<p class="text-xs block-text text-right">/', $html);
+        $this->assertStringContainsString('Copyright '.date('Y').' Example Site', $html, 'The tags work in its own text too.');
     }
 }

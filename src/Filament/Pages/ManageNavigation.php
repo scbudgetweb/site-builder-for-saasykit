@@ -193,6 +193,14 @@ class ManageNavigation extends Page
         ]);
     }
 
+    /**
+     * The header links repeater on its own, as on the Header tab, for the Header bar block's Edit links.
+     */
+    public static function headerLinksRepeater(): Repeater
+    {
+        return (new self)->headerRepeater();
+    }
+
     private function headerRepeater(): Repeater
     {
         return self::withButtonTips(Repeater::make('header'), __('link'))
@@ -294,7 +302,7 @@ class ManageNavigation extends Page
                 ->label(__('Copyright line'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The small print at the very bottom of every page.'))
                 ->placeholder(NavigationMenus::defaultCopyright())
-                ->helperText(__('{year} becomes the current year and {site_name} the site name. Add a link like <a href="https://example.com">Example</a>; links to other sites open in a new tab. Leave empty for the standard line.'))
+                ->helperText(__('{{ current_year }} becomes this year and {{ site_name }} the site name. Add a link like <a href="https://example.com">Example</a>; links to other sites open in a new tab. Leave empty for the standard line.'))
                 ->maxLength(300)
                 ->rule(fn (): Closure => function (string $attribute, mixed $value, Closure $fail): void {
                     foreach (NavigationMenus::linkAddresses(is_string($value) ? $value : '') as $address) {

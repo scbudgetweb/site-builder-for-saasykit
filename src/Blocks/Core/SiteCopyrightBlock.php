@@ -12,7 +12,8 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 
 /**
- * Theme Builder: the copyright line, from Website › Navigation › Footer, or its own text (":year" becomes this year).
+ * Theme Builder: the copyright line, from Website › Navigation › Footer, or its own text, where {{ current_year }} and
+ * {{ site_name }} are filled in as in any text (and the older ":year" still works).
  */
 class SiteCopyrightBlock extends PageBlock
 {
@@ -57,9 +58,9 @@ class SiteCopyrightBlock extends PageBlock
                 ->live(),
             TextInput::make('text')
                 ->label(__('Text'))
-                ->hintIcon(self::HELP_ICON, __(':year becomes this year, e.g. "© :year Village Hall".'))
+                ->hintIcon(self::HELP_ICON, __('{{ current_year }} becomes this year and {{ site_name }} the site\'s name, e.g. "© {{ current_year }} {{ site_name }}".'))
                 ->maxLength(200)
-                ->placeholder('© :year '.config('app.name'))
+                ->placeholder('© {{ current_year }} {{ site_name }}')
                 ->visible(fn (Get $get): bool => $get('source') === 'own'),
             Select::make('align')
                 ->label(__('Line up'))

@@ -57,6 +57,7 @@ class BlockFeaturesTest extends PageTestCase
         'site_account_links' => [false, [], false],
         'site_copyright' => [false, [], true],
         'site_footer_links' => [false, [], true],
+        'site_header' => [true, [], false],
         'site_logo' => [false, [], false],
         'site_menu' => [false, [], false],
         'post_title' => [false, ['decoration', 'size'], false],

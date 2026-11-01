@@ -119,7 +119,8 @@ Some built-in pages need a particular block to keep working. If yours is missing
 | Block | Use it for |
 |---|---|
 | **Gallery** | A grid of images that open larger when clicked |
-| **Video** | A YouTube, Vimeo or Adilo video. See [Videos and privacy](#videos-and-privacy) |
+| **Video** | A YouTube, Vimeo or Adilo video. See [Videos, maps and privacy](#videos-maps-and-privacy) |
+| **Map** | A Google map of an address or a place, typed as you'd search for it on Google Maps (no API key or Google account needed). Its zoom (street, neighbourhood, town or wider area) and height, and Design › Image for corners, border and shadow. Optionally, under the map: the address (as typed, or written out on several lines) and a *Get directions* link. See [Videos, maps and privacy](#videos-maps-and-privacy) |
 | **Logo strip** | Partner or sponsor logos: a still row (lined up left, centre or right), a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
 | **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |
 | **Divider / spacer** | A line (with an optional label) or empty space between blocks |
@@ -258,9 +259,11 @@ For a button that should look different, such as a plainer second button, turn o
 
 Features, steps, stats, image cards and buttons can show an icon. Type to search over 1,600 icons using everyday words, such as *calendar*, *map* or *trophy*. Add *filled* or *logo* to find those styles. Icons are stored on the site, so nothing is loaded from another server.
 
-## Videos and privacy
+## Videos, maps and privacy
 
 Until a visitor accepts marketing cookies, a video shows a still picture with a play button, and nothing loads from YouTube, Vimeo or Adilo until it's clicked. Once marketing cookies are allowed, the player shows straight away. YouTube videos always use its privacy-enhanced mode.
+
+Maps work the same way: until marketing cookies are allowed, a map shows a placeholder with the address, **Show map** and **Open in Google Maps**, and nothing loads from Google until one is clicked. Only the address is sent to Google.
 
 ## Images
 

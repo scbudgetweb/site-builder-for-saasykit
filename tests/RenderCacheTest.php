@@ -65,7 +65,7 @@ class RenderCacheTest extends PageTestCase
         $this->assertStringContainsString('New heading', $this->render($page->fresh()));
     }
 
-    public function test_pages_with_live_figures_or_videos_anywhere_are_never_cached(): void
+    public function test_pages_with_live_figures_videos_or_maps_anywhere_are_never_cached(): void
     {
         app(SiteBuilder::class)->stats(['halls' => ['Halls', fn (): int => 3]]);
         $renderer = app(PageRenderer::class);
@@ -74,6 +74,7 @@ class RenderCacheTest extends PageTestCase
             'live stats' => [self::block('stats', ['items' => [['source' => 'live:halls', 'label' => 'Halls']]])],
             'video' => [self::block('video', ['url' => 'https://youtu.be/dQw4w9WgXcQ'])],
             'video in a row' => [self::block('section', ['rows' => [['layout' => 'stacked', 'blocks' => [self::block('video', ['url' => 'https://youtu.be/dQw4w9WgXcQ'])]]]])],
+            'map' => [self::block('map', ['address' => 'Village Hall, Sometown'])],
         ];
 
         foreach ($cases as $case => $blocks) {

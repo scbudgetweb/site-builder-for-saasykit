@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\MapBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SocialFollowBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\StatsBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\VideoBlock;
@@ -23,7 +24,7 @@ class CoreBlocksTest extends PageTestCase
     {
         $this->assertSame([
             'section', 'hero', 'banner', 'heading', 'text', 'image_text', 'image', 'features', 'image_cards', 'steps', 'stats', 'countdown', 'circle_counters', 'bar_counters', 'pricing_table', 'call_to_action', 'mailing_list', 'contact_form',
-            'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'logo_strip', 'social_follow', 'divider', 'latest_posts',
+            'buttons', 'icon', 'testimonials', 'team', 'faq', 'toggle', 'tabs', 'gallery', 'video', 'map', 'logo_strip', 'social_follow', 'divider', 'latest_posts',
             'site_logo', 'site_menu', 'site_account_links', 'site_footer_links', 'site_copyright',
             'post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'post_nav', 'related_posts', 'archive_title', 'post_list', 'saved',
         ], array_keys(app(BlockRegistry::class)->all()));
@@ -102,6 +103,57 @@ class CoreBlocksTest extends PageTestCase
         $this->get('/about-us')
             ->assertDontSee('<template x-if="playing">', false)
             ->assertSee('<iframe src="https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0"', false);
+    }
+
+    public function test_maps_show_a_placeholder_until_consent_is_given(): void
+    {
+        $this->page(['blocks' => [self::block('map', ['address' => 'Village Hall, High Street, Sometown', 'zoom' => 'street'])]]);
+
+        $this->get('/about-us')
+            ->assertOk()
+            ->assertSee('<template x-if="showing">', false)
+            ->assertSee('Show map')
+            ->assertSee('The map loads from Google Maps, which may set cookies.')
+            ->assertSee('https://www.google.com/maps?q=Village%20Hall%2C%20High%20Street%2C%20Sometown&amp;z=17&amp;hl=en&amp;output=embed', false)
+            ->assertSee('https://www.google.com/maps/search/?api=1&amp;query=Village%20Hall%2C%20High%20Street%2C%20Sometown', false)
+            ->assertSee('https://www.google.com/maps/dir/?api=1&amp;destination=Village%20Hall%2C%20High%20Street%2C%20Sometown', false)
+            ->assertSee('Get directions');
+
+        app(SiteBuilder::class)->consentChecker(fn (string $category): bool => $category === 'marketing');
+
+        $this->get('/about-us')
+            ->assertDontSee('<template x-if="showing">', false)
+            ->assertDontSee('Show map')
+            ->assertSee('<iframe src="https://www.google.com/maps?q=Village%20Hall', false)
+            ->assertSee('title="Map of Village Hall, High Street, Sometown"', false);
+    }
+
+    public function test_a_map_can_show_its_address_and_leave_out_directions(): void
+    {
+        $this->page(['blocks' => [self::block('map', [
+            'address' => 'Village Hall, Sometown',
+            'show_address' => true,
+            'address_text' => "Village Hall\nHigh Street\nSometown",
+            'show_directions' => false,
+            'height' => 'large',
+        ])]]);
+
+        $this->get('/about-us')
+            ->assertSee('<address class="block-text not-italic">', false)
+            ->assertSeeInOrder(['Village Hall', '<br>', 'High Street', '<br>', 'Sometown'], false)
+            ->assertSee('sm:h-[32rem]', false)
+            ->assertDontSee('Get directions');
+    }
+
+    public function test_map_links_carry_only_the_encoded_address(): void
+    {
+        $urls = MapBlock::urls("  Hall\" onload=\"alert(1)&output=x\n#top  ", 'not-a-zoom');
+
+        $this->assertStringStartsWith('https://www.google.com/maps?q=Hall%22%20onload%3D%22alert%281%29%26output%3Dx%20%23top&z=15&', $urls['embedUrl']);
+        $this->assertStringEndsWith('&output=embed', $urls['embedUrl']);
+        $this->assertSame(1, substr_count($urls['embedUrl'], 'output='));
+        $this->assertNull(MapBlock::urls('   '));
+        $this->assertNull(MapBlock::urls(['not a string']));
     }
 
     public function test_a_failing_consent_checker_means_no_consent(): void

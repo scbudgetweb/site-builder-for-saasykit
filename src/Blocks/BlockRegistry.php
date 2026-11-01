@@ -58,6 +58,7 @@ class BlockRegistry
         // Media
         Core\GalleryBlock::class,
         Core\VideoBlock::class,
+        Core\MapBlock::class,
         Core\LogoStripBlock::class,
         Core\SocialFollowBlock::class,
         Core\DividerBlock::class,

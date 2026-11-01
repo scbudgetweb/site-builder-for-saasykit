@@ -14,7 +14,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
- * Blog post template: links to the post before this one and the one after it, by date (as Divi's Posts Navigation),
+ * Blog post template: links to the post before this one and the one after it, by date,
  * each with a label and the post's title, and optionally its image. With neither, Content › When empty decides.
  */
 class PostNavBlock extends PageBlock

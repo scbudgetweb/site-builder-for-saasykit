@@ -13,7 +13,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 
 /**
- * Divi's Dividers: a shape along the top or bottom edge of a block (a wave, a slant, a curve…), in a colour, usually
+ * Dividers: a shape along the top or bottom edge of a block (a wave, a slant, a curve…), in a colour, usually
  * the colour of the block next to it, so one flows into the other. Drawn by the package's CSS as a mask over a
  * coloured layer (resources/css/design/dividers.css), from its own shapes: nothing typed reaches a URL.
  */

@@ -14,7 +14,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * A contact form (Divi's Contact Form module): name, email, phone, subject and message, as the block chooses. Each
+ * A contact form: name, email, phone, subject and message, as the block chooses. Each
  * message is kept in Website › Contact messages and, unless the block turns it off, emailed to its Deliver to address or
  * SaaSykit's Support Email. The form itself is ContactForm (Livewire), with the block's choices locked in.
  */

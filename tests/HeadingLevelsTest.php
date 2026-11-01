@@ -10,7 +10,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\StyleClipboard;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 
 /**
- * Design › Heading text as Divi has it: All headings, then H1 to H6 one by one, reaching headings typed in rich text.
+ * Design › Heading text: All headings, then H1 to H6 one by one, reaching headings typed in rich text.
  */
 class HeadingLevelsTest extends PageTestCase
 {

@@ -16,7 +16,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * Plans side by side (Divi's Pricing Tables module): each with a name, a price and its period, feature lines included
+ * Plans side by side: each with a name, a price and its period, feature lines included
  * or not ("-" in front), a button, and one featured with a badge. Or, where the app has SaaSykit's plans component,
  * the live plans themselves (with their checkout links), which change with each visitor so aren't cached.
  */

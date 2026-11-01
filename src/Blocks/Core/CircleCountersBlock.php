@@ -7,7 +7,7 @@ use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * Percentages as rings (Divi's Circle Counter module), with the number inside and the label under each.
+ * Percentages as rings, with the number inside and the label under each.
  */
 class CircleCountersBlock extends PercentCountersBlock
 {

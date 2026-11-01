@@ -10,7 +10,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * Theme Builder › Top bar (Divi's secondary menu bar): a slim row above the header with a short line (such as opening
+ * Theme Builder › Top bar: a slim row above the header with a short line (such as opening
  * hours), a phone number and an email address that can be tapped, and the social icons from SaaSykit's General
  * Settings. On the site colour, dark, unless its Background says otherwise; it can hide on phones.
  */

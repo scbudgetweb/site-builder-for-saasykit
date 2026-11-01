@@ -22,7 +22,7 @@ use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
 /**
- * Theme Builder: a whole header in one block (as Divi's Menu module): the logo, the links from Website › Navigation
+ * Theme Builder: a whole header in one block: the logo, the links from Website › Navigation
  * (with their dropdowns and mega menus), the account links and a call-to-action button, and the phone menu button, laid
  * out by a Style. Edit links changes Navigation's header links where you are. The Logo, Menu and Account links blocks
  * stay for layouts of your own. Not cached: the current page's link is marked, and the account links depend on the

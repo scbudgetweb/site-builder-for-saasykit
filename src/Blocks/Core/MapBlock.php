@@ -14,7 +14,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
 /**
- * A Google map of an address or a place (as Divi's Map module), from Google Maps' plain embed, so no API key is
+ * A Google map of an address or a place, from Google Maps' plain embed, so no API key is
  * needed. The map is built on the server from the address alone. Google Maps sets its own (marketing) cookies, so,
  * as with Video, a visitor who hasn't allowed them sees a placeholder with Show map until they choose to load it.
  * Optionally, under the map: the address as text and a Get directions link.

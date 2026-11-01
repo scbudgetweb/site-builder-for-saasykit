@@ -10,7 +10,7 @@ use ScBudgetWeb\SiteBuilder\Filament\Forms\HeadingInput;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * A heading on its own (Divi's Heading module), with an optional small heading: its level (H1–H6) is for search
+ * A heading on its own, with an optional small heading: its level (H1–H6) is for search
  * engines and screen readers, and sets its standard size. Design › Heading text styles it, by level too.
  */
 class HeadingBlock extends PageBlock

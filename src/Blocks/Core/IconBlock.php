@@ -12,7 +12,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
 
 /**
- * One icon on its own (Divi's Icon module). Design › Icon styles it as the icons in Features do (a tile, its shape,
+ * One icon on its own. Design › Icon styles it as the icons in Features do (a tile, its shape,
  * size and colours, with hover); Content › Link makes it a link.
  */
 class IconBlock extends PageBlock

@@ -13,7 +13,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * A title that opens and closes its content (Divi's Toggle module): one FAQ item on its own, open or closed at first.
+ * A title that opens and closes its content: one FAQ item on its own, open or closed at first.
  * Drawn as <details>, so it works without JavaScript and from the keyboard.
  */
 class ToggleBlock extends PageBlock

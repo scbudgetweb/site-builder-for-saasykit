@@ -31,7 +31,7 @@ final class Typography implements DesignGroup
     /** Text => the short name in its classes and properties (sb-d-hf, --sb-hf…). */
     private const TEXTS = ['heading' => 'h', 'body' => 't'];
 
-    /** Heading level => the short name in its classes and properties (sb-d-hl2c, --sb-hl2c…), as Divi's H1–H6 tabs. */
+    /** Heading level => the short name in its classes and properties (sb-d-hl2c, --sb-hl2c…). */
     public const LEVELS = ['h1' => 'hl1', 'h2' => 'hl2', 'h3' => 'hl3', 'h4' => 'hl4', 'h5' => 'hl5', 'h6' => 'hl6'];
 
     public const WEIGHTS = [
@@ -141,7 +141,7 @@ final class Typography implements DesignGroup
     }
 
     /**
-     * Heading text, as Divi has it: every heading at once (All headings, saved as "heading"), then each level on its own
+     * Heading text: every heading at once (All headings, saved as "heading"), then each level on its own
      * (H1 to H6, saved as "h1"…"h6"), which wins over All headings for that level. Headings typed in rich text count.
      */
     private static function headingTabs(): Tabs

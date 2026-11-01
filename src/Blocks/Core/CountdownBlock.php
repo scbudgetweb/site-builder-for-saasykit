@@ -16,7 +16,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use Throwable;
 
 /**
- * Counts down to a date and time (Divi's Countdown Timer module): days, hours, minutes and seconds, each an item for
+ * Counts down to a date and time: days, hours, minutes and seconds, each an item for
  * Design › Items. The end is a moment in the site's time zone, given to the page as a timestamp, so a cached page
  * still counts right; the numbers in the HTML are only where it starts. When it ends: hide the block, show a
  * message, or stay at zero.

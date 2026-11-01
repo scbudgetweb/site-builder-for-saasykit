@@ -7,7 +7,7 @@ use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
 /**
- * Percentages as bars (Divi's Bar Counters module), each with its label and number above it.
+ * Percentages as bars, each with its label and number above it.
  */
 class BarCountersBlock extends PercentCountersBlock
 {

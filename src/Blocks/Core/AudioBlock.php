@@ -15,7 +15,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
 /**
- * An uploaded sound file (as Divi's Audio module): a card with an optional cover image, the title, artist and a short
+ * An uploaded sound file: a card with an optional cover image, the title, artist and a short
  * description, and the browser's own player, which loads nothing until it's played (preload="none"). The file is in
  * the media library, and can be chosen from it (PageBlock::audioUpload()). Design › Items styles the card. The types
  * and largest size taken are set in Website › Media › Audio (AudioUploads). Or SoundCloud's or Spotify's own player

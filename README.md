@@ -122,7 +122,7 @@ The site's look in one place: logos, colours, fonts, buttons, corners and shadow
    // Straight after SaaSykit's sitemap, which rewrites robots.txt.
    Schedule::command('app:generate-sitemap')->everyOddHour()->then(fn () => Artisan::call('site-builder:sitemap'));
 
-   // Page and Branding images nothing uses (older than a day).
+   // Page and Branding uploads (images and sound files) nothing uses (older than a day).
    Schedule::command('site-builder:clean-uploads')->daily();
 
    // Contact form messages older than site-builder.contact.keep_days.
@@ -140,6 +140,7 @@ Everything sits in one navigation group, **Website** by default:
 | Navigation | `update pages` |
 | Branding | `update settings` |
 | Legal pages | `update settings` |
+| Media | `update settings` |
 
 The package's migration creates the page permissions and gives them to the `admin` role. Every permission name can be changed in `config/site-builder.php`.
 
@@ -175,7 +176,8 @@ Your copy doesn't update with the package. After each package update, check the 
 | `pages.preview_path` | `site-builder/preview` | Where signed previews live |
 | `pages.revisions` | `30` | Revisions kept per page |
 | `pages.cache` | `true` (`SITE_BUILDER_PAGE_CACHE`) | Cache the HTML of pages whose blocks are all cacheable |
-| `uploads.disk` / `directory` | `public` / `site-builder` | Where logos and page images are stored |
+| `uploads.disk` / `directory` | `public` / `site-builder` | Where logos, page images and Audio blocks' sound files are stored |
+| `livewire_upload_size` | `true` | Raises Livewire's temporary upload limit (`temporary_file_upload.rules`' `max:`) to the largest sound file set in Website › Media, and its `max_upload_time` to 30 minutes, never lowering them. `false` leaves them alone |
 | `livewire_nesting_depth` | `48` | Raises Livewire's `payload.max_nesting_depth` to this (never lowers it, at most 128), so lists, tables and quotes in rich text can be edited in the builder's panels. `false` leaves Livewire's setting alone |
 
 ## Extending it
@@ -200,7 +202,7 @@ See the [developer guides](docs/README.md#for-developers-and-agents).
 
 ## Documentation
 
-- **For people running the site:** [pages](docs/pages.md), [revisions](docs/revisions.md), [the block library](docs/block-library.md), [navigation](docs/navigation.md), [the Theme builder](docs/theme-builder.md), [mailing lists](docs/mailing-lists.md), [Branding](docs/branding.md) and [legal pages](docs/legal-pages.md).
+- **For people running the site:** [pages](docs/pages.md), [revisions](docs/revisions.md), [the block library](docs/block-library.md), [navigation](docs/navigation.md), [the Theme builder](docs/theme-builder.md), [mailing lists](docs/mailing-lists.md), [Branding](docs/branding.md), [legal pages](docs/legal-pages.md) and [media](docs/media.md).
 - **For developers:** [writing a custom block](docs/developers/custom-blocks.md), [extending the site builder](docs/developers/extending.md), [building tenant micro-sites](docs/developers/tenant-micro-sites.md) and [publishing a release](docs/developers/releasing.md).
 
 ## Testing

@@ -9,6 +9,7 @@ use Filament\View\PanelsRenderHook;
 use Illuminate\Contracts\View\View;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageBranding;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageLegalPages;
+use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageMedia;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\ContactMessages\ContactMessageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\MailingLists\MailingListProviderResource;
@@ -53,6 +54,7 @@ class SiteBuilderPlugin implements Plugin
             ManageNavigation::class,
             ManageBranding::class,
             ManageLegalPages::class,
+            ManageMedia::class,
         ]);
         // The design fields' Alpine code (DeviceValue, BoxSides), before Alpine starts.
         $panel->renderHook(PanelsRenderHook::SCRIPTS_BEFORE, fn (): View => view('site-builder::filament.design-fields-script'));

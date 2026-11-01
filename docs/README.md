@@ -14,6 +14,7 @@ Everything is in the admin panel under **Website**:
 | [Theme builder](theme-builder.md) | Building your own header and footer from blocks, and where each is shown |
 | [Branding](branding.md) | Logos, colours, fonts, buttons, corners and shadows, the header, footer and banners |
 | [Legal pages](legal-pages.md) | Your Privacy Policy and Terms of Service |
+| [Media](media.md) | The sound files Audio blocks take: file types and the largest size, against your server's limit |
 
 ## For developers and agents
 

@@ -120,6 +120,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 |---|---|
 | **Gallery** | A grid of images that open larger when clicked |
 | **Video** | A YouTube, Vimeo or Adilo video. See [Videos, maps and privacy](#videos-maps-and-privacy) |
+| **Audio** | An uploaded sound file in a card (MP3, M4A, OGG or WAV, up to 100 MB, as standard; both are set in [Website › Media](media.md)): an optional cover image (a music note without one), the title, an artist or speaker and a short description, then the browser's own player. Nothing downloads until it's played. **Offer a download link** adds a Download link; off, the player's menu leaves Download out too. Design › Items styles the card and each text part. A sound file you remove is deleted once nothing uses it, as images are |
 | **Map** | A Google map of an address or a place, typed as you'd search for it on Google Maps (no API key or Google account needed). Its zoom (street, neighbourhood, town or wider area) and height, and Design › Image for corners, border and shadow. Optionally, under the map: the address (as typed, or written out on several lines) and a *Get directions* link. See [Videos, maps and privacy](#videos-maps-and-privacy) |
 | **Logo strip** | Partner or sponsor logos: a still row (lined up left, centre or right), a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
 | **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |

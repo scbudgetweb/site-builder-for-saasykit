@@ -35,6 +35,7 @@ use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\SavedBlockPolicy;
 use ScBudgetWeb\SiteBuilder\Pages\Slot;
 use ScBudgetWeb\SiteBuilder\Pages\TemplatePolicy;
+use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\Support\LivewireLimits;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
@@ -82,6 +83,16 @@ class SiteBuilderServiceProvider extends ServiceProvider
 
         // Room for rich text's nested updates in the builder's panels (Livewire allows 10 path parts by default).
         LivewireLimits::apply();
+
+        // Room in Livewire's upload limit for the largest sound file Audio blocks take (Website › Media), once settings
+        // can be read. Before the package's tables exist (a fresh install), Livewire's own limit stands.
+        $this->app->booted(function (): void {
+            try {
+                LivewireLimits::raiseUploadSize($this->app->make(AudioUploads::class)->maxKilobytes());
+            } catch (Throwable) {
+                //
+            }
+        });
 
         if (config('site-builder.pages.routes', true)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/web.php');

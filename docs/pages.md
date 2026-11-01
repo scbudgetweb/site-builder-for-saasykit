@@ -28,6 +28,14 @@ Clicking a page in the list opens the **visual builder**: the page as visitors s
 - **Move things** by dragging: point at a block and drag its **Move** handle, or a row's **Row** handle. A blue line shows where it'll land: above or below a block, or into a column (a row: into a Section). The page scrolls when you drag near its top or bottom. Or use the right-click menu: **Move up / down** and **Move to the column on the left / right**.
 - **The right-click menu** also has **Duplicate** and **Delete** (no question asked: Ctrl+Z puts it back). Inside a Section, it has **Row settings** (layout, line-up, row style), **Add a row below**, **Duplicate row**, **Move row up / down**, **Delete row**, and **Column … settings** (background, line-up, space, border). On a Section itself: **Add a row**.
 - A block with nothing to show yet (just added, say) shows as a dashed box on the canvas, so you can click it and fill it in. Visitors never see it.
+- **Layers** (the stack in the toolbar) opens a panel beside the canvas listing everything on the page as a tree: blocks, Sections, their rows and columns, and the blocks in each column. Each shows its admin label (or what it is) and a few words of its content. The panel stays open next time, in this browser.
+  - **Click** one to scroll to it and open its settings; **point** at one to outline it on the canvas.
+  - The **arrows** fold a Section, row or column away.
+  - **Drag** a block or row to move it: a block above or below another, or into a column; a row above or below another, or into a Section.
+  - The **eye** hides one on every screen (Design › Visibility › Hide on), so visitors don't see it; it still shows, faded, in the builder. A faded eye means it's hidden on some screens only. Click again to show it everywhere.
+  - **Double-click** one, or use the **pencil**, to rename it: its admin label, only seen in the builder. Enter saves, Esc doesn't; leave it blank for its usual name.
+
+  Each change goes into your draft as any other, so undo takes it back.
 - **Undo and redo** with the arrows in the toolbar, or **Ctrl+Z** and **Ctrl+Y** (**⌘Z** and **⇧⌘Z** on a Mac). The last 30 changes are kept, until you publish or discard. While you're typing in a panel, those keys undo your typing instead.
 - **Revisions** (the clock in the toolbar) lists each saved version, with Preview and Restore. Restore puts that version's blocks into your draft, so you can check it before publishing, and undo takes it back. Its title and search settings are restored in *Edit as a form*.
 - **Right-click a block** for its menu:

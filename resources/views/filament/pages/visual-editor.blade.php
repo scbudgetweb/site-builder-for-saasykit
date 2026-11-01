@@ -20,6 +20,16 @@
             menu: { open: false, x: 0, y: 0, uid: null, rowUid: null, columnUid: null, isNested: false, mode: 'main' },
             hoveredRow: null,
             drag: null,
+            // The layers panel: the page as a tree (VisualEditor::layers()), open or not (remembered in this browser),
+            // the parts folded away, the one being renamed, and a drag in the panel.
+            layers: config.layers,
+            levels: config.levels,
+            layersOpen: (() => { try { return window.localStorage.getItem('site-builder.layers') === '1'; } catch (error) { return false; } })(),
+            collapsed: {},
+            renaming: null,
+            renameText: '',
+            layerDrag: null,
+            layerDrop: null,
 
             init() {
                 this.$refs.frame.addEventListener('load', () => this.attach());
@@ -541,6 +551,111 @@
                 }
             },
 
+            toggleLayers() {
+                this.layersOpen = ! this.layersOpen;
+
+                try {
+                    window.localStorage.setItem('site-builder.layers', this.layersOpen ? '1' : '0');
+                } catch (error) {}
+
+                // The canvas narrows or widens beside it.
+                window.setTimeout(() => this.redraw(), 250);
+            },
+
+            // The layers not folded away inside another.
+            visibleLayers() {
+                return this.layers.filter((layer) => ! layer.ancestors.some((uid) => this.collapsed[uid]));
+            },
+
+            toggleCollapsed(uid) {
+                this.collapsed = { ...this.collapsed, [uid]: ! this.collapsed[uid] };
+            },
+
+            // A layer clicked: the canvas scrolls to it and its settings open, as when it's clicked on the canvas.
+            openLayer(layer) {
+                const element = this.elementFor(layer.uid);
+                (element?.style.display === 'contents' ? element.firstElementChild : element)?.scrollIntoView({ block: 'center' });
+
+                window.setTimeout(() => layer.kind === 'block'
+                    ? this.select(layer.uid)
+                    : this.openPanel(layer.kind === 'row' ? 'editRow' : 'editColumn', layer.uid), 60);
+            },
+
+            hoverLayer(uid) {
+                this.hoveredUid = uid;
+                this.redraw();
+            },
+
+            startRename(layer) {
+                this.renaming = layer.uid;
+                this.renameText = layer.label;
+                this.$nextTick(() => document.getElementById('sb-layer-rename')?.select());
+            },
+
+            // Enter or leaving the field saves; Esc doesn't. Once only: the field's blur follows Enter.
+            finishRename(save) {
+                const uid = this.renaming;
+                this.renaming = null;
+
+                if (save && uid && this.renameText !== this.layers.find((layer) => layer.uid === uid)?.label) {
+                    this.$wire.renameLayer(uid, this.renameText);
+                }
+            },
+
+            // Blocks and rows can be dragged (not columns; not the top level in the library's editor).
+            canDragLayer(layer) {
+                return layer.kind !== 'column' && (config.topLevel || layer.depth > 0);
+            },
+
+            layerDragStart(event, layer) {
+                this.layerDrag = layer;
+                event.dataTransfer.effectAllowed = 'move';
+                event.dataTransfer.setData('text/plain', layer.uid);
+            },
+
+            // Where a drop on a layer puts what's dragged: a block before or after a block, or into a column; a row
+            // before or after a row, or into a Section. Never into itself.
+            layerDropPosition(event, target) {
+                const dragged = this.layerDrag;
+
+                if (! dragged || dragged.uid === target.uid || target.ancestors.includes(dragged.uid)) {
+                    return null;
+                }
+
+                const rect = event.currentTarget.getBoundingClientRect();
+                const side = event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
+
+                if (dragged.kind === 'row') {
+                    return target.kind === 'row' ? side : (target.isSection ? 'in' : null);
+                }
+
+                return target.kind === 'column' ? 'in' : (target.kind === 'block' ? side : null);
+            },
+
+            layerDragOver(event, layer) {
+                const position = this.layerDropPosition(event, layer);
+                this.layerDrop = position ? { uid: layer.uid, position } : null;
+
+                if (position) {
+                    event.preventDefault();
+                }
+            },
+
+            dropOnLayer(event, layer) {
+                const position = this.layerDropPosition(event, layer);
+
+                if (position) {
+                    this.$wire.dropNode(this.layerDrag.uid, layer.uid, position);
+                }
+
+                this.layerDragEnd();
+            },
+
+            layerDragEnd() {
+                this.layerDrag = null;
+                this.layerDrop = null;
+            },
+
             redraw() {
                 this.place(this.hoverBox, this.hoveredUid === this.selectedUid ? null : this.hoveredUid);
                 this.place(this.selectBox, this.selectedUid);
@@ -562,6 +677,7 @@
                 }
 
                 this.nodes = detail.nodes;
+                this.layers = detail.layers ?? this.layers;
 
                 // A font a block has just chosen: its stylesheet, once.
                 (detail.fonts ?? []).forEach((href) => {
@@ -711,7 +827,7 @@
          start a new canvas component that has lost the iframe (its load event has gone). Updates bring the nodes. --}}
     <div
         wire:ignore.self
-        x-data="siteBuilderCanvas({ nodes: @js($this->canvasNodes()), colour: '#2563eb', levels: @js(\ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel::LEVEL_COLOURS), clipboard: @js($this->styleClipboardLabel()), topLevel: @js($this->allowsTopLevelChanges()) })"
+        x-data="siteBuilderCanvas({ nodes: @js($this->canvasNodes()), colour: '#2563eb', levels: @js(\ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel::LEVEL_COLOURS), layers: @js($this->layers()), clipboard: @js($this->styleClipboardLabel()), topLevel: @js($this->allowsTopLevelChanges()) })"
         x-on:site-builder-canvas-updated.window="update($event.detail)"
         x-on:site-builder-canvas-reload.window="$refs.frame.contentWindow?.location.reload()"
         x-on:site-builder-style-copied.window="clipboard = $event.detail.label"
@@ -745,6 +861,15 @@
             </x-filament::tabs>
 
             <div style="display: flex; align-items: center; gap: 0.125rem;">
+                <x-filament::icon-button
+                    icon="heroicon-o-square-3-stack-3d"
+                    color="gray"
+                    :label="__('Layers')"
+                    :tooltip="__('Layers: every Section, row, column and block, to find, move, hide or rename')"
+                    x-on:click="toggleLayers()"
+                    x-bind:aria-pressed="layersOpen ? 'true' : 'false'"
+                    x-bind:style="layersOpen ? 'color: var(--primary-600)' : ''"
+                />
                 {{ $this->undoAction }}
                 {{ $this->redoAction }}
                 {{ $this->revisionsAction }}
@@ -761,7 +886,10 @@
             </div>
         </header>
 
-        <div wire:ignore style="flex: 1 1 auto; min-height: 0; display: flex; justify-content: center; padding: 0.75rem; background: rgb(128 128 128 / 0.12);">
+        <div wire:ignore style="flex: 1 1 auto; min-height: 0; display: flex; gap: 0.75rem; padding: 0.75rem; background: rgb(128 128 128 / 0.12);">
+            @include('site-builder::filament.pages.partials.layers-panel')
+
+            <div style="flex: 1 1 auto; min-width: 0; display: flex; justify-content: center;">
             <iframe
                 x-ref="frame"
                 src="{{ $this->canvasUrl() }}"
@@ -769,6 +897,7 @@
                 x-bind:style="{ width: widths[device] }"
                 style="width: 100%; max-width: 100%; height: 100%; border: 0; border-radius: 0.5rem; background: #fff; box-shadow: 0 1px 3px rgb(0 0 0 / 0.15); transition: width 200ms ease;"
             ></iframe>
+            </div>
         </div>
 
         {{-- The canvas menu: right-click a block. Uses Filament's dropdown look. Only Alpine draws it, so Livewire's

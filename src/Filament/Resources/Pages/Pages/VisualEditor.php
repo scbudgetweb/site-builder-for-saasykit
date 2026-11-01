@@ -20,6 +20,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockTree;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SavedBlockBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\Effects;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
 use ScBudgetWeb\SiteBuilder\Blocks\StyleClipboard;
@@ -287,6 +288,156 @@ class VisualEditor extends ResourcePage
     }
 
     /**
+     * The layers panel: every block, row and column of the draft in page order, as a flat list with each one's depth
+     * and the uids above it (for folding), its label (its admin label, or what it is, with a few words of its content),
+     * and whether it's hidden on every screen (Design › Visibility) or some. A linked library block's own blocks are
+     * the library's, so they aren't listed.
+     *
+     * @return array<int, array{uid: string, kind: string, label: string, detail: string, depth: int, ancestors: array<int, string>, hidden: bool, partlyHidden: bool, hasChildren: bool, isSection: bool, isLinked: bool}>
+     */
+    public function layers(): array
+    {
+        return self::layersOf($this->draft()->blocks ?? []);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $blocks
+     * @param  array<int, string>  $ancestors
+     * @return array<int, array{uid: string, kind: string, label: string, detail: string, depth: int, ancestors: array<int, string>, hidden: bool, partlyHidden: bool, hasChildren: bool, isSection: bool, isLinked: bool}>
+     */
+    private static function layersOf(array $blocks, array $ancestors = []): array
+    {
+        $registry = app(BlockRegistry::class);
+        $layers = [];
+        $layer = fn (string $uid, string $kind, string $label, string $detail, array $node, array $ancestors, bool $hasChildren, bool $isSection = false, bool $isLinked = false): array => [
+            'uid' => $uid,
+            'kind' => $kind,
+            'label' => is_string($node['admin_label'] ?? null) && trim($node['admin_label']) !== '' ? Str::limit(trim($node['admin_label']), 60) : $label,
+            'detail' => $detail,
+            'depth' => count($ancestors),
+            'ancestors' => $ancestors,
+            ...self::hiddenState($node['design']['effects']['hide_on'] ?? null),
+            'hasChildren' => $hasChildren,
+            'isSection' => $isSection,
+            'isLinked' => $isLinked,
+        ];
+
+        foreach ($blocks as $block) {
+            if (! is_array($block) || ! is_string($block['uid'] ?? null) || ! is_string($block['type'] ?? null)) {
+                continue;
+            }
+
+            $data = is_array($block['data'] ?? null) ? $block['data'] : [];
+            $blockClass = $registry->find($block['type']);
+            $isSection = $block['type'] === SectionBlock::NAME;
+            $rows = $isSection && is_array($data['rows'] ?? null) ? array_values(array_filter($data['rows'], 'is_array')) : [];
+            $layers[] = $layer($block['uid'], 'block', $blockClass ? $blockClass::label() : $block['type'], self::summaryOf($data), $data, $ancestors, $rows !== [], $isSection, $block['type'] === SavedBlockBlock::NAME);
+
+            foreach ($rows as $rowIndex => $row) {
+                $row = SectionBlock::normaliseRow($row);
+                $rowAncestors = [...$ancestors, $block['uid']];
+                $columns = array_values(array_filter($row['columns'], 'is_array'));
+
+                if (is_string($row['uid'] ?? null)) {
+                    $layoutKey = $row['layout'] ?? null;
+                    $layout = SectionBlock::LAYOUTS[(is_string($layoutKey) || is_int($layoutKey)) && isset(SectionBlock::LAYOUTS[$layoutKey]) ? $layoutKey : 'stacked'][0];
+                    $layers[] = $layer($row['uid'], 'row', __('Row :number', ['number' => $rowIndex + 1]), __($layout), $row, $rowAncestors, $columns !== []);
+                    $rowAncestors[] = $row['uid'];
+                }
+
+                foreach ($columns as $columnIndex => $column) {
+                    $columnAncestors = $rowAncestors;
+                    $inner = is_array($column['blocks'] ?? null) ? $column['blocks'] : [];
+
+                    if (is_string($column['uid'] ?? null)) {
+                        $layers[] = $layer($column['uid'], 'column', __('Column :number', ['number' => $columnIndex + 1]), trans_choice(':count block|:count blocks', count($inner)), $column, $columnAncestors, $inner !== []);
+                        $columnAncestors[] = $column['uid'];
+                    }
+
+                    $layers = [...$layers, ...self::layersOf($inner, $columnAncestors)];
+                }
+            }
+        }
+
+        return $layers;
+    }
+
+    /**
+     * A few words of a block's content, to tell blocks of one kind apart: its heading, title or text.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private static function summaryOf(array $data): string
+    {
+        foreach (['heading', 'title', 'label', 'text', 'content', 'quote'] as $key) {
+            if (is_string($data[$key] ?? null) && ($text = trim(html_entity_decode(strip_tags(str_replace('<', ' <', $data[$key]))))) !== '') {
+                return Str::limit(preg_replace('/\s+/', ' ', $text) ?? '', 40);
+            }
+        }
+
+        return '';
+    }
+
+    /**
+     * @return array{hidden: bool, partlyHidden: bool}
+     */
+    private static function hiddenState(mixed $hideOn): array
+    {
+        $screens = array_values(array_intersect(array_keys(Effects::SCREENS), is_array($hideOn) ? $hideOn : []));
+
+        return ['hidden' => count($screens) === count(Effects::SCREENS), 'partlyHidden' => $screens !== [] && count($screens) < count(Effects::SCREENS)];
+    }
+
+    /**
+     * The layers panel's eye: hides a block, row or column on every screen (Design › Visibility › Hide on), or shows it
+     * on every screen again. On the canvas it still shows, faded. A linked library block is hidden in the library.
+     */
+    public function toggleLayerHidden(string $uid): void
+    {
+        $blocks = $this->draft()->blocks ?? [];
+        $found = BlockTree::find($blocks, $uid);
+
+        if ($found === null || ($found['kind'] === 'block' && ($found['node']['type'] ?? null) === SavedBlockBlock::NAME)) {
+            $this->cantDoThat();
+
+            return;
+        }
+
+        $path = $found['kind'] === 'block' ? 'data.design.effects.hide_on' : 'design.effects.hide_on';
+        $isHidden = self::hiddenState(Arr::get($found['node'], $path))['hidden'];
+
+        $this->changeBlocks(BlockTree::update($blocks, $uid, function (array $node) use ($path, $isHidden): array {
+            Arr::set($node, $path, $isHidden ? [] : array_keys(Effects::SCREENS));
+
+            return $node;
+        }), $uid);
+    }
+
+    /**
+     * The layers panel's rename: a block's, row's or column's admin label (blank: its usual name).
+     */
+    public function renameLayer(string $uid, string $label): void
+    {
+        $blocks = $this->draft()->blocks ?? [];
+        $found = BlockTree::find($blocks, $uid);
+
+        if ($found === null) {
+            $this->cantDoThat();
+
+            return;
+        }
+
+        $label = Str::limit(trim(preg_replace('/\s+/', ' ', $label) ?? ''), 60, '');
+        $path = $found['kind'] === 'block' ? 'data.admin_label' : 'admin_label';
+
+        $this->changeBlocks(BlockTree::update($blocks, $uid, function (array $node) use ($path, $label): array {
+            $label === '' ? Arr::forget($node, $path) : Arr::set($node, $path, $label);
+
+            return $node;
+        }), $uid);
+    }
+
+    /**
      * The page body with the draft's blocks (or $blocks), marked up for the canvas.
      *
      * @param  array<int|string, mixed>|null  $blocks
@@ -381,6 +532,7 @@ class VisualEditor extends ResourcePage
             html: $block['html'] ?? $this->canvasHtml($blocks),
             uid: $block['uid'] ?? null,
             nodes: self::nodesOf($blocks),
+            layers: self::layersOf($blocks),
             fonts: BlockDesign::fontStylesheets($blocks),
             isPreview: $isPreview,
         );

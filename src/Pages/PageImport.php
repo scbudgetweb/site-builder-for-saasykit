@@ -4,7 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Pages;
 
 use Filament\Schemas\Schema;
 use finfo;
-use Illuminate\Http\File;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -12,7 +12,10 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Schemas\PageForm;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
+use ScBudgetWeb\SiteBuilder\Models\MediaFile;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
 use Throwable;
 
@@ -335,15 +338,14 @@ final class PageImport
     private function upload(string $file, string $path, ?string $baseDirectory, bool $allowsSvg): ?string
     {
         $fullPath = str_starts_with($file, '/') ? $file : rtrim($baseDirectory ?? (string) getcwd(), '/').'/'.$file;
-        $types = $allowsSvg ? [...PageBlock::IMAGE_FILE_TYPES, PageBlock::SVG_FILE_TYPE] : PageBlock::IMAGE_FILE_TYPES;
+        $images = app(ImageUploads::class);
+        $types = $images->mimeTypesFor($allowsSvg);
         $type = is_file($fullPath) ? (new finfo(FILEINFO_MIME_TYPE))->file($fullPath) : null;
 
         $problem = match (true) {
             ! is_file($fullPath) => __('No file at :path.', ['path' => $fullPath]),
-            ! in_array($type, $types, true) => $allowsSvg
-                ? __('Not an image the site takes: JPG, PNG, WebP, AVIF or SVG.')
-                : __('Not an image the site takes here: JPG, PNG, WebP or AVIF.'),
-            filesize($fullPath) > PageBlock::IMAGE_MAX_KILOBYTES * 1024 => __('Larger than :size MB.', ['size' => PageBlock::IMAGE_MAX_KILOBYTES / 1024]),
+            ! in_array($type, $types, true) => __('Not an image the site takes here: :types (Website › Media › Images).', ['types' => $images->typeLabelsFor($allowsSvg)]),
+            filesize($fullPath) > $images->maxKilobytes() * 1024 => __('Larger than :size.', ['size' => ImageUploads::megabytes($images->maxKilobytes())]),
             $type === PageBlock::SVG_FILE_TYPE => SafeSvg::problem((string) file_get_contents($fullPath)),
             default => null,
         };
@@ -354,7 +356,8 @@ final class PageImport
             return null;
         }
 
-        $stored = Storage::disk($this->pages->uploadDisk())->putFile($this->pages->uploadDirectory(), new File($fullPath), ['visibility' => 'public']);
+        // Stored and added to the media library as an upload in the editor is (photos processed as Website › Media › Images says).
+        $stored = app(MediaLibrary::class)->store(new UploadedFile($fullPath, basename($fullPath), $type, null, true));
 
         if (! is_string($stored)) {
             $this->error($path, __('The image couldn\'t be stored.'));
@@ -378,6 +381,7 @@ final class PageImport
     {
         if ($this->storedFiles !== []) {
             Storage::disk($this->pages->uploadDisk())->delete($this->storedFiles);
+            MediaFile::query()->whereIn('path', $this->storedFiles)->delete();
         }
     }
 

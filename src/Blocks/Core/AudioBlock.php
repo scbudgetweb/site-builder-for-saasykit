@@ -8,8 +8,10 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
@@ -18,7 +20,7 @@ use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
  * An uploaded sound file (as Divi's Audio module): a card with an optional cover image, the title, artist and a short
  * description, and the browser's own player, which loads nothing until it's played (preload="none"). The file is kept
  * with the page images, so it's removed with them once nothing uses it. Design › Items styles the card. The types and
- * largest size taken are set in Website › Media (AudioUploads).
+ * largest size taken are set in Website › Media › Audio (AudioUploads).
  */
 class AudioBlock extends PageBlock
 {
@@ -59,7 +61,7 @@ class AudioBlock extends PageBlock
             ...static::headingFields(),
             FileUpload::make('audio')
                 ->label(__('Sound file'))
-                ->helperText(fn (): string => __('An :types file, up to :size (Website › Media). MP3 plays in every browser.', [
+                ->helperText(fn (): string => __('An :types file, up to :size (Website › Media › Audio). MP3 plays in every browser.', [
                     'types' => app(AudioUploads::class)->typeLabels(),
                     'size' => AudioUploads::megabytes(app(AudioUploads::class)->maxKilobytes()),
                 ]))
@@ -70,6 +72,7 @@ class AudioBlock extends PageBlock
                 ->acceptedFileTypes($uploads->mimeTypes())
                 ->maxSize($uploads->maxKilobytes())
                 // As imageUpload(): trust any file in the pages upload folder, and nothing else on the disk (lesson 1).
+                ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => app(MediaLibrary::class)->store($file))
                 ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => app(PageService::class)->isPageUpload($file)),
             Grid::make(['default' => 1, 'sm' => 2])->schema([
                 TextInput::make('title')

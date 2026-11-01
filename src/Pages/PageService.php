@@ -9,10 +9,12 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use League\Flysystem\FileAttributes;
 use League\Flysystem\StorageAttributes;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
+use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 use Throwable;
@@ -176,9 +178,9 @@ class PageService
     }
 
     /**
-     * Deletes files removed from a page or library block on save, unless another page (including one in the bin,
-     * which can be restored), a library block or a kept revision (which can be restored too) still uses them, e.g.
-     * after Duplicate or Save to library.
+     * Deletes files removed from a page or library block on save, unless they're in the media library (kept until
+     * someone deletes them there), or another page (including one in the bin, which can be restored), a library block,
+     * a template or a kept revision (which can be restored too) still uses them, e.g. after Duplicate or Save to library.
      *
      * The match is a plain LIKE with no escape characters, which works the same on SQLite and MySQL (lesson 13).
      * An "_" in a file name matches any character, which can only keep a file, never delete one that's in use.
@@ -187,15 +189,18 @@ class PageService
      */
     public function deleteUnusedUploads(array $removedPaths, ?Page $page = null, ?SavedBlock $exceptSavedBlock = null): void
     {
+        // A file in the media library stays until someone deletes it there.
+        $kept = array_flip(app(MediaLibrary::class)->recordedPaths($removedPaths));
+
         foreach ($removedPaths as $path) {
-            if (! $this->isUploadInUse($path, $page, $exceptSavedBlock)) {
+            if (! isset($kept[$path]) && ! $this->isUploadInUse($path, $page, $exceptSavedBlock)) {
                 Storage::disk($this->uploadDisk())->delete($path);
             }
         }
     }
 
     /**
-     * Whether a page (including one in the bin), a library block, a kept revision or a visual builder draft uses the
+     * Whether a page (including one in the bin), a library block, a template, a kept revision or a visual builder draft uses the
      * upload, leaving out the page or library block being changed.
      */
     public function isUploadInUse(string $path, ?Page $exceptPage = null, ?SavedBlock $exceptSavedBlock = null): bool
@@ -213,6 +218,7 @@ class PageService
                 ->when($exceptSavedBlock, fn ($query) => $query->whereKeyNot($exceptSavedBlock->getKey()))
                 ->where('blocks', 'like', $pattern)
                 ->exists()
+            || Template::query()->where('blocks', 'like', $pattern)->exists()
             || PageRevision::query()->where('snapshot', 'like', $pattern)->exists()
             // A visual builder draft, including what its undo and redo could bring back.
             || PageDraft::query()->where(fn ($query) => $query

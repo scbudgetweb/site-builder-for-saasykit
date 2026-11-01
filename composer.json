@@ -12,8 +12,12 @@
         "illuminate/support": "^12.0|^13.0"
     },
     "require-dev": {
+        "intervention/image": "^4.0",
         "orchestra/testbench": "^10.0|^11.0",
         "phpunit/phpunit": "^11.0|^12.0"
+    },
+    "suggest": {
+        "intervention/image": "^4.0 (with Laravel 13): lets Website › Media settings shrink large photos and remove their location data on upload"
     },
     "autoload": {
         "psr-4": {

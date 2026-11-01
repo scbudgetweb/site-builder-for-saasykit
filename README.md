@@ -122,7 +122,7 @@ The site's look in one place: logos, colours, fonts, buttons, corners and shadow
    // Straight after SaaSykit's sitemap, which rewrites robots.txt.
    Schedule::command('app:generate-sitemap')->everyOddHour()->then(fn () => Artisan::call('site-builder:sitemap'));
 
-   // Page and Branding uploads (images and sound files) nothing uses (older than a day).
+   // Uploads abandoned before they reached the media library, and Branding images, that nothing uses (older than a day).
    Schedule::command('site-builder:clean-uploads')->daily();
 
    // Contact form messages older than site-builder.contact.keep_days.
@@ -140,7 +140,8 @@ Everything sits in one navigation group, **Website** by default:
 | Navigation | `update pages` |
 | Branding | `update settings` |
 | Legal pages | `update settings` |
-| Media | `update settings` |
+| Media: Library tab | `update pages` |
+| Media: Images and Audio tabs | `update settings` |
 
 The package's migration creates the page permissions and gives them to the `admin` role. Every permission name can be changed in `config/site-builder.php`.
 
@@ -177,7 +178,7 @@ Your copy doesn't update with the package. After each package update, check the 
 | `pages.revisions` | `30` | Revisions kept per page |
 | `pages.cache` | `true` (`SITE_BUILDER_PAGE_CACHE`) | Cache the HTML of pages whose blocks are all cacheable |
 | `uploads.disk` / `directory` | `public` / `site-builder` | Where logos, page images and Audio blocks' sound files are stored |
-| `livewire_upload_size` | `true` | Raises Livewire's temporary upload limit (`temporary_file_upload.rules`' `max:`) to the largest sound file set in Website › Media, and its `max_upload_time` to 30 minutes, never lowering them. `false` leaves them alone |
+| `livewire_upload_size` | `true` | Raises Livewire's temporary upload limit (`temporary_file_upload.rules`' `max:`) to the largest image or sound file set in Website › Media, and its `max_upload_time` to 30 minutes, never lowering them. `false` leaves them alone |
 | `livewire_nesting_depth` | `48` | Raises Livewire's `payload.max_nesting_depth` to this (never lowers it, at most 128), so lists, tables and quotes in rich text can be edited in the builder's panels. `false` leaves Livewire's setting alone |
 
 ## Extending it

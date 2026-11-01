@@ -23,9 +23,11 @@ use ScBudgetWeb\SiteBuilder\Console\CleanUnusedUploadsCommand;
 use ScBudgetWeb\SiteBuilder\Console\GeneratePageSitemapCommand;
 use ScBudgetWeb\SiteBuilder\Console\ImportPageCommand;
 use ScBudgetWeb\SiteBuilder\Console\InstallCommand;
+use ScBudgetWeb\SiteBuilder\Console\SyncMediaLibraryCommand;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
 use ScBudgetWeb\SiteBuilder\Livewire\ContactForm;
 use ScBudgetWeb\SiteBuilder\Livewire\MailingListSignup;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Models\Template;
@@ -36,6 +38,7 @@ use ScBudgetWeb\SiteBuilder\Pages\SavedBlockPolicy;
 use ScBudgetWeb\SiteBuilder\Pages\Slot;
 use ScBudgetWeb\SiteBuilder\Pages\TemplatePolicy;
 use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
+use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\Support\LivewireLimits;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
@@ -54,6 +57,7 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->app->singleton(Branding::class);
         $this->app->singleton(BrandingStyle::class);
         $this->app->singleton(PageService::class);
+        $this->app->scoped(MediaLibrary::class);
         $this->app->singleton(BlockRegistry::class);
         $this->app->singleton(PageRenderer::class);
         $this->app->singleton(BlockPresets::class);
@@ -84,11 +88,11 @@ class SiteBuilderServiceProvider extends ServiceProvider
         // Room for rich text's nested updates in the builder's panels (Livewire allows 10 path parts by default).
         LivewireLimits::apply();
 
-        // Room in Livewire's upload limit for the largest sound file Audio blocks take (Website › Media), once settings
-        // can be read. Before the package's tables exist (a fresh install), Livewire's own limit stands.
+        // Room in Livewire's upload limit for the largest image or sound file pages take (Website › Media), once
+        // settings can be read. Before the package's tables exist (a fresh install), Livewire's own limit stands.
         $this->app->booted(function (): void {
             try {
-                LivewireLimits::raiseUploadSize($this->app->make(AudioUploads::class)->maxKilobytes());
+                LivewireLimits::raiseUploadSize(max($this->app->make(AudioUploads::class)->maxKilobytes(), $this->app->make(ImageUploads::class)->maxKilobytes()));
             } catch (Throwable) {
                 //
             }
@@ -129,7 +133,7 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->registerPanelHooks();
 
         if ($this->app->runningInConsole()) {
-            $this->commands([InstallCommand::class, GeneratePageSitemapCommand::class, CleanUnusedUploadsCommand::class, ImportPageCommand::class]);
+            $this->commands([InstallCommand::class, GeneratePageSitemapCommand::class, CleanUnusedUploadsCommand::class, ImportPageCommand::class, SyncMediaLibraryCommand::class]);
 
             $this->publishes([__DIR__.'/../config/site-builder.php' => config_path('site-builder.php')], 'site-builder-config');
             $this->publishes([__DIR__.'/../resources/fonts' => public_path(Branding::PACKAGE_FONTS_DIRECTORY)], 'site-builder-assets');

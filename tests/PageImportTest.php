@@ -171,9 +171,9 @@ class PageImportTest extends PageTestCase
 
         $this->assertCount(4, $result->errors);
         $this->assertStringStartsWith('blocks.0.data.image: ', $result->errors[0]);
-        $this->assertSame('blocks.1.data.image: Not an image the site takes: JPG, PNG, WebP, AVIF or SVG.', $result->errors[1]);
+        $this->assertSame('blocks.1.data.image: Not an image the site takes here: JPG, PNG, WebP, AVIF or SVG (Website › Media › Images).', $result->errors[1]);
         $this->assertSame('blocks.2.data.image: No file at '.$this->folder.'/images/missing.png.', $result->errors[2]);
-        $this->assertSame('share_image: Not an image the site takes here: JPG, PNG, WebP or AVIF.', $result->errors[3]);
+        $this->assertSame('share_image: Not an image the site takes here: JPG, PNG, WebP or AVIF (Website › Media › Images).', $result->errors[3]);
         $this->assertSame([], Storage::disk('public')->allFiles('site-builder/pages'), 'The good one goes again too.');
     }
 

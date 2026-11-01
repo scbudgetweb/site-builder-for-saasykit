@@ -3,42 +3,66 @@
 namespace ScBudgetWeb\SiteBuilder\Filament\Pages;
 
 use Filament\Actions\Action;
-use Filament\Forms\Components\CheckboxList;
-use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Actions;
-use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\EmbeddedTable;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
+use Livewire\Attributes\Session;
+use Livewire\Attributes\Url;
+use ScBudgetWeb\SiteBuilder\Filament\Pages\Media\LibraryTable;
+use ScBudgetWeb\SiteBuilder\Filament\Pages\Media\SettingsFields;
 use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
+use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 
 /**
- * Admin › Website › Media: what can be uploaded to pages. Its Audio tab sets the sound files Audio blocks take: the
- * types, from a fixed list of plain sound formats, and the largest file, shown against the server's own limit, which
- * the site can't raise by itself.
+ * Admin › Website › Media, in tabs, as the tenant page's relation managers are:
+ * - Library: every image and sound file uploaded to pages (LibraryTable), for page editors
+ *   (site-builder.permissions.media_library);
+ * - Images and Audio: what pages can upload (SettingsFields), for administrators (site-builder.permissions.media).
+ * The tab is in the address (?tab=images), so a link or a refresh opens it again.
  *
- * @property-read Schema $form
+ * @property-read Schema $imagesForm
+ * @property-read Schema $audioForm
  */
-class ManageMedia extends Page
+class ManageMedia extends Page implements HasTable
 {
-    protected string $view = 'site-builder::filament.pages.manage-media';
+    use InteractsWithTable;
+
+    public const TABS = ['library', 'images', 'audio'];
 
     protected static ?int $navigationSort = 5;
 
     protected static ?string $slug = 'media';
 
+    #[Url(as: 'tab')]
+    public ?string $activeTab = 'library';
+
+    /** The library as "grid" (thumbnails) or "list" (a table with sizes and dates), remembered for the session. */
+    #[Session(key: 'site-builder.media-layout')]
+    public string $libraryLayout = 'grid';
+
     /**
      * @var array<string, mixed>|null
      */
-    public ?array $data = [];
+    public ?array $imageData = [];
+
+    /**
+     * @var array<string, mixed>|null
+     */
+    public ?array $audioData = [];
 
     public static function getNavigationGroup(): ?string
     {
@@ -57,96 +81,152 @@ class ManageMedia extends Page
 
     public function getSubheading(): ?string
     {
-        return __('What can be uploaded to your pages.');
+        return $this->activeTab === 'library'
+            ? __('Images and sound files uploaded to your pages. A file stays here until you delete it, and one that\'s in use can\'t be deleted.')
+            : __('What can be uploaded to your pages.');
     }
 
     public static function canAccess(): bool
     {
-        $permission = config('site-builder.permissions.media', 'update settings');
-
-        return is_string($permission) && (bool) auth()->user()?->can($permission);
+        return static::canSeeLibrary() || static::canChangeSettings();
     }
 
-    public function mount(AudioUploads $audio): void
+    public static function canSeeLibrary(): bool
     {
-        $this->form->fill([
-            'audio_types' => $audio->types(),
-            'audio_max_megabytes' => $audio->chosenMegabytes(),
+        return self::userCan(config('site-builder.permissions.media_library', 'update pages'));
+    }
+
+    public static function canChangeSettings(): bool
+    {
+        return self::userCan(config('site-builder.permissions.media', 'update settings'));
+    }
+
+    public function mount(ImageUploads $images, AudioUploads $audio, Settings $settings): void
+    {
+        $allowed = $this->allowedTabs();
+
+        if (! in_array($this->activeTab, $allowed, true)) {
+            $this->activeTab = $allowed[0] ?? 'library';
+        }
+
+        if (static::canChangeSettings()) {
+            $this->imagesForm->fill(SettingsFields::imageState($images, $settings));
+            $this->audioForm->fill(SettingsFields::audioState($audio));
+        }
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        return $schema->components([
+            Tabs::make()
+                ->key('mediaTabs')
+                ->livewireProperty('activeTab')
+                ->contained(false)
+                ->tabs([
+                    'library' => Tab::make(__('Library'))
+                        ->icon(Heroicon::OutlinedPhoto)
+                        ->visible(fn (): bool => static::canSeeLibrary())
+                        ->schema([EmbeddedTable::make()]),
+                    'images' => Tab::make(__('Images'))
+                        ->icon(Heroicon::OutlinedAdjustmentsHorizontal)
+                        ->visible(fn (): bool => static::canChangeSettings())
+                        ->schema([EmbeddedSchema::make('imagesForm')]),
+                    'audio' => Tab::make(__('Audio'))
+                        ->icon(Heroicon::OutlinedMusicalNote)
+                        ->visible(fn (): bool => static::canChangeSettings())
+                        ->schema([EmbeddedSchema::make('audioForm')]),
+                ]),
         ]);
     }
 
-    public function form(Schema $schema): Schema
+    public function table(Table $table): Table
+    {
+        return LibraryTable::configure($table, $this);
+    }
+
+    public function imagesForm(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Form::make([
-                    Tabs::make()
-                        ->persistTabInQueryString('media-tab')
-                        ->tabs([
-                            Tab::make(__('Audio'))
-                                ->icon(Heroicon::OutlinedMusicalNote)
-                                ->schema($this->audioFields()),
-                        ]),
-                ])
-                    ->livewireSubmitHandler('save')
-                    ->footer([
-                        Actions::make([
-                            Action::make('save')
-                                ->label(__('Save changes'))
-                                ->submit('save'),
-                        ]),
-                    ]),
+                Form::make([Section::make()->schema(SettingsFields::images())])
+                    ->livewireSubmitHandler('saveImages')
+                    ->footer([Actions::make([Action::make('saveImages')->label(__('Save changes'))->submit('saveImages')])]),
             ])
-            ->statePath('data');
+            ->statePath('imageData');
     }
 
-    public function save(Settings $settings): void
+    public function audioForm(Schema $schema): Schema
     {
-        $data = $this->form->getState();
+        return $schema
+            ->components([
+                Form::make([Section::make()->schema(SettingsFields::audio())])
+                    ->livewireSubmitHandler('saveAudio')
+                    ->footer([Actions::make([Action::make('saveAudio')->label(__('Save changes'))->submit('saveAudio')])]),
+            ])
+            ->statePath('audioData');
+    }
 
-        $settings->set([
-            AudioUploads::TYPES_SETTING => array_values(array_intersect(array_keys(AudioUploads::TYPES), (array) ($data['audio_types'] ?? []))),
-            AudioUploads::MEGABYTES_SETTING => (int) $data['audio_max_megabytes'],
-        ]);
+    public function saveImages(Settings $settings): void
+    {
+        abort_unless(static::canChangeSettings(), 403);
 
+        $settings->set(SettingsFields::imageSettings($this->imagesForm->getState()));
+        $this->savedNotification();
+    }
+
+    public function saveAudio(Settings $settings): void
+    {
+        abort_unless(static::canChangeSettings(), 403);
+
+        $settings->set(SettingsFields::audioSettings($this->audioForm->getState()));
+        $this->savedNotification();
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $isLibrary = fn (): bool => $this->activeTab === 'library' && static::canSeeLibrary();
+
+        return [
+            Action::make('showList')
+                ->label(__('List'))
+                ->icon(Heroicon::OutlinedListBullet)
+                ->color('gray')
+                ->visible(fn (): bool => $isLibrary() && $this->libraryLayout !== 'list')
+                ->action(fn () => $this->useLayout('list')),
+            Action::make('showGrid')
+                ->label(__('Grid'))
+                ->icon(Heroicon::OutlinedSquares2x2)
+                ->color('gray')
+                ->visible(fn (): bool => $isLibrary() && $this->libraryLayout === 'list')
+                ->action(fn () => $this->useLayout('grid')),
+            LibraryTable::uploadAction()->visible($isLibrary),
+        ];
+    }
+
+    public function useLayout(string $layout): void
+    {
+        $this->libraryLayout = $layout === 'list' ? 'list' : 'grid';
+        $this->resetTable();
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function allowedTabs(): array
+    {
+        return array_values(array_filter(self::TABS, fn (string $tab): bool => $tab === 'library' ? static::canSeeLibrary() : static::canChangeSettings()));
+    }
+
+    private function savedNotification(): void
+    {
         Notification::make()
             ->title(__('Media settings saved'))
             ->success()
             ->send();
     }
 
-    /**
-     * @return array<int, mixed>
-     */
-    private function audioFields(): array
+    private static function userCan(mixed $permission): bool
     {
-        $serverKilobytes = app(AudioUploads::class)->serverMaxKilobytes();
-
-        return [
-            CheckboxList::make('audio_types')
-                ->label(__('File types Audio blocks take'))
-                ->helperText(__('MP3 plays in every browser; M4A, OGG and WAV in every current one. FLAC and WebM don\'t play in every browser, so offer them only alongside a download.'))
-                ->options(array_map(fn (array $type): string => $type[0], AudioUploads::TYPES))
-                ->descriptions(array_map(fn (array $type): string => '.'.implode(', .', $type[1]), AudioUploads::TYPES))
-                ->columns(['default' => 1, 'sm' => 2, 'lg' => 3])
-                ->required()
-                ->minItems(1),
-            TextInput::make('audio_max_megabytes')
-                ->label(__('Largest sound file'))
-                ->helperText(__('An hour\'s talk at 128 kbps is about 60 MB. Only page editors upload files, and each file stays on your site\'s storage until nothing uses it.'))
-                ->numeric()
-                ->integer()
-                ->minValue(1)
-                ->maxValue(AudioUploads::MAX_MEGABYTES)
-                ->suffix('MB')
-                ->required()
-                ->live(onBlur: true),
-            Callout::make(__('Your server takes uploads up to :size', ['size' => $serverKilobytes === null ? __('any size') : AudioUploads::megabytes($serverKilobytes)]))
-                ->description(fn (Get $get): string => $serverKilobytes !== null && is_numeric($get('audio_max_megabytes')) && (int) $get('audio_max_megabytes') * 1024 > $serverKilobytes
-                    ? __('That\'s less than the size above, so Audio blocks take files up to :size until your host raises PHP\'s upload_max_filesize and post_max_size (and the web server\'s own limit, such as nginx\'s client_max_body_size).', ['size' => AudioUploads::megabytes($serverKilobytes)])
-                    : __('Set by PHP\'s upload_max_filesize and post_max_size. If large files still fail to upload, ask your host about the web server\'s own limit too (such as nginx\'s client_max_body_size).'))
-                ->color(fn (Get $get): string => $serverKilobytes !== null && is_numeric($get('audio_max_megabytes')) && (int) $get('audio_max_megabytes') * 1024 > $serverKilobytes ? 'warning' : 'info')
-                ->icon(Heroicon::OutlinedServer),
-        ];
+        return is_string($permission) && (bool) auth()->user()?->can($permission);
     }
 }

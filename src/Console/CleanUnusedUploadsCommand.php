@@ -7,11 +7,13 @@ use Illuminate\Contracts\Console\Isolatable;
 use Illuminate\Support\Facades\Storage;
 use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingField;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 
 /**
  * Deletes uploads that nothing uses:
- * - page images that no page (including the bin), library block or kept revision uses;
+ * - page uploads that aren't in the media library (a file there stays until someone deletes it in Website › Media
+ *   library) and that no page (including the bin), library block, template or kept revision uses;
  * - Branding images (logos, icons, banner images, app sections' images) that no Branding setting uses.
  * They're left behind when an image is uploaded and the page or Branding is then never saved. Only files older than a
  * day are touched, so an editor that's still open keeps its new uploads. Schedule it in the host app, e.g. daily.
@@ -24,7 +26,7 @@ class CleanUnusedUploadsCommand extends Command implements Isolatable
 
     protected $description = 'Delete site builder page and Branding images that nothing uses';
 
-    public function handle(PageService $pages, Branding $branding): int
+    public function handle(PageService $pages, Branding $branding, MediaLibrary $library): int
     {
         $disk = Storage::disk($pages->uploadDisk());
         $olderThan = now()->subHours(max(1, (int) $this->option('hours')))->getTimestamp();
@@ -32,8 +34,10 @@ class CleanUnusedUploadsCommand extends Command implements Isolatable
         $deleted = 0;
 
         $brandingInUse = array_flip($branding->usedUploads());
+        $pageUploads = array_values(array_filter($disk->allFiles($pages->uploadDirectory()), fn (string $path): bool => $pages->isPageUpload($path)));
+        $inLibrary = array_flip($library->recordedPaths($pageUploads));
         $unused = [
-            ...array_filter($disk->allFiles($pages->uploadDirectory()), fn (string $path): bool => $pages->isPageUpload($path) && ! $pages->isUploadInUse($path)),
+            ...array_filter($pageUploads, fn (string $path): bool => ! isset($inLibrary[$path]) && ! $pages->isUploadInUse($path)),
             ...array_filter($disk->allFiles($branding->uploadDirectory()), fn (string $path): bool => BrandingField::isBrandingUpload($path) && ! isset($brandingInUse[$path])),
         ];
 

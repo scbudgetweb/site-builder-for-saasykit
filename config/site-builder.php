@@ -50,8 +50,10 @@ return [
     'permissions' => [
         'branding' => 'update settings',
         'legal' => 'update settings',
-        // Website › Media: the sound files Audio blocks take.
+        // Website › Media's Images and Audio tabs: what pages can upload.
         'media' => 'update settings',
+        // Website › Media's Library tab: seeing, uploading, downloading and deleting the files pages use.
+        'media_library' => 'update pages',
         'mailing_lists' => 'update settings',
         // Reading and deleting what visitors sent through Contact form blocks.
         'contact_messages' => 'update settings',
@@ -139,8 +141,8 @@ return [
     |--------------------------------------------------------------------------
     |
     | Logos, banners and images in page blocks are stored on this (public) disk,
-    | under the given folder. Audio blocks' sound files go there too: their
-    | types and largest size are set in Website › Media.
+    | under the given folder. Audio blocks' sound files go there too. The
+    | files, and what pages can upload, are in Website › Media.
     |
     */
 
@@ -184,7 +186,7 @@ return [
     |
     | Livewire refuses any upload over its temporary upload limit (12 MB by
     | default), whatever the field allows. The package raises that limit to
-    | the largest sound file Audio blocks take (Website › Media), and the
+    | the largest image or sound file pages take (Website › Media), and the
     | time an upload may take to 30 minutes, never lowering either. Each
     | field still checks its own size. Set it to false to leave Livewire's
     | own settings as they are (raise them yourself for large sound files).

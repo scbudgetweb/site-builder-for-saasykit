@@ -278,11 +278,23 @@ cat about.json | php artisan site-builder:page -
 
 - The page settings are `title`, `slug`, `status` (`draft` unless it says `published`), `replaces`, `show_page_banner`, `seo_title`, `seo_description`, `share_image`, `noindex` and `blocks`. With `--update`, only the settings given change.
 - A block is `{"type", "data"}`; its data uses the same keys the editor saves (a saved page's blocks are the best examples). A Section's data has `rows`, each with a `layout` (`stacked`, `2`, `1-2`, `3` …) and `columns`, each with its `blocks`.
-- An image is a page upload's path (e.g. `site-builder/pages/….jpg`, as *Choose from uploads* lists), or `file:` and a path relative to the JSON file to upload one. Files get an upload's checks: JPG, PNG, WebP, AVIF or a plain SVG, up to 2 MB; no SVG for a share image. `file:` is for images only: an Audio block's `audio` is the path of a sound file already uploaded to the pages folder.
+- An image is a page upload's path (e.g. `site-builder/pages/….jpg`, as *Choose from uploads* lists), or `file:` and a path relative to the JSON file to upload one. Files get an upload's checks: the types and size in Website › Media › Images (JPG, PNG, WebP, AVIF or a plain SVG, up to 2 MB, as standard); no SVG for a share image. They're processed as Website › Media › Images says and join the media library. `file:` is for images only: an Audio block's `audio` is the path of a sound file already uploaded to the pages folder.
 - Problems are listed by their place in the JSON (`blocks.2.data.items.0.title: The title field is required.`), and nothing is saved, including uploaded files. It also refuses what the form would drop without a word: an unknown block type, a block a Section's column can't take, a setting that doesn't exist (often a typo), text where a number or yes/no goes, and an image that isn't an uploaded file.
 - A list (repeater) holds only the rows given: none come from its defaults, so a block that needs at least one row says so.
 - A setting that another one hides (e.g. a custom background colour when the background isn't *Custom*) is left out with a warning.
 - In code: `app(PageImport::class)->import($array, $folderForFiles, update: false, dryRun: false)` returns a `PageImportResult` (`errors`, `warnings`, `page`, `isNew`).
+
+## Media library
+
+Every file uploaded to pages has a row in `site_builder_media_files` (`Models\MediaFile`): its path, kind (`image`, `svg`, `audio` or `other`), name, type, size, dimensions, alt text and who uploaded it. Blocks still store the file's path, so nothing in them changes.
+
+- **Storing an upload:** `Media\MediaLibrary::store($uploadedFile)` puts it in the pages upload folder, processes a photo as Website › Media › Images says, adds the row and returns the path. `PageBlock::imageUpload()` and the Audio block's field use it, so an app block using `imageUpload()` gets the library by itself. An app's own `FileUpload` into the pages folder should call it too: `->saveUploadedFileUsing(fn (TemporaryUploadedFile $file) => app(MediaLibrary::class)->store($file))`.
+- **Keeping files:** a file with a row stays until someone deletes it in Website › Media's Library tab. `PageService::deleteUnusedUploads()` and `site-builder:clean-uploads` skip it, and still delete page uploads without a row (an upload abandoned mid-edit).
+- **In use:** `usedPaths()` lists the paths current content uses (pages, including the bin, library blocks, templates and drafts with their undo and redo). `isUsed($path)` checks one, `usesOf($path)` lists the places, with links, plus drafts and kept revisions. `delete($file)` refuses a file in use.
+- **Existing files:** `recordExisting()` (`php artisan site-builder:media-sync`) adds files in the pages folder that have no row. The migration runs it once.
+- **A folder per tenant:** the library shows `MediaFile::query()->inUploadFolder($pages->uploadDirectory())`, so each upload folder sees only its own files. Run `site-builder:media-sync` for each tenant's folder after upgrading.
+- **What's taken:** `Settings\ImageUploads` and `Settings\AudioUploads` (both `Settings\UploadRules`) give each kind's types (`types()`, `mimeTypes()`), the largest file after the server's limit (`maxKilobytes()`) and, for images, `maxWidth()`, `stripsLocation()` and `canProcess()` (Laravel 13's `Image` facade with Intervention Image 4 and GD). `PageBlock::IMAGE_FILE_TYPES` and `IMAGE_MAX_KILOBYTES` are only the standard values now.
+- **The page:** `Filament\Pages\ManageMedia`, with tabs on a Livewire property (`activeTab`, `?tab=` in the address): Library (`Pages\Media\LibraryTable`), Images and Audio (`Pages\Media\SettingsFields`, the `imagesForm` and `audioForm` schemas). Permissions: `site-builder.permissions.media_library` (`update pages`) for Library, `site-builder.permissions.media` (`update settings`) for Images and Audio; either opens the page.
 
 ## Contact forms
 
@@ -314,7 +326,8 @@ Schedule these commands in the host:
 | Command | When |
 |---|---|
 | `site-builder:sitemap` | Straight after SaaSykit's `app:generate-sitemap`, which rewrites `robots.txt` |
-| `site-builder:clean-uploads` | Once a day. It deletes images nothing uses that are older than a day: page images no page, library block or revision uses, and Branding images no Branding setting uses (the package's or the app's sections'). `--dry-run` lists them |
+| `site-builder:clean-uploads` | Once a day. It deletes files nothing uses that are older than a day: page uploads that never reached the media library (files in it stay until someone deletes them there) and that no page, library block, template or revision uses, and Branding images no Branding setting uses (the package's or the app's sections'). `--dry-run` lists them |
+| `site-builder:media-sync` | When needed. Adds files in the pages upload folder that aren't in the media library yet (the migration adds those already uploaded; run it for a folder per tenant, or after copying files in by hand) |
 | `model:prune` | Once a day (Laravel's own). It deletes Contact form messages older than `site-builder.contact.keep_days` (365 by default; `SITE_BUILDER_CONTACT_KEEP_DAYS`, 0 keeps them) |
 
 If your host's cron can skip minutes, avoid schedules pinned to one minute (`dailyAt()`, `hourly()`). Hall Booker uses its own `atMostEvery()` macro for this.

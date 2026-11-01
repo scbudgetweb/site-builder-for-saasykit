@@ -30,6 +30,7 @@ use Filament\Schemas\Components\View;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Eyebrow;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\Design\Items;
@@ -42,8 +43,10 @@ use ScBudgetWeb\SiteBuilder\Filament\Forms\EyebrowInput;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\HeadingInput;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteRichEditor;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
 use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
@@ -56,6 +59,7 @@ use Throwable;
  */
 abstract class PageBlock
 {
+    /** The standard image types. What image fields take is set in Website › Media › Images (ImageUploads). */
     public const IMAGE_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
 
     /** Block images may also be SVGs, checked on upload (SafeSvg), except where only a picture file works (a share image). */
@@ -67,6 +71,7 @@ abstract class PageBlock
     /** The icon beside a setting whose tooltip explains it (->hintIcon(PageBlock::HELP_ICON, __('…'))). */
     public const HELP_ICON = Heroicon::OutlinedQuestionMarkCircle;
 
+    /** The standard largest image. What image fields take is set in Website › Media › Images (ImageUploads). */
     public const IMAGE_MAX_KILOBYTES = 2048;
 
     /** A button's own colours instead of a Branding button style. */
@@ -725,12 +730,15 @@ abstract class PageBlock
     }
 
     /**
-     * A block image: JPG, PNG, WebP or AVIF, and (with $allowsSvg) an SVG, which stays sharp at any size. An SVG is served
-     * from the site's own address, so it's only accepted when it's a plain drawing, with no scripts or links (SafeSvg).
+     * A block image, of the types and up to the size set in Website › Media › Images (JPG, PNG, WebP or AVIF up
+     * to 2 MB as standard), and (with $allowsSvg, when SVG is on there) an SVG, which stays sharp at any size. An SVG is
+     * served from the site's own address, so it's only accepted when it's a plain drawing, with no scripts or links
+     * (SafeSvg). The file joins the media library as it's stored (MediaLibrary::store()).
      */
     public static function imageUpload(string $name, string $label, bool $allowsSvg = true): FileUpload
     {
         $pages = app(PageService::class);
+        $images = app(ImageUploads::class);
 
         return FileUpload::make($name)
             ->label($label)
@@ -738,9 +746,10 @@ abstract class PageBlock
             ->directory($pages->uploadDirectory())
             ->visibility('public')
             ->image()
-            ->acceptedFileTypes($allowsSvg ? [...self::IMAGE_FILE_TYPES, self::SVG_FILE_TYPE] : self::IMAGE_FILE_TYPES)
+            ->acceptedFileTypes($images->mimeTypesFor($allowsSvg))
             ->rule(new SafeSvg)
-            ->maxSize(self::IMAGE_MAX_KILOBYTES)
+            ->maxSize($images->maxKilobytes())
+            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => app(MediaLibrary::class)->store($file))
             ->imagePreviewHeight('120')
             // Filament only trusts existing paths from a model attribute, but block images live inside the blocks JSON,
             // and a block's panel stores its upload before the page is saved. So trust any file in the pages upload

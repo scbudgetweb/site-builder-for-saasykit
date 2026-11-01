@@ -120,7 +120,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 |---|---|
 | **Gallery** | A grid of images that open larger when clicked |
 | **Video** | A YouTube, Vimeo or Adilo video. See [Videos, maps and privacy](#videos-maps-and-privacy) |
-| **Audio** | An uploaded sound file in a card (MP3, M4A, OGG or WAV, up to 100 MB, as standard; both are set in [Website › Media](media.md)): an optional cover image (a music note without one), the title, an artist or speaker and a short description, then the browser's own player. Nothing downloads until it's played. **Offer a download link** adds a Download link; off, the player's menu leaves Download out too. Design › Items styles the card and each text part. A sound file you remove is deleted once nothing uses it, as images are |
+| **Audio** | An uploaded sound file in a card (MP3, M4A, OGG or WAV, up to 100 MB, as standard; both are set in [Website › Media › Audio](media.md#audio)): an optional cover image (a music note without one), the title, an artist or speaker and a short description, then the browser's own player. Nothing downloads until it's played. **Offer a download link** adds a Download link; off, the player's menu leaves Download out too. Design › Items styles the card and each text part. Sound files are kept in the [media library](media.md#library) |
 | **Map** | A Google map of an address or a place, typed as you'd search for it on Google Maps (no API key or Google account needed). Its zoom (street, neighbourhood, town or wider area) and height, and Design › Image for corners, border and shadow. Optionally, under the map: the address (as typed, or written out on several lines) and a *Get directions* link. See [Videos, maps and privacy](#videos-maps-and-privacy) |
 | **Logo strip** | Partner or sponsor logos: a still row (lined up left, centre or right), a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
 | **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |
@@ -268,13 +268,13 @@ Maps work the same way: until marketing cookies are allowed, a map shows a place
 
 ## Images
 
-Images can be JPG, PNG, WebP, AVIF or SVG, up to 2 MB. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
+Images can be JPG, PNG, WebP, AVIF or SVG, up to 2 MB, as standard; [Website › Media › Images](media.md#images) changes both, and can shrink large photos and remove their location data as they're uploaded. An SVG stays sharp at every size, which suits logos and icons. It must be a plain drawing: one with scripts, links to other files or other active content is refused when you upload it, because uploads are served from the site's own address. If yours is refused, export it again as a plain SVG (most design apps have an option for this), or use a PNG or WebP. A page's **Share image** can't be an SVG, because social sites don't show them. An Image or Image + text block needs **Alternative text**: a short description of the picture for people using screen readers, and for search engines.
 
 Pages can also be built from a JSON file with `php artisan site-builder:page`, checked as the editor checks them: see [Building pages from JSON](developers/extending.md#building-pages-from-json).
 
 To use an image that's already uploaded, click **Choose from uploads** beside any image field: it lists the images uploaded to your pages, newest first, with a picture of each, and you can type part of a file name to search. The same file is used again, not copied. Only page images are listed (not Branding's logos), and a share image's list leaves out SVGs.
 
-An image you remove from a page is deleted from storage once nothing uses it any more. That includes other pages, the block library and the page's kept [revisions](revisions.md).
+Every image you upload goes into the [media library](media.md#library), and stays there when you remove it from a page, so you can use it again. Delete files you no longer need there; one that a page, library block or template uses can't be deleted.
 
 ## Duplicating, deleting and restoring pages
 

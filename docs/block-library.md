@@ -38,4 +38,4 @@ A library block that pages use can't be deleted. You're told which pages use it,
 
 ## Images
 
-Images in a library block are kept as long as any page, library block or page revision uses them. When nothing uses an image any more, it's deleted from storage.
+Images in a library block are in the [media library](media.md#library), and stay there until someone deletes them. One that a library block uses can't be deleted.

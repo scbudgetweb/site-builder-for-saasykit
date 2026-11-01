@@ -173,7 +173,7 @@ Colours, presets and dynamic content:
 Helpers for fields:
 - `headingFields()`;
 - `richText()`, whose output goes through `PageBlock::html()`;
-- `imageUpload()` (with *Choose from uploads* to reuse an uploaded image) and `PageBlock::imageUrl()`;
+- `imageUpload()` and `audioUpload()` (each with *Choose from library*, and storing into the media library) and `PageBlock::imageUrl()`;
 - `iconSelect()` and `IconLibrary::render()`;
 - `buttonsRepeater()`;
 - `columnsSelect()` and `PageBlock::columns()`;

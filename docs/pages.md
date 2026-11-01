@@ -120,7 +120,7 @@ Some built-in pages need a particular block to keep working. If yours is missing
 |---|---|
 | **Gallery** | A grid of images that open larger when clicked |
 | **Video** | A YouTube, Vimeo or Adilo video. See [Videos, maps and privacy](#videos-maps-and-privacy) |
-| **Audio** | An uploaded sound file in a card (MP3, M4A, OGG or WAV, up to 100 MB, as standard; both are set in [Website › Media › Audio](media.md#audio)): an optional cover image (a music note without one), the title, an artist or speaker and a short description, then the browser's own player. Nothing downloads until it's played. **Offer a download link** adds a Download link; off, the player's menu leaves Download out too. Design › Items styles the card and each text part. Sound files are kept in the [media library](media.md#library) |
+| **Audio** | **Where it plays from:** *Upload a file*, *SoundCloud* or *Spotify*. An uploaded sound file (MP3, M4A, OGG or WAV, up to 100 MB, as standard; both are set in [Website › Media › Audio](media.md#audio)) shows in a card: an optional cover image (a music note without one), the title, an artist or speaker and a short description, then the browser's own player. Nothing downloads until it's played. **Offer a download link** adds a Download link; off, the player's menu leaves Download out too. Design › Items styles the card and each text part. Sound files are kept in the [media library](media.md#library). For SoundCloud or Spotify, paste the link to a track or playlist (SoundCloud), or an episode, show, track, album or playlist (Spotify); their own player shows, with no account or key needed. See [Videos, maps and privacy](#videos-maps-and-privacy) |
 | **Map** | A Google map of an address or a place, typed as you'd search for it on Google Maps (no API key or Google account needed). Its zoom (street, neighbourhood, town or wider area) and height, and Design › Image for corners, border and shadow. Optionally, under the map: the address (as typed, or written out on several lines) and a *Get directions* link. See [Videos, maps and privacy](#videos-maps-and-privacy) |
 | **Logo strip** | Partner or sponsor logos: a still row (lined up left, centre or right), a scrolling loop or a carousel. Moving logos have a pause button, and stay still for visitors who turn off animations |
 | **Social follow** | Icons linking to your social profiles, from the app's general settings (web addresses only) |
@@ -264,6 +264,8 @@ Features, steps, stats, image cards and buttons can show an icon. Type to search
 
 Until a visitor accepts marketing cookies, a video shows a still picture with a play button, and nothing loads from YouTube, Vimeo or Adilo until it's clicked. Once marketing cookies are allowed, the player shows straight away. YouTube videos always use its privacy-enhanced mode.
 
+SoundCloud and Spotify players in an Audio block work the same way: a play button with the title until marketing cookies are allowed, and nothing loads from them until it's clicked.
+
 Maps work the same way: until marketing cookies are allowed, a map shows a placeholder with the address, **Show map** and **Open in Google Maps**, and nothing loads from Google until one is clicked. Only the address is sent to Google.
 
 ## Images
@@ -272,7 +274,7 @@ Images can be JPG, PNG, WebP, AVIF or SVG, up to 2 MB, as standard; [Website ›
 
 Pages can also be built from a JSON file with `php artisan site-builder:page`, checked as the editor checks them: see [Building pages from JSON](developers/extending.md#building-pages-from-json).
 
-To use an image that's already uploaded, click **Choose from uploads** beside any image field: it lists the images uploaded to your pages, newest first, with a picture of each, and you can type part of a file name to search. The same file is used again, not copied. Only page images are listed (not Branding's logos), and a share image's list leaves out SVGs.
+To use an image that's already uploaded, click **Choose from library** beside any image field. It shows the [media library](media.md#library) as pictures, newest first: type part of a name to search, filter to images or SVG drawings, and **Show more** for older ones. Click one, then **Use this file**. Or upload a new one there and then. The same file is used again, not copied. If the library has alt text for the image and the block's **Alternative text** is blank, it's filled in for you. A share image's list leaves out SVGs. The Audio block's sound file has **Choose from library** too.
 
 Every image you upload goes into the [media library](media.md#library), and stays there when you remove it from a page, so you can use it again. Delete files you no longer need there; one that a page, library block or template uses can't be deleted.
 

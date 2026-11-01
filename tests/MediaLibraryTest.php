@@ -9,8 +9,10 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\MediaPicker;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageMedia;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\MediaFile;
 use ScBudgetWeb\SiteBuilder\Models\Page;
@@ -349,5 +351,88 @@ class MediaLibraryTest extends PageTestCase
 
         $notReally = UploadedFile::fake()->createWithContent('broken.jpg', 'not an image');
         $this->assertNotNull(app(MediaLibrary::class)->store($notReally));
+    }
+
+    public function test_the_picker_lists_this_sites_files_of_its_kinds_newest_first(): void
+    {
+        $old = $this->libraryFile('old-hall.jpg');
+        $old->forceFill(['created_at' => now()->subDays(3)])->save();
+        $this->libraryFile('logo.svg', '<svg xmlns="http://www.w3.org/2000/svg"/>');
+        $this->libraryFile('talk.mp3', 'sound');
+        $this->libraryFile('new-hall.jpg');
+        MediaFile::query()->create(['disk' => 'public', 'path' => 'other-tenant/pages/x.jpg', 'name' => 'x.jpg', 'kind' => 'image', 'size' => 1]);
+
+        $images = MediaPicker::make('path')->kinds([MediaFile::IMAGE, MediaFile::SVG]);
+        $names = fn (array $result): array => array_column($result['items'], 'name');
+
+        $this->assertSame(['new-hall.jpg', 'logo.svg', 'old-hall.jpg'], $names($images->getMediaForJs()));
+        $this->assertSame(['logo.svg'], $names($images->getMediaForJs(kind: 'svg')));
+        $this->assertSame(['old-hall.jpg'], $names($images->getMediaForJs(search: 'old')));
+        $this->assertSame(['new-hall.jpg', 'logo.svg', 'old-hall.jpg'], $names($images->getMediaForJs(kind: 'audio')), 'A kind it doesn\'t offer is ignored.');
+        $this->assertSame(['talk.mp3'], $names(MediaPicker::make('path')->kinds([MediaFile::AUDIO])->getMediaForJs()));
+        $this->assertSame(['images' => 'Images', 'svg' => 'SVG drawings'], array_combine(['images', 'svg'], array_values($images->getKindFilters())));
+        $this->assertSame([], MediaPicker::make('path')->kinds([MediaFile::AUDIO])->getKindFilters());
+
+        foreach (range(1, MediaPicker::PER_PAGE) as $number) {
+            $this->libraryFile("photo-{$number}.jpg");
+        }
+
+        $first = $images->getMediaForJs();
+        $this->assertCount(MediaPicker::PER_PAGE, $first['items']);
+        $this->assertTrue($first['hasMore']);
+        $this->assertFalse($images->getMediaForJs(page: 2)['hasMore']);
+    }
+
+    public function test_choosing_from_the_library_fills_blank_alt_text(): void
+    {
+        $file = $this->libraryFile('hall.jpg');
+        $file->update(['alt' => 'The main hall set out for a party']);
+        $page = $this->page(['blocks' => [self::block('image', []), self::block('image', ['alt' => 'Our own words'])]]);
+
+        $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), ['path' => $file->path])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame([$file->path], array_values((array) $editor->get('mountedActions.0.data.image')));
+        $this->assertSame('The main hall set out for a party', $editor->get('mountedActions.0.data.alt'));
+
+        $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[1]['uid']]))
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), ['path' => $file->path]);
+
+        $this->assertSame('Our own words', $editor->get('mountedActions.0.data.alt'), 'Alt text already written is kept.');
+    }
+
+    public function test_a_new_file_can_be_uploaded_in_the_picker_and_one_must_be_given(): void
+    {
+        $page = $this->page(['blocks' => [self::block('image', ['alt' => 'The hall'])]]);
+
+        $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), [])
+            ->assertHasActionErrors(['path'])
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), ['upload' => UploadedFile::fake()->image('garden.jpg', 300, 200)])
+            ->assertHasNoActionErrors();
+
+        $path = (string) array_values((array) $editor->get('mountedActions.0.data.image'))[0];
+        $this->assertSame('garden.jpg', MediaFile::query()->where('path', $path)->value('name'));
+        Storage::disk('public')->assertExists($path);
+    }
+
+    public function test_a_sound_file_can_be_chosen_from_the_library(): void
+    {
+        $talk = $this->libraryFile('talk.mp3', 'sound');
+        $hall = $this->libraryFile('hall.jpg');
+        $page = $this->page(['blocks' => [self::block('audio', ['title' => 'Welcome talk'])]]);
+
+        $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('audio', 'mountedActionSchema0'), ['path' => $hall->path])
+            ->assertHasActionErrors(['path'])
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('audio', 'mountedActionSchema0'), ['path' => $talk->path])
+            ->assertHasNoActionErrors();
+
+        $this->assertSame([$talk->path], array_values((array) $editor->get('mountedActions.0.data.audio')));
     }
 }

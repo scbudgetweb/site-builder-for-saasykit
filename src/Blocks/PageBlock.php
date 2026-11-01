@@ -41,11 +41,14 @@ use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\ButtonsRepeater;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\EyebrowInput;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\HeadingInput;
+use ScBudgetWeb\SiteBuilder\Filament\Forms\MediaPicker;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteRichEditor;
 use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
+use ScBudgetWeb\SiteBuilder\Models\MediaFile;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
 use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\IconLibrary;
@@ -64,9 +67,6 @@ abstract class PageBlock
 
     /** Block images may also be SVGs, checked on upload (SafeSvg), except where only a picture file works (a share image). */
     public const SVG_FILE_TYPE = 'image/svg+xml';
-
-    /** How many uploaded images "Choose from uploads" lists before a search. */
-    private const UPLOADED_IMAGES_SHOWN = 60;
 
     /** The icon beside a setting whose tooltip explains it (->hintIcon(PageBlock::HELP_ICON, __('…'))). */
     public const HELP_ICON = Heroicon::OutlinedQuestionMarkCircle;
@@ -733,82 +733,132 @@ abstract class PageBlock
      * A block image, of the types and up to the size set in Website › Media › Images (JPG, PNG, WebP or AVIF up
      * to 2 MB as standard), and (with $allowsSvg, when SVG is on there) an SVG, which stays sharp at any size. An SVG is
      * served from the site's own address, so it's only accepted when it's a plain drawing, with no scripts or links
-     * (SafeSvg). The file joins the media library as it's stored (MediaLibrary::store()).
+     * (SafeSvg). The file joins the media library as it's stored (MediaLibrary::store()), and Choose from library
+     * beside it picks one already there.
      */
     public static function imageUpload(string $name, string $label, bool $allowsSvg = true): FileUpload
     {
-        $pages = app(PageService::class);
+        return self::plainImageUpload($name, $label, $allowsSvg)
+            ->hintAction(self::chooseFromLibrary(isAudio: false, allowsSvg: $allowsSvg));
+    }
+
+    /**
+     * A sound file, of the types and up to the size set in Website › Media › Audio (MP3, M4A, OGG or WAV up to 100 MB as
+     * standard), joining the media library as it's stored, with Choose from library beside it.
+     */
+    public static function audioUpload(string $name, string $label): FileUpload
+    {
+        return self::plainAudioUpload($name, $label)
+            ->helperText(fn (): string => __('An :types file, up to :size (Website › Media › Audio). MP3 plays in every browser.', [
+                'types' => app(AudioUploads::class)->typeLabels(),
+                'size' => AudioUploads::megabytes(app(AudioUploads::class)->maxKilobytes()),
+            ]))
+            ->hintAction(self::chooseFromLibrary(isAudio: true));
+    }
+
+    private static function plainImageUpload(string $name, string $label, bool $allowsSvg): FileUpload
+    {
         $images = app(ImageUploads::class);
+
+        return self::pagesUpload($name, $label)
+            ->image()
+            ->acceptedFileTypes($images->mimeTypesFor($allowsSvg))
+            ->rule(new SafeSvg)
+            ->maxSize($images->maxKilobytes())
+            ->imagePreviewHeight('120');
+    }
+
+    private static function plainAudioUpload(string $name, string $label): FileUpload
+    {
+        $audio = app(AudioUploads::class);
+
+        return self::pagesUpload($name, $label)
+            ->acceptedFileTypes($audio->mimeTypes())
+            ->maxSize($audio->maxKilobytes());
+    }
+
+    /**
+     * A file field storing into the pages upload folder through the media library.
+     */
+    private static function pagesUpload(string $name, string $label): FileUpload
+    {
+        $pages = app(PageService::class);
 
         return FileUpload::make($name)
             ->label($label)
             ->disk($pages->uploadDisk())
             ->directory($pages->uploadDirectory())
             ->visibility('public')
-            ->image()
-            ->acceptedFileTypes($images->mimeTypesFor($allowsSvg))
-            ->rule(new SafeSvg)
-            ->maxSize($images->maxKilobytes())
             ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => app(MediaLibrary::class)->store($file))
-            ->imagePreviewHeight('120')
             // Filament only trusts existing paths from a model attribute, but block images live inside the blocks JSON,
             // and a block's panel stores its upload before the page is saved. So trust any file in the pages upload
             // folder, and nothing else on the disk (Branding files, other uploads…) (lesson 1).
-            ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => app(PageService::class)->isPageUpload($file))
-            ->hintAction(self::chooseUploadedImage($allowsSvg));
+            ->preventFilePathTampering(allowFilePathUsing: fn (string $file): bool => app(PageService::class)->isPageUpload($file));
     }
 
     /**
-     * "Choose from uploads" beside an image field: reuse an image already uploaded to a page, newest first, instead
-     * of uploading it again. Only page uploads are offered (and accepted), so the field still only holds those.
+     * "Choose from library" beside a file field: a file already in the media library (Website › Media), picked from a
+     * grid of thumbnails with a search, or a new one uploaded there and then. The same file is used, not copied. For an
+     * image, the library's alt text fills the field beside it ("alt", or "{name}_alt") when that's blank.
      */
-    private static function chooseUploadedImage(bool $allowsSvg): Action
+    private static function chooseFromLibrary(bool $isAudio, bool $allowsSvg = true): Action
     {
-        $images = fn (): array => app(PageService::class)->uploadedImages($allowsSvg);
-        $options = fn (array $paths): array => collect($paths)
-            ->mapWithKeys(fn (string $path): array => [$path => self::uploadedImageOption($path)])
-            ->all();
+        $kinds = match (true) {
+            $isAudio => [MediaFile::AUDIO],
+            $allowsSvg && app(ImageUploads::class)->allowsSvg() => [MediaFile::IMAGE, MediaFile::SVG],
+            default => [MediaFile::IMAGE],
+        };
 
-        return Action::make('chooseUploadedImage')
-            ->label(__('Choose from uploads'))
-            ->icon(Heroicon::OutlinedPhoto)
-            ->modalHeading(__('Choose an uploaded image'))
-            ->modalDescription(__('Images already uploaded to your pages, newest first. Using one again doesn\'t make a copy.'))
-            ->modalSubmitActionLabel(__('Use image'))
-            ->modalWidth('lg')
+        return Action::make('chooseFromLibrary')
+            ->label(__('Choose from library'))
+            ->icon($isAudio ? Heroicon::OutlinedMusicalNote : Heroicon::OutlinedPhoto)
+            ->modalHeading($isAudio ? __('Choose a sound file') : __('Choose an image'))
+            ->modalDescription(__('From Website › Media, newest first. Using a file again doesn\'t make a copy.'))
+            ->modalSubmitActionLabel(__('Use this file'))
+            ->modalWidth('4xl')
             ->schema([
-                Select::make('image')
-                    ->label(__('Image'))
-                    ->searchable()
-                    ->allowHtml()
-                    ->required()
-                    ->placeholder(__('Choose an image'))
-                    ->helperText(fn (): ?string => $images() === []
-                        ? __('Nothing uploaded yet. Upload an image here once, and it can be chosen in any image field.')
-                        : __('Type part of a file name to search them all.'))
-                    ->options(fn (): array => $options(array_slice($images(), 0, self::UPLOADED_IMAGES_SHOWN)))
-                    ->getSearchResultsUsing(fn (string $search): array => $options(array_slice(array_values(array_filter(
-                        $images(),
-                        fn (string $path): bool => Str::contains(basename($path), $search, ignoreCase: true),
-                    )), 0, self::UPLOADED_IMAGES_SHOWN)))
-                    ->getOptionLabelUsing(fn (?string $value): ?string => is_string($value) ? self::uploadedImageOption($value) : null)
-                    ->in(fn (): array => $images()),
+                MediaPicker::make('path')
+                    ->hiddenLabel()
+                    ->kinds($kinds)
+                    ->required(fn (Get $get): bool => blank($get('upload')))
+                    ->validationMessages(['required' => __('Choose a file, or upload a new one.')]),
+                ($isAudio ? self::plainAudioUpload('upload', __('Or upload a new one')) : self::plainImageUpload('upload', __('Or upload a new one'), $allowsSvg))
+                    ->live(),
             ])
             ->action(function (array $data, FileUpload $component): void {
-                $component->state([(string) Str::uuid() => $data['image']]);
+                $upload = $data['upload'] ?? null;
+                $path = is_array($upload) ? (array_values($upload)[0] ?? null) : $upload;
+                $path = is_string($path) && $path !== '' ? $path : $data['path'];
+
+                $component->state([(string) Str::uuid() => $path]);
                 $component->callAfterStateUpdated();
+
+                self::fillAltFromLibrary($component, (string) $path);
             });
     }
 
     /**
-     * An uploaded image's thumbnail and file name, for the "Choose from uploads" picker.
+     * Fills the image's alt text field ("{name}_alt", or "alt" beside an "image" field) from the library, when it's blank.
      */
-    private static function uploadedImageOption(string $path): string
+    private static function fillAltFromLibrary(FileUpload $component, string $path): void
     {
-        return '<span style="display:flex;align-items:center;gap:0.75rem">'
-            .'<img src="'.e((string) self::imageUrl($path)).'" alt="" loading="lazy" style="width:4rem;height:3rem;flex-shrink:0;object-fit:cover;border-radius:0.25rem;background:#f4f4f5">'
-            .'<span style="overflow-wrap:anywhere">'.e(basename($path)).'</span>'
-            .'</span>';
+        $alt = MediaFile::query()->where('path', $path)->value('alt');
+
+        if (blank($alt)) {
+            return;
+        }
+
+        foreach (array_filter([$component->getName().'_alt', $component->getName() === 'image' ? 'alt' : null]) as $name) {
+            $field = $component->getContainer()->getComponent(fn ($candidate): bool => $candidate instanceof Field && $candidate->getName() === $name, withHidden: true);
+
+            if ($field instanceof Field) {
+                if (blank($field->getState())) {
+                    $field->state($alt);
+                }
+
+                return;
+            }
+        }
     }
 
     /**

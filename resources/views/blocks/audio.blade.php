@@ -1,11 +1,35 @@
 {{--
-    A sound file in a card: the cover image (or a note), the title, artist and description, then the browser's own player.
+    SoundCloud's or Spotify's own player ($embed), click-to-play until marketing cookies are allowed. Or a sound file in
+    a card: the cover image (or a note), the title, artist and description, then the browser's own player.
     preload="none": nothing is downloaded until it's played. Without "Offer a download link", the player's menu leaves
     Download out too (where the browser supports controlslist).
 --}}
 @include('site-builder::blocks.partials.heading')
 
-@if ($audioUrl)
+@if ($embed && $showsPlayerStraightAway)
+    {{-- SoundCloud's or Spotify's own player, at its own height. --}}
+    <iframe src="{{ $embed['url'] }}" title="{{ $title }}" height="{{ $embed['height'] }}" class="block w-full overflow-hidden rounded-sb-card border-0"
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+@elseif ($embed)
+    {{-- Click-to-play: nothing loads from SoundCloud or Spotify until the visitor presses play (GDPR). --}}
+    <div x-data="{ playing: false }" class="relative w-full overflow-hidden rounded-sb-card bg-primary-900" style="height: {{ $embed['height'] }}px">
+        <button type="button" x-show="! playing" @click="playing = true"
+                class="group absolute inset-0 flex h-full w-full items-center gap-4 px-5 text-left text-white focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+                aria-label="{{ __('Play :title from :provider', ['title' => $title, 'provider' => $embed['provider']]) }}">
+            <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white/95 text-primary-600 shadow-lg transition-transform group-hover:scale-110" aria-hidden="true">
+                <svg class="ml-1 h-7 w-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span class="min-w-0">
+                <span class="block truncate font-semibold">{{ $title }}</span>
+                <span class="mt-0.5 block text-xs opacity-80">{{ __('Plays from :provider, which may set cookies.', ['provider' => $embed['provider']]) }}</span>
+            </span>
+        </button>
+        <template x-if="playing">
+            <iframe src="{{ $embed['playUrl'] }}" title="{{ $title }}" class="absolute inset-0 h-full w-full border-0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+        </template>
+    </div>
+@elseif ($audioUrl)
     <div class="sb-items grid">
         <figure class="sb-item m-0 rounded-sb-card border border-current/15 p-4 sm:p-5">
             <div class="flex items-center gap-4">

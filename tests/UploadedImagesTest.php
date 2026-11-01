@@ -8,12 +8,13 @@ use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
+use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 
 /**
- * Every image field can reuse an image already uploaded to a page ("Choose from uploads"), newest first, instead of
- * uploading it again. Only page uploads are offered or accepted.
+ * Every image field can reuse an image already in the media library ("Choose from library"), newest first, instead of
+ * uploading it again. Only library files in this site's upload folder, of the field's kinds, are offered or accepted.
  */
 class UploadedImagesTest extends PageTestCase
 {
@@ -38,6 +39,7 @@ class UploadedImagesTest extends PageTestCase
         }
         $disk->put('site-builder/branding/logo.png', 'image');
         $disk->put('site-builder/pages/old/garden.jpg', 'image');
+        app(MediaLibrary::class)->recordExisting();
     }
 
     public function test_uploaded_images_are_listed_newest_first(): void
@@ -63,7 +65,7 @@ class UploadedImagesTest extends PageTestCase
 
         $editor = Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
             ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
-            ->callAction(TestAction::make('chooseUploadedImage')->schemaComponent('image', 'mountedActionSchema0'), ['image' => 'site-builder/pages/kitchen.webp'])
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), ['path' => 'site-builder/pages/kitchen.webp'])
             ->assertHasNoFormErrors();
 
         $this->assertSame(['site-builder/pages/kitchen.webp'], array_values((array) $editor->get('mountedActions.0.data.image')));
@@ -83,8 +85,8 @@ class UploadedImagesTest extends PageTestCase
         foreach (['site-builder/branding/logo.png', 'site-builder/pages/notes.pdf', 'site-builder/pages/../branding/logo.png'] as $path) {
             Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
                 ->mountAction(TestAction::make('editBlock')->arguments(['uid' => $page->blocks[0]['uid']]))
-                ->callAction(TestAction::make('chooseUploadedImage')->schemaComponent('image', 'mountedActionSchema0'), ['image' => $path])
-                ->assertHasActionErrors(['image']);
+                ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('image', 'mountedActionSchema0'), ['path' => $path])
+                ->assertHasActionErrors(['path']);
         }
     }
 
@@ -95,9 +97,9 @@ class UploadedImagesTest extends PageTestCase
         $page = $this->page();
 
         Livewire::test(EditPage::class, ['record' => $page->getRouteKey()])
-            ->callAction(TestAction::make('chooseUploadedImage')->schemaComponent('share_image', 'form'), ['image' => 'site-builder/pages/logo.svg'])
-            ->assertHasActionErrors(['image'])
-            ->callAction(TestAction::make('chooseUploadedImage')->schemaComponent('share_image', 'form'), ['image' => 'site-builder/pages/hall.jpg'])
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('share_image', 'form'), ['path' => 'site-builder/pages/logo.svg'])
+            ->assertHasActionErrors(['path'])
+            ->callAction(TestAction::make('chooseFromLibrary')->schemaComponent('share_image', 'form'), ['path' => 'site-builder/pages/hall.jpg'])
             ->assertHasNoActionErrors()
             ->call('save')
             ->assertHasNoFormErrors();

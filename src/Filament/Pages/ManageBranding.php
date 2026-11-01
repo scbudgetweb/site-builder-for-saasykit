@@ -22,6 +22,7 @@ use Filament\Schemas\Components\Actions;
 use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
@@ -46,6 +47,7 @@ use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\CustomCss;
 use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 
 /**
  * Admin › Website › Branding: the site's identity (logos, icons, colours, fonts, text sizes, buttons, shapes,
@@ -151,6 +153,8 @@ class ManageBranding extends Page
         }
 
         $state['logo_in_panels'] = $branding->showsLogoInPanels();
+        $state['header_behaviour'] = HeaderBehaviour::clean($branding->get(Branding::HEADER_BEHAVIOUR));
+        $state['back_to_top'] = $branding->backToTop();
 
         foreach (Branding::LOGO_PLACES as $key => [, $defaultVariant]) {
             $state[Str::after($key, 'branding.')] ??= $defaultVariant;
@@ -338,6 +342,21 @@ class ManageBranding extends Page
                                                 $this->colorPairs(__('Button'), ['header_button_color', 'header_button_hover_color', 'header_button_text_color', 'header_button_text_hover_color']),
                                             ]),
                                         ]),
+                                    Section::make(__('Header behaviour'))
+                                        ->description(__('How the standard header behaves as the page scrolls. A header template has its own, under Header settings in its visual builder.'))
+                                        ->schema([
+                                            Group::make(HeaderBehaviour::fields())
+                                                ->statePath('header_behaviour')
+                                                ->columns(['default' => 1, 'md' => 2]),
+                                        ]),
+                                    Section::make(__('Back to top'))
+                                        ->description(__('A small round button in a bottom corner, once visitors have scrolled down a screen or so. It takes them back to the top of the page, in the header button\'s colours.'))
+                                        ->schema([
+                                            Select::make('back_to_top')
+                                                ->label(__('Back to top button'))
+                                                ->options(array_map(fn (string $label): string => __($label), Branding::BACK_TO_TOP_PLACES))
+                                                ->placeholder(__('None')),
+                                        ]),
                                     Section::make(__('Footer'))
                                         ->description(__('Colours for the site footer. Social icons only show for networks with a link in General Settings. Leave blank to keep the standard look.'))
                                         ->schema([
@@ -436,6 +455,10 @@ class ManageBranding extends Page
 
         // Toggles: store "off" as no value, so the standard look applies.
         $values[Branding::LOGO_IN_PANELS] = ($data['logo_in_panels'] ?? false) ? true : null;
+
+        // The standard behaviour is stored as no value.
+        $behaviour = HeaderBehaviour::clean($data['header_behaviour'] ?? []);
+        $values[Branding::HEADER_BEHAVIOUR] = $behaviour === HeaderBehaviour::clean([]) ? null : $behaviour;
 
         foreach (BrandingStyle::BUTTON_SLOTS as $slot) {
             foreach (['uppercase', 'lift'] as $toggle) {

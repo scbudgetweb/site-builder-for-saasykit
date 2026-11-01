@@ -46,5 +46,20 @@
         </div>
     @endif
 
-    @include('site-builder::pages.content', ['page' => $page, 'marksNodes' => $isCanvas ?? false])
+    @if (isset($samplePage))
+        {{-- A header template's canvas: the header, behaving as its Header settings say, over a sample page. --}}
+        @php($headerWrapper = \ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour::wrapper($headerBehaviour ?? [], true))
+        <div {{ (new \Illuminate\View\ComponentAttributeBag($headerWrapper['attributes']))->class(['relative z-40 sb-header-template', ...$headerWrapper['classes']]) }}>
+            @include('site-builder::pages.content', ['page' => $page, 'marksNodes' => $isCanvas ?? false])
+            @if ($headerWrapper['needsScript'])
+                @include('site-builder::theme.partials.header-script')
+            @endif
+        </div>
+        @php(request()->attributes->set(\ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour::OPENING_PAGE_ATTRIBUTE, $samplePage))
+        <div data-sb-sample>
+            {{ app(\ScBudgetWeb\SiteBuilder\Blocks\PageRenderer::class)->render($samplePage) }}
+        </div>
+    @else
+        @include('site-builder::pages.content', ['page' => $page, 'marksNodes' => $isCanvas ?? false])
+    @endif
 </x-layouts.app>

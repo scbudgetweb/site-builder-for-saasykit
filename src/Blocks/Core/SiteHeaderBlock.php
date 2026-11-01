@@ -340,6 +340,7 @@ class SiteHeaderBlock extends PageBlock
             ] : null,
             'heightClasses' => self::HEIGHTS[static::pick($data['height'] ?? null, self::HEIGHTS, 'standard')][1],
             'widthClasses' => self::WIDTHS[static::pick($data['content_width'] ?? null, self::WIDTHS, 'contained')][1],
+            'isOverlayable' => ! $hasOwnBackground,
             'hasHeaderBackground' => ! $hasOwnBackground && static::pick($data['header_background'] ?? null, self::BACKGROUNDS, 'header') === 'header',
             'hasBorder' => ($data['border'] ?? true) !== false,
             'colourStyle' => trim($colourStyle),

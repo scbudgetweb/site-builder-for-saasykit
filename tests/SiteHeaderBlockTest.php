@@ -55,7 +55,7 @@ class SiteHeaderBlockTest extends PageTestCase
     {
         $html = $this->headerHtml();
 
-        $this->assertStringContainsString('class="sb-header-bar bg-sb-header-bg text-sb-header-text border-b border-current/10"', $html);
+        $this->assertStringContainsString('class="sb-header-bar bg-sb-header-bg text-sb-header-text border-b border-current/10 sb-header-overlayable"', $html);
         $this->assertMatchesRegularExpression('/aria-label="Example Site home">.*Example Site/s', $html);
         $this->assertMatchesRegularExpression('/<nav class="hidden lg:flex items-center gap-8" aria-label="Main">.*Pricing.*Blog/s', $html);
         $this->assertStringContainsString('>Log in</a>', $html);
@@ -87,7 +87,7 @@ class SiteHeaderBlockTest extends PageTestCase
         $this->assertStringNotContainsString('>Log in</a>', $html);
         $this->assertStringNotContainsString('javascript:', $html);
         $this->assertMatchesRegularExpression('/<a href="http:\/\/localhost#pricing"\s+target="_blank" rel="noopener"\s+class="inline-flex items-center whitespace-nowrap site-button site-button-2 px-4 py-2 font-semibold">Book now<\/a>/', $html);
-        $this->assertMatchesRegularExpression('/class="sb-header-bar"\s+style="--color-sb-header-link: #0a3d2e;"/', $html, 'No Branding background or line.');
+        $this->assertMatchesRegularExpression('/class="sb-header-bar sb-header-overlayable"\s+style="--color-sb-header-link: #0a3d2e;"/', $html, 'No Branding background or line.');
         $this->assertStringContainsString('min-h-20', $html);
         $this->assertStringContainsString('max-w-none', $html);
         $this->assertStringContainsString('hidden md:flex', $html);

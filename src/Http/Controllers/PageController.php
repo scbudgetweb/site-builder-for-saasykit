@@ -13,6 +13,7 @@ use ScBudgetWeb\SiteBuilder\Models\PageRevision;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
@@ -84,7 +85,8 @@ class PageController extends Controller
 
     /**
      * A Theme Builder template's canvas: its blocks as the page's content, with the site's header and footer hidden, so
-     * a header template is edited on its own. A blog template shows the latest post (or a sample) in its blocks.
+     * a header template is edited on its own. A blog template shows the latest post (or a sample) in its blocks. A
+     * header sits on a sample page, behaving as its Header settings say.
      */
     public function templateCanvas(Template $template, int $user): Response
     {
@@ -92,7 +94,15 @@ class PageController extends Controller
         request()->attributes->set(Templates::HIDE_CHROME_ATTRIBUTE, true);
         app(Blog::class)->useSampleFor($template->type);
 
-        return self::private(view('site-builder::pages.show', ['page' => $template->previewPage($draft?->blocks), 'isPreview' => true, 'isCanvas' => true]));
+        return self::private(view('site-builder::pages.show', [
+            'page' => $template->previewPage($draft?->blocks),
+            'isPreview' => true,
+            'isCanvas' => true,
+            ...$template->type === 'header' ? [
+                'headerBehaviour' => HeaderBehaviour::clean($template->settings),
+                'samplePage' => HeaderBehaviour::samplePage(),
+            ] : [],
+        ]));
     }
 
     /**

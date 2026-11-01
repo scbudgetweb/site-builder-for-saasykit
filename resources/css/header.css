@@ -1,0 +1,120 @@
+/*
+ * How the site header behaves as the page scrolls (Templates\HeaderBehaviour, on the header element; the scroll states
+ * come from theme/partials/header-script):
+ *  - .sb-header-sticky stays at the top; .sb-header-hides slides away (.sb-header-hidden) while scrolling down;
+ *  - once scrolled (.sb-header-scrolled), .sb-header-shrinks makes its rows (.sb-header-row) and logo smaller, and
+ *    .sb-header-shadows adds a shadow;
+ *  - .sb-header-over sits over a Banner or Hero that opens the page, see-through until scrolled: the standard header and
+ *    a Header bar on the Branding colours (.sb-header-overlayable) lose their background, and the header's own parts
+ *    (.sb-header-part: rows, menus, account links, logos) take the light or dark text. Mobile menus and dropdowns,
+ *    outside those parts or on their own background, keep their colours. The opening banner leaves room for it
+ *    (.sb-header-space, --sb-header-height measured by the script).
+ */
+:root {
+    /* The header text colour before the over-the-section colours, for dropdowns inside the header's parts. */
+    --sb-solid-header-text: var(--color-sb-header-text);
+}
+
+.sb-header-sticky {
+    position: sticky;
+    top: 0;
+}
+
+.sb-header-over {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+}
+
+.sb-header-over.sb-header-sticky {
+    position: fixed;
+}
+
+.sb-header-sticky,
+.sb-header-over {
+    transition: transform 0.3s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.sb-header-shadows.sb-header-scrolled {
+    box-shadow: 0 8px 24px -12px rgb(0 0 0 / 0.3);
+}
+
+/* After the shadow, so a header that has slid away leaves none along the top. */
+.sb-header-hides.sb-header-hidden {
+    transform: translateY(-100%);
+    box-shadow: none;
+}
+
+.sb-header-shrinks .sb-header-row {
+    transition: min-height 0.2s ease, padding 0.2s ease;
+}
+
+.sb-header-shrinks .sb-header-row img.sb-logo {
+    max-height: 12rem;
+    transition: max-height 0.2s ease;
+}
+
+.sb-header-shrinks.sb-header-scrolled .sb-header-row {
+    min-height: 3.25rem;
+    padding-block: 0.25rem;
+}
+
+.sb-header-shrinks.sb-header-scrolled .sb-header-row img.sb-logo {
+    max-height: 2.25rem;
+}
+
+.sb-header-over[data-over-text='light'] {
+    --sb-over-text: #ffffff;
+    --sb-over-link: rgb(255 255 255 / 0.85);
+    --sb-over-link-hover: #ffffff;
+}
+
+.sb-header-over[data-over-text='dark'] {
+    --sb-over-text: #111827;
+    --sb-over-link: #374151;
+    --sb-over-link-hover: #111827;
+}
+
+.sb-header-over:not(.sb-header-scrolled).sb-header-overlayable,
+.sb-header-over:not(.sb-header-scrolled) .sb-header-overlayable {
+    background-color: transparent;
+    border-color: transparent;
+}
+
+.sb-header-over:not(.sb-header-scrolled) .sb-header-part {
+    color: var(--sb-over-text);
+    --color-sb-header-text: var(--sb-over-text);
+    --color-sb-header-link: var(--sb-over-link);
+    --color-sb-header-link-hover: var(--sb-over-link-hover);
+    --color-sb-header-account-link: var(--sb-over-text);
+    --color-sb-header-account-link-hover: var(--sb-over-link);
+}
+
+/* The site's name in place of a logo, which otherwise takes the site's link colour. */
+.sb-header-over:not(.sb-header-scrolled) .sb-header-part .sb-site-name {
+    color: var(--sb-over-text);
+}
+
+.sb-header-over:not(.sb-header-scrolled) .sb-header-part .bg-sb-header-menu-bg {
+    color: var(--sb-solid-header-text);
+}
+
+/* A header template turns solid once scrolled, in the Branding header colours, behind blocks without a background. */
+.sb-header-over.sb-header-template.sb-header-scrolled {
+    background-color: var(--color-sb-header-bg);
+    color: var(--color-sb-header-text);
+}
+
+:root:has(.sb-header-over) .sb-header-space {
+    display: block;
+    height: var(--sb-header-height, 4rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .sb-header-sticky,
+    .sb-header-over,
+    .sb-header-shrinks .sb-header-row,
+    .sb-header-shrinks .sb-header-row img.sb-logo {
+        transition: none;
+    }
+}

@@ -121,6 +121,14 @@ class Branding
 
     public const ANNOUNCEMENT_LINK_HOVER_COLOR = 'branding.announcement_link_hover_color';
 
+    /** How the standard header behaves as the page scrolls (Templates\HeaderBehaviour::clean()'s keys). */
+    public const HEADER_BEHAVIOUR = 'branding.header_behaviour';
+
+    /** A Back to top button, "right" or "left" (bottom corner), or none. */
+    public const BACK_TO_TOP = 'branding.back_to_top';
+
+    public const BACK_TO_TOP_PLACES = ['right' => 'Bottom right', 'left' => 'Bottom left'];
+
     /** Admin-written CSS for the public site, checked by Support\CustomCss. */
     public const CUSTOM_CSS = 'branding.custom_css';
 
@@ -274,6 +282,7 @@ class Branding
             self::FAVICON, self::APPLE_TOUCH_ICON, self::SHARE_IMAGE,
             ...array_keys(self::ELEMENT_COLOR_VARIABLES),
             self::CUSTOM_CSS, self::GLOBAL_COLOURS,
+            self::HEADER_BEHAVIOUR, self::BACK_TO_TOP,
         ];
 
         foreach (self::BANNERS as $banner) {
@@ -869,6 +878,16 @@ class Branding
     public function logoUrlFor(string $place): ?string
     {
         return $this->logoUrl($this->logoVariantFor($place));
+    }
+
+    /**
+     * Where the Back to top button sits ("right" or "left"), or null for none.
+     */
+    public function backToTop(): ?string
+    {
+        $place = $this->string(self::BACK_TO_TOP);
+
+        return isset(self::BACK_TO_TOP_PLACES[$place ?? '']) ? $place : null;
     }
 
     public function showsLogoInPanels(): bool

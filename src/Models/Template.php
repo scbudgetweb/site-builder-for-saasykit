@@ -19,6 +19,7 @@ use ScBudgetWeb\SiteBuilder\Templates\Templates;
  * @property string $applies_to
  * @property array<int, int>|null $page_ids
  * @property array<int, int>|null $category_ids
+ * @property array<string, mixed>|null $settings for a header, how it behaves as the page scrolls (HeaderBehaviour)
  * @property array<int|string, mixed>|null $blocks
  * @property Carbon|null $updated_at
  */
@@ -32,7 +33,7 @@ class Template extends Model
 
     protected $table = 'site_builder_templates';
 
-    protected $fillable = ['name', 'type', 'is_active', 'applies_to', 'page_ids', 'category_ids', 'blocks'];
+    protected $fillable = ['name', 'type', 'is_active', 'applies_to', 'page_ids', 'category_ids', 'settings', 'blocks'];
 
     protected $attributes = [
         'is_active' => true,
@@ -45,6 +46,7 @@ class Template extends Model
             'is_active' => 'boolean',
             'page_ids' => 'array',
             'category_ids' => 'array',
+            'settings' => 'array',
             'blocks' => StoredBlocks::class,
         ];
     }

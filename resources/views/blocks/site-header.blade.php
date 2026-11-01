@@ -2,7 +2,8 @@
     Theme Builder › Header bar: the logo, the header links, the account links and a button, laid out by $headerStyle,
     with a menu button opening the mobile menu below $breakpoint ("always" for the menu-button-only style). Below the
     breakpoint the links and account links move into the mobile menu, and the button too unless it stays on phones.
-    Colours override the Branding header tokens for this header.
+    Colours override the Branding header tokens for this header. Without a Background of its own, it's see-through
+    in a header over the first section ($isOverlayable, Templates\HeaderBehaviour).
 --}}
 @php
     $menuId = 'site-header-'.(is_string($uid ?? null) && preg_match('/^[A-Za-z0-9_-]+$/', $uid) ? $uid : \Illuminate\Support\Str::random(8));
@@ -12,10 +13,12 @@
     $wideInline = $isAlways ? 'hidden' : ($breakpoint === 'md' ? 'hidden md:inline-flex' : 'hidden lg:inline-flex');
     $narrow = $isAlways ? 'inline-flex' : ($breakpoint === 'md' ? 'inline-flex md:hidden' : 'inline-flex lg:hidden');
     $hasActions = $showsAccount || $cta !== null;
+    // Each row shrinks with a header that does; on the Branding colours, it takes a see-through header's text colours.
+    $rowClasses = $isOverlayable ? 'sb-header-row sb-header-part' : 'sb-header-row';
 @endphp
 
 <div x-data="{ open: false }" @keydown.escape.window="open = false"
-     @class(['sb-header-bar', 'bg-sb-header-bg text-sb-header-text' => $hasHeaderBackground, 'border-b border-current/10' => $hasBorder])
+     @class(['sb-header-bar', 'bg-sb-header-bg text-sb-header-text' => $hasHeaderBackground, 'border-b border-current/10' => $hasBorder, 'sb-header-overlayable' => $isOverlayable])
      @if ($colourStyle !== '') style="{{ $colourStyle }}" @endif>
     <div @class(['mx-auto px-4 sm:px-6 lg:px-8', $widthClasses])>
 
@@ -25,18 +28,18 @@
         @endphp
 
         @if ($headerStyle === 'centred_logo')
-            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2', $heightClasses])>
+            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-4 py-2', $heightClasses, $rowClasses])>
                 <div></div>
                 <div class="flex justify-center">{{ $logo }}</div>
                 <div class="flex items-center justify-end gap-3">{{ $actions }}</div>
             </div>
             @if ($links !== [])
-                <nav @class([$wide, 'items-center justify-center gap-8 border-t border-current/10 py-3']) aria-label="{{ __('Main') }}">
+                <nav @class([$wide, 'items-center justify-center gap-8 border-t border-current/10 py-3', 'sb-header-part' => $isOverlayable]) aria-label="{{ __('Main') }}">
                     @include('site-builder::theme.partials.desktop-links', ['items' => $links])
                 </nav>
             @endif
         @elseif ($headerStyle === 'split')
-            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-2', $heightClasses])>
+            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-2', $heightClasses, $rowClasses])>
                 <nav @class([$wide, 'items-center justify-end gap-8']) aria-label="{{ __('Main') }}">
                     @include('site-builder::theme.partials.desktop-links', ['items' => $linkHalves[0] ?? []])
                 </nav>
@@ -49,7 +52,7 @@
                 </div>
             </div>
         @elseif ($headerStyle === 'links_centre')
-            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-2', $heightClasses])>
+            <div @class(['grid grid-cols-[1fr_auto_1fr] items-center gap-6 py-2', $heightClasses, $rowClasses])>
                 <div class="flex">{{ $logo }}</div>
                 <nav @class([$wide, 'items-center justify-center gap-8']) aria-label="{{ __('Main') }}">
                     @include('site-builder::theme.partials.desktop-links', ['items' => $links])
@@ -58,7 +61,7 @@
             </div>
         @else
             {{-- Logo on the left, links on the right; or, menu button only, the logo and the button. --}}
-            <div @class(['flex items-center justify-between gap-6 py-2', $heightClasses])>
+            <div @class(['flex items-center justify-between gap-6 py-2', $heightClasses, $rowClasses])>
                 <div class="flex">{{ $logo }}</div>
                 <div class="flex items-center gap-8">
                     @if ($links !== [] && ! $isAlways)

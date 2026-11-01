@@ -54,9 +54,9 @@ class TemplateBlocksTest extends PageTestCase
 
         $html = $this->get('/about-us')->assertSuccessful()->getContent();
 
-        $this->assertMatchesRegularExpression('/<div class="flex justify-center">\s*<a href="http:\/\/localhost"[^>]*aria-label="[^"]* home">\s*<span class="[^"]*" style="height: 48px; width: auto;">Example Site/', $html, 'The site\'s name when no logo is uploaded.');
+        $this->assertMatchesRegularExpression('/<div class="sb-header-part flex justify-center">\s*<a href="http:\/\/localhost"[^>]*aria-label="[^"]* home">\s*<span class="[^"]*" style="height: 48px; width: auto;">Example Site/', $html, 'The site\'s name when no logo is uploaded.');
         $this->assertStringContainsString('height: 200px; width: auto;', $html, 'Too tall is clamped.');
-        $this->assertSame(1, substr_count($html, 'class="flex justify-center"'), 'An unknown line-up is left.');
+        $this->assertSame(1, substr_count($html, 'class="sb-header-part flex justify-center"'), 'An unknown line-up is left.');
     }
 
     public function test_the_menu_shows_the_navigation_and_a_mobile_menu_of_its_own(): void
@@ -70,7 +70,7 @@ class TemplateBlocksTest extends PageTestCase
 
         $this->assertStringContainsString('style="--color-sb-header-link: #0a3d2e;"', $html);
         $this->assertStringNotContainsString('red; x: y', $html, 'Only hex colours.');
-        $this->assertMatchesRegularExpression('/<nav class="hidden items-center gap-8 md:flex" aria-label="Main">.*Pricing.*Blog/s', $html);
+        $this->assertMatchesRegularExpression('/<nav class="sb-header-part hidden items-center gap-8 md:flex" aria-label="Main">.*Pricing.*Blog/s', $html);
         $this->assertStringContainsString('aria-controls="site-menu-'.$uid.'"', $html);
         $this->assertStringContainsString('id="site-menu-'.$uid.'"', $html);
         $this->assertMatchesRegularExpression('/id="site-menu-'.$uid.'"[^>]*class="[^"]*md:hidden"/s', $html);

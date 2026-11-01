@@ -1,5 +1,6 @@
 {{-- The Banner and Hero blocks (Hero is a Banner with taller, larger defaults): a full-width Branding banner (hero or inner) or its own image. As the first block it holds the h1. A subclass's extra content (BannerBlock::extraContentView()) sits below the text across the banner's full content width, or beside it on wide screens. --}}
 <x-site-builder::banner :variant="$variant" :image-url="$imageUrl" :image-overlay="$imageOverlay" :image-position="$imagePosition"
+                        :opening="($index ?? null) === 0 && \ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour::isOpeningPage($page ?? null)"
                         :class="$cssClass" data-block="{{ $blockName }}">
     <div @class([
         'relative mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8',

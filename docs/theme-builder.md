@@ -20,6 +20,12 @@ The Theme builder lets you build the site's **header** and **footer** from block
 
 What a template is (header or footer) can't change once it's made, because some blocks only fit one or the other.
 
+### How the header behaves
+
+A header template's **Header settings** (in the visual builder's toolbar, or the template's form) choose whether it **stays at the top** (always, or only when scrolling back up), **shrinks** and gets a **shadow** once the page scrolls, and sits **over the first section** when a page opens with a Hero or Banner. They're the same settings as the standard header's in [Branding](branding.md#header--footer), but the template's own. They're saved straight away (not with Save), and the canvas shows the header over a **sample page**, so you can scroll and see them work. The sample page is never shown to visitors.
+
+Over the first section, a **Header bar** on the Branding header colours turns see-through, as do the **Logo**, **Menu** and **Account links** blocks. A Header bar or Section with a **Background** of its own keeps it.
+
 ### Which template is shown
 
 Where more than one template could apply to a page, the one for **chosen pages** wins; otherwise the **most recently saved**. Pages that aren't built in the site builder (the blog, for example) use templates shown on **every page** (or every page except those chosen).

@@ -11,7 +11,7 @@
     @if ($blogTemplate !== null)
         {{ $blogTemplate }}
     @else
-        <x-site-builder::banner variant="inner" class="py-14 sm:py-20">
+        <x-site-builder::banner :opening="true" variant="inner" class="py-14 sm:py-20">
             <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
                 <h1 class="sb-h1 text-sb-banner-heading">{{ __('From our blog') }}</h1>
                 <p class="mt-4 text-lg text-sb-banner-subtitle">{{ __('Check out our latest news and updates.') }}</p>

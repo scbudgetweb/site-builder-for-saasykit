@@ -13,7 +13,8 @@
 @endphp
 
 @if ($url)
-    <img src="{{ $url }}" alt="{{ config('app.name') }}" {{ $attributes->class(['h-8 w-auto']) }}>
+    {{-- .sb-logo: a header that shrinks makes it smaller, and one over the first section can show the other logo. --}}
+    <img src="{{ $url }}" alt="{{ config('app.name') }}" {{ $attributes->class(['sb-logo h-8 w-auto']) }}>
 @else
-    <span {{ $attributes->class(['text-xl font-bold tracking-tight', $nameClass]) }}>{{ config('app.name') }}</span>
+    <span {{ $attributes->class(['sb-site-name text-xl font-bold tracking-tight', $nameClass]) }}>{{ config('app.name') }}</span>
 @endif

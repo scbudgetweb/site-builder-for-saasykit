@@ -7,7 +7,7 @@
     @include('site-builder::pages.show', ['page' => $builtPage])
 @else
 <x-layouts.app>
-    <x-site-builder::banner variant="hero" class="py-20 sm:py-28">
+    <x-site-builder::banner :opening="true" variant="hero" class="py-20 sm:py-28">
         <div class="mx-auto max-w-4xl px-4 text-center sm:px-6">
             <h1 class="sb-h1 text-sb-banner-heading">{{ __('site-builder::theme.home.heading', ['app' => config('app.name')]) }}</h1>
 

@@ -116,7 +116,7 @@ class Templates
      * goes by the category of the post or archive being shown (Blog::categoryId()); the blog's own archive (/blog) has
      * none, so only templates for every category, or every one except some, apply there.
      *
-     * @return array{id: int, updated_at: int}|null
+     * @return array{id: int, updated_at: int, settings: array<string, mixed>}|null
      */
     public function for(string $type, ?Page $page = null): ?array
     {
@@ -132,7 +132,12 @@ class Templates
 
         usort($candidates, fn (array $a, array $b): int => [$b['applies_to'] === Template::ONLY, $b['updated_at']] <=> [$a['applies_to'] === Template::ONLY, $a['updated_at']]);
 
-        return isset($candidates[0]) ? ['id' => $candidates[0]['id'], 'updated_at' => $candidates[0]['updated_at']] : null;
+        return isset($candidates[0]) ? [
+            'id' => $candidates[0]['id'],
+            'updated_at' => $candidates[0]['updated_at'],
+            // Cached before 1.7 without settings.
+            'settings' => is_array($candidates[0]['settings'] ?? null) ? $candidates[0]['settings'] : [],
+        ] : null;
     }
 
     /**
@@ -167,9 +172,10 @@ class Templates
     }
 
     /**
-     * Every active template: id, type, where it applies and when it was saved. Cached until a template changes.
+     * Every active template: id, type, where it applies, its settings and when it was saved. Cached until a template
+     * changes.
      *
-     * @return array<int, array{id: int, type: string, applies_to: string, page_ids: array<int, int>, category_ids?: array<int, int>, updated_at: int}>
+     * @return array<int, array{id: int, type: string, applies_to: string, page_ids: array<int, int>, category_ids?: array<int, int>, settings?: array<string, mixed>, updated_at: int}>
      */
     public function active(): array
     {
@@ -188,13 +194,14 @@ class Templates
     {
         return VersionedCache::remember(cache()->store(), self::CACHE_KEY, self::VERSION_KEY, fn (): array => Template::query()
             ->where('is_active', true)
-            ->get(['id', 'type', 'applies_to', 'page_ids', 'category_ids', 'updated_at'])
+            ->get(['id', 'type', 'applies_to', 'page_ids', 'category_ids', 'settings', 'updated_at'])
             ->map(fn (Template $template): array => [
                 'id' => (int) $template->id,
                 'type' => $template->type,
                 'applies_to' => $template->applies_to,
                 'page_ids' => self::ids($template->page_ids),
                 'category_ids' => self::ids($template->category_ids),
+                'settings' => is_array($template->settings) ? $template->settings : [],
                 'updated_at' => (int) $template->updated_at?->getTimestamp(),
             ])
             ->all());

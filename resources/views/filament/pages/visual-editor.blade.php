@@ -713,6 +713,7 @@
         wire:ignore.self
         x-data="siteBuilderCanvas({ nodes: @js($this->canvasNodes()), colour: '#2563eb', levels: @js(\ScBudgetWeb\SiteBuilder\Blocks\Panel\SettingsPanel::LEVEL_COLOURS), clipboard: @js($this->styleClipboardLabel()), topLevel: @js($this->allowsTopLevelChanges()) })"
         x-on:site-builder-canvas-updated.window="update($event.detail)"
+        x-on:site-builder-canvas-reload.window="$refs.frame.contentWindow?.location.reload()"
         x-on:site-builder-style-copied.window="clipboard = $event.detail.label"
         style="display: flex; flex-direction: column; height: 100dvh;"
     >
@@ -750,6 +751,10 @@
             </div>
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
+                {{-- A header template's own settings (TemplateVisualEditor). --}}
+                @if (method_exists($this, 'headerSettingsAction'))
+                    {{ $this->headerSettingsAction }}
+                @endif
                 {{ $this->editAsFormAction }}
                 {{ $this->discardAction }}
                 {{ $this->publishAction }}

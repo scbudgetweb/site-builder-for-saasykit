@@ -4,6 +4,7 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages;
 
 use Filament\Resources\Pages\CreateRecord;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
@@ -16,7 +17,14 @@ class CreateTemplate extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        return [...$data, 'blocks' => Templates::starterBlocks(is_string($data['type'] ?? null) ? $data['type'] : '')];
+        $type = is_string($data['type'] ?? null) ? $data['type'] : '';
+
+        return [
+            ...$data,
+            // Only a header has settings (how it behaves as the page scrolls).
+            'settings' => $type === 'header' ? HeaderBehaviour::clean($data['settings'] ?? []) : null,
+            'blocks' => Templates::starterBlocks($type),
+        ];
     }
 
     protected function getRedirectUrl(): string

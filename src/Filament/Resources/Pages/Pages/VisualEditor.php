@@ -30,6 +30,7 @@ use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Pages\PageRevisions;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 use Throwable;
 
 /**
@@ -116,6 +117,9 @@ class VisualEditor extends ResourcePage
     {
         $page = clone $this->page();
         $page->forceFill(['blocks' => $blocks]);
+
+        // A Banner or Hero that opens it leaves room for a header over it, as on the site (HeaderBehaviour).
+        request()->attributes->set(HeaderBehaviour::OPENING_PAGE_ATTRIBUTE, $page);
 
         return $page;
     }
@@ -206,6 +210,14 @@ class VisualEditor extends ResourcePage
     public function draft(): PageDraft
     {
         return $this->openDraft ??= app(VisualDrafts::class)->open($this->record(), auth()->user());
+    }
+
+    /**
+     * Reads the draft again when it's next needed, e.g. after the record it's based on was saved.
+     */
+    protected function resetDraft(): void
+    {
+        $this->openDraft = null;
     }
 
     public function canvasUrl(): string

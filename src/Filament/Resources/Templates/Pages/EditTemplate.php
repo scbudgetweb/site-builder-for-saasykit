@@ -10,6 +10,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 
 class EditTemplate extends EditRecord
 {
@@ -25,6 +26,30 @@ class EditTemplate extends EditRecord
         $template = $this->getRecord();
 
         app(BlockRegistry::class)->editingTemplate($template instanceof Template ? $template->type : null);
+    }
+
+    /**
+     * A header's settings open on the standard behaviour where nothing (or something unexpected) is saved.
+     */
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        return $this->isHeader() ? [...$data, 'settings' => HeaderBehaviour::clean($data['settings'] ?? null)] : $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        if ($this->isHeader() && array_key_exists('settings', $data)) {
+            $data['settings'] = HeaderBehaviour::clean($data['settings']);
+        }
+
+        return $data;
+    }
+
+    private function isHeader(): bool
+    {
+        $template = $this->getRecord();
+
+        return $template instanceof Template && $template->type === 'header';
     }
 
     protected function getHeaderActions(): array

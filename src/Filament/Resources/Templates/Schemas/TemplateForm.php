@@ -7,6 +7,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
@@ -15,6 +16,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
@@ -106,6 +108,14 @@ class TemplateForm
                                 ->helperText(__('Off: it isn\'t used anywhere, so you can work on it first.'))
                                 ->default(true),
                         ]),
+                    ]),
+                Section::make(__('Header behaviour'))
+                    ->description(__('How this header behaves as the page scrolls. Also under Header settings in the visual builder, where you can try it on a sample page.'))
+                    ->visible(fn (Get $get): bool => $get('type') === 'header')
+                    ->schema([
+                        Group::make(HeaderBehaviour::fields(forTemplate: true))
+                            ->statePath('settings')
+                            ->columns(['default' => 1, 'md' => 2]),
                     ]),
                 app(BlockRegistry::class)->editor(Builder::make('blocks'))
                     ->label(__('Blocks'))

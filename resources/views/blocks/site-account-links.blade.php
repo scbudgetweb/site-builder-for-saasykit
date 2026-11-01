@@ -1,5 +1,5 @@
 {{-- Theme Builder › Account links: Log in and a button for visitors, the account menu once signed in. --}}
-<div @class(['flex items-center gap-3', 'justify-center' => $align === 'center', 'justify-end' => $align === 'right'])>
+<div @class(['sb-header-part flex items-center gap-3', 'justify-center' => $align === 'center', 'justify-end' => $align === 'right'])>
     @auth
         @if ($hasUserMenu)
             <x-dynamic-component component="layouts.app.user-menu" />

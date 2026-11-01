@@ -102,6 +102,19 @@ The header and footer **colours**. Their links are set in [Navigation](navigatio
 
 **Footer:** background, text and headings, links and their hover colour, and social icons and their hover colour. Social icons only show for networks with a link in the app's general settings.
 
+**Header behaviour** (the standard header; a header template has its own, under **Header settings** in its visual builder, see the [Theme builder](theme-builder.md#how-the-header-behaves)):
+
+| Setting | What it does |
+|---|---|
+| **Stays at the top** | No (it scrolls away with the page), **Yes, always**, or **Only when scrolling back up**: it slides away while visitors read down the page and comes back as soon as they scroll up, or tab to it |
+| **Shrinks once the page scrolls** | A little shorter, with a smaller logo. Only for a header that stays at the top |
+| **Shadow once the page scrolls** | On as standard, for a header that stays at the top |
+| **Over the first section** | See-through over a Hero or Banner that opens the page (including the standard page banner, the home page's and the blog's), with **light or dark text** and, optionally, **the other logo** from Brand. It turns solid, in the header colours, once the page scrolls (when it stays at the top). The banner leaves room for it. Pages that start with anything else show the header as normal. Dropdowns and the mobile menu keep their own colours |
+
+Visitors who turn off animations see these changes without the slide and fade.
+
+**Back to top:** a small round button in the bottom right or bottom left corner, in the header button's colours, once visitors have scrolled down most of a screen. It takes them back to the top of the page (straight there for visitors who turn off animations). None as standard.
+
 **Announcement bar:** the bar that shows announcements from Admin › Announcements, on the website and in the dashboard. Background, text (also the close button), and the colour of links in the announcement and their hover colour. Left blank, it keeps SaaSykit's standard look, in shades of the site's secondary colour.
 
 Your app may add sections of its own here, for example the colours of a booking box.

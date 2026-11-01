@@ -40,7 +40,7 @@ class ManageNavigation extends Page
 {
     protected string $view = 'site-builder::filament.pages.manage-navigation';
 
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 5;
 
     protected static ?string $slug = 'navigation';
 

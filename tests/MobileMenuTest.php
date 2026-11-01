@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Tests;
 
 use Illuminate\Support\Facades\Storage;
+use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Media\MediaLibrary;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
@@ -130,5 +131,21 @@ class MobileMenuTest extends PageTestCase
         $this->assertSame(40, mb_strlen($mobile['contact_phone']));
         $this->assertSame('', NavigationMenus::mobileStyle($mobile), 'An image background without an image draws the header colours.');
         $this->assertSame(NavigationMenus::defaultMobile()['button_icon'], app(Settings::class)->get(NavigationMenus::MOBILE_KEY)['button_icon']);
+    }
+
+    public function test_on_a_background_of_its_own_it_shows_the_logo_that_reads_on_it(): void
+    {
+        $this->assertNull(NavigationMenus::mobileLogoVariant(NavigationMenus::defaultMobile()), 'On the header colours, the header\'s logo.');
+        $this->assertSame('dark', NavigationMenus::mobileLogoVariant(['background' => 'gradient', 'background_color' => '#0b1220', 'background_color_2' => '#134e4a']));
+        $this->assertSame('light', NavigationMenus::mobileLogoVariant(['background' => 'colour', 'background_color' => '#fef3c7']));
+        $this->assertSame('light', NavigationMenus::mobileLogoVariant(['background' => 'colour', 'background_color' => '#0b1220', 'text_color' => '#111827']), 'Text colour chosen: dark text, the logo for light backgrounds.');
+
+        Storage::fake('public');
+        app(Branding::class)->save([Branding::LOGO_LIGHT => 'site-builder/branding/light.svg', Branding::LOGO_DARK => 'site-builder/branding/dark.svg']);
+
+        $html = $this->menuHtml(['background' => 'gradient', 'background_color' => '#0b1220', 'background_color_2' => '#134e4a']);
+        $menu = substr($html, strpos($html, 'sb-mobile-menu-panel'));
+        $this->assertStringContainsString('site-builder/branding/dark.svg', $menu);
+        $this->assertStringNotContainsString('site-builder/branding/light.svg', $menu);
     }
 }

@@ -38,7 +38,7 @@ class MailingListProviderResource extends Resource
 
     protected static ?string $slug = 'site-builder/mailing-lists';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 8;
 
     public static function canAccess(): bool
     {

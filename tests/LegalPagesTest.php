@@ -54,7 +54,7 @@ class LegalPagesTest extends PageTestCase
         $this->actingAs($this->user());
         $this->assertTrue(ManageLegalPages::canAccess());
         $this->assertSame('Website', ManageLegalPages::getNavigationGroup());
-        $this->assertSame(5, ManageLegalPages::getNavigationSort());
+        $this->assertSame(9, ManageLegalPages::getNavigationSort());
 
         $this->actingAs($this->user('someone@example.com'));
         $this->assertFalse(ManageLegalPages::canAccess());

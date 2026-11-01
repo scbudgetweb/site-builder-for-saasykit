@@ -41,7 +41,7 @@ On phones and tablets, the menu button opens a menu that scrolls on its own. Dro
 |---|---|
 | **Opens as** | Drops down from the top, slides in from the right or the left (a panel, with the page still showing beside it on tablets, dimmed), or fills the screen with large links in the middle |
 | **Blur the page beside it** | For the side panels: the page behind is blurred as well as dimmed. A tap on it closes the menu |
-| **Show the logo at the top** | The header logo from Branding, or the site name when none is uploaded |
+| **Show the logo at the top** | The header logo from Branding, or the site name when none is uploaded. On a background of its own, the menu shows Branding's logo that reads on it: the one for dark backgrounds under light text, and the one for light backgrounds under dark text |
 | **Text under the logo** | An optional short line, for example *Book online in minutes* |
 | **Links: Size** | Normal, Large or Extra large (both in the heading font) |
 | **Links: Line up** | Left or centre (filling the screen, always centre) |

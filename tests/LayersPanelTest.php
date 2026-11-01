@@ -105,10 +105,22 @@ class LayersPanelTest extends PageTestCase
         $this->assertSame([], $page->fresh()->blocks[1]['data']['rows'][0]['columns'][1]['blocks'][0]['data']['design'] ?? [], 'Only in the draft until it\'s published.');
 
         Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])->call('toggleLayerHidden', $text['uid']);
-        $this->assertSame([], BlockTree::find(app(VisualDrafts::class)->open($page, $this->user())->blocks, $text['uid'])['node']['data']['design']['effects']['hide_on']);
+        $this->assertArrayNotHasKey('design', BlockTree::find(app(VisualDrafts::class)->open($page, $this->user())->blocks, $text['uid'])['node']['data'], 'Shown again: as it was.');
         $this->assertTrue($this->layer($page, 'Opening hours')['hidden']);
 
         Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])->call('toggleLayerHidden', 'no-such-uid')->assertNotified('That can\'t be done there.');
+    }
+
+    public function test_hiding_and_showing_again_leaves_no_change(): void
+    {
+        $page = $this->layeredPage();
+        $uid = $this->layer($page, 'Hero')['uid'];
+
+        Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->call('toggleLayerHidden', $uid)
+            ->call('toggleLayerHidden', $uid);
+
+        $this->assertFalse(app(VisualDrafts::class)->hasChanges(app(VisualDrafts::class)->open($page, $this->user()), $page->fresh()), 'Nothing to publish.');
     }
 
     public function test_hidden_on_some_screens_shows_as_partly_hidden(): void

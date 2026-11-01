@@ -407,7 +407,20 @@ class VisualEditor extends ResourcePage
         $isHidden = self::hiddenState(Arr::get($found['node'], $path))['hidden'];
 
         $this->changeBlocks(BlockTree::update($blocks, $uid, function (array $node) use ($path, $isHidden): array {
-            Arr::set($node, $path, $isHidden ? [] : array_keys(Effects::SCREENS));
+            if (! $isHidden) {
+                Arr::set($node, $path, array_keys(Effects::SCREENS));
+
+                return $node;
+            }
+
+            // Shown again: the setting goes, with any group it leaves empty, so hiding and showing changes nothing.
+            Arr::forget($node, $path);
+
+            foreach ([Str::beforeLast($path, '.'), Str::beforeLast(Str::beforeLast($path, '.'), '.')] as $parent) {
+                if (Arr::get($node, $parent) === []) {
+                    Arr::forget($node, $parent);
+                }
+            }
 
             return $node;
         }), $uid);

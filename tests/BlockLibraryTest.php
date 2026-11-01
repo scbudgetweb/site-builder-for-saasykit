@@ -44,7 +44,7 @@ class BlockLibraryTest extends PageTestCase
     {
         $this->assertTrue(SavedBlockResource::canViewAny());
         $this->assertSame('Website', SavedBlockResource::getNavigationGroup());
-        $this->assertSame(2, SavedBlockResource::getNavigationSort());
+        $this->assertSame(6, SavedBlockResource::getNavigationSort());
 
         $this->actingAs($this->user('someone@example.com'));
         $this->assertFalse(SavedBlockResource::canViewAny());

@@ -64,7 +64,8 @@
         <div @class(['flex min-h-16 shrink-0 items-center justify-between gap-4 px-4 py-3 sm:px-6', 'border-b border-current/10' => ! $isFull])>
             @if ($mobileMenu['show_logo'])
                 <a href="{{ route('home') }}" class="min-w-0">
-                    <x-site-builder::logo place="header" />
+                    {{-- On a background of its own, the logo that reads on it. --}}
+                    <x-site-builder::logo place="header" :variant="($hasOwnColours ?? false) ? null : \ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus::mobileLogoVariant($mobileMenu)" />
                     @if ($mobileMenu['tagline'] !== '')
                         <span class="mt-2 block text-xs font-semibold uppercase tracking-widest opacity-70">{{ $mobileMenu['tagline'] }}</span>
                     @endif

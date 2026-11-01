@@ -28,7 +28,7 @@ class ManageLegalPages extends Page
 {
     protected string $view = 'site-builder::filament.pages.manage-legal-pages';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 9;
 
     protected static ?string $slug = 'legal-pages';
 

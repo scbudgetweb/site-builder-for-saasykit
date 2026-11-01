@@ -3,13 +3,15 @@
     'place' => 'header',
     // Classes for the site-name fallback (when that logo isn't uploaded).
     'nameClass' => '',
+    // "light" or "dark" to use that logo here (e.g. on a mobile menu's own background), when it's uploaded.
+    'variant' => null,
 ])
 
 {{-- The logo chosen for this place in Branding, or the site name when that logo hasn't been uploaded. --}}
 @php
     $branding = app(\ScBudgetWeb\SiteBuilder\Branding\Branding::class);
     $key = 'branding.logo_'.(in_array($place, ['header', 'footer', 'auth', 'dashboards'], true) ? $place : 'header');
-    $url = $branding->logoUrlFor($key);
+    $url = (in_array($variant, ['light', 'dark'], true) ? $branding->logoUrl($variant) : null) ?? $branding->logoUrlFor($key);
 @endphp
 
 @if ($url)

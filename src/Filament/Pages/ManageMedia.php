@@ -43,7 +43,7 @@ class ManageMedia extends Page implements HasTable
 
     public const TABS = ['library', 'images', 'audio'];
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $slug = 'media';
 

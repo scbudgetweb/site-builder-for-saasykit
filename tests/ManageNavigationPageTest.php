@@ -43,7 +43,7 @@ class ManageNavigationPageTest extends PageTestCase
     {
         $this->assertTrue(ManageNavigation::canAccess());
         $this->assertSame('Website', ManageNavigation::getNavigationGroup());
-        $this->assertSame(3, ManageNavigation::getNavigationSort());
+        $this->assertSame(5, ManageNavigation::getNavigationSort());
 
         $this->actingAs($this->user('someone@example.com'));
         $this->assertFalse(ManageNavigation::canAccess());

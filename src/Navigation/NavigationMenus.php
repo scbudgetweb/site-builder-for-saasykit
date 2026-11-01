@@ -463,11 +463,38 @@ class NavigationMenus
             return '';
         }
 
-        // Text: the colour chosen, or white (or near-black on a light colour).
-        $text = Colour::css($mobile['text_color'] ?? null)
-            ?? ($background === 'colour' && ($hex = Colour::hex($mobile['background_color'] ?? null)) !== null && ! Colour::isReadableTextOn('#ffffff', $hex) ? '#111827' : '#ffffff');
+        $text = self::mobileText($mobile);
 
         return $css." --color-sb-header-bg: transparent; --color-sb-header-text: {$text}; --color-sb-header-link: {$text}; --color-sb-header-link-hover: color-mix(in oklab, {$text} 75%, transparent); --color-sb-header-account-link: {$text}; --color-sb-header-account-link-hover: color-mix(in oklab, {$text} 75%, transparent);";
+    }
+
+    /**
+     * The mobile menu's text colour on a background of its own: the colour chosen, or white (or near-black on a light
+     * colour).
+     *
+     * @param  array<string, mixed>  $mobile
+     */
+    private static function mobileText(array $mobile): string
+    {
+        return Colour::css($mobile['text_color'] ?? null)
+            ?? (($mobile['background'] ?? null) === 'colour' && ($hex = Colour::hex($mobile['background_color'] ?? null)) !== null && ! Colour::isReadableTextOn('#ffffff', $hex) ? '#111827' : '#ffffff');
+    }
+
+    /**
+     * Which Branding logo the mobile menu shows on a background of its own: the one for dark backgrounds under light
+     * text, the one for light backgrounds under dark text. Null on the header colours, where the header's logo shows.
+     *
+     * @param  array<string, mixed>  $mobile
+     */
+    public static function mobileLogoVariant(array $mobile): ?string
+    {
+        if (self::mobileStyle($mobile) === '') {
+            return null;
+        }
+
+        $text = Colour::hex(self::mobileText($mobile));
+
+        return $text !== null && Colour::isReadableTextOn($text, '#ffffff') ? 'light' : 'dark';
     }
 
     /**

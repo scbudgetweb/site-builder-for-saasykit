@@ -118,6 +118,35 @@
 }
 
 /*
+ * A block on Branding's footer colours (Background › Footer colours, in a Theme builder template): links in the
+ * footer's link colours, social icons in its social colours and the site's name as a heading, as in the standard
+ * footer. In the components layer: above the app's own link colour (base), below a link's own utilities and buttons.
+ */
+@layer components {
+    .bg-sb-footer-bg a:not([class*='site-button']) {
+        color: var(--color-sb-footer-link);
+    }
+
+    .bg-sb-footer-bg a:not([class*='site-button']):hover,
+    .bg-sb-footer-bg a:not([class*='site-button']):focus-visible {
+        color: var(--color-sb-footer-link-hover);
+    }
+
+    .bg-sb-footer-bg [data-block='social_follow'] a {
+        color: var(--color-sb-footer-social);
+    }
+
+    .bg-sb-footer-bg [data-block='social_follow'] a:hover,
+    .bg-sb-footer-bg [data-block='social_follow'] a:focus-visible {
+        color: var(--color-sb-footer-social-hover);
+    }
+
+    .bg-sb-footer-bg .sb-site-name {
+        color: var(--color-sb-footer-heading);
+    }
+}
+
+/*
  * Buttons. Four named styles (Branding › Buttons) set these variables per .site-button-N; the border is an
  * inset box-shadow, so solid and outline buttons are the same size. --site-button-shadow adds a drop shadow
  * (a block button's own Shadow). A dashed, dotted or double border is a real border (PageBlock::buttonLook()).

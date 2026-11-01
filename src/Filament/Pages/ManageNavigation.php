@@ -24,6 +24,7 @@ use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Support\HtmlString;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\StandardHeaderAndFooter;
 use ScBudgetWeb\SiteBuilder\Models\Page as SitePage;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
@@ -118,15 +119,19 @@ class ManageNavigation extends Page
                     Tabs::make()
                         ->persistTabInQueryString('navigation-tab')
                         ->tabs([
+                            // Keys for links from elsewhere (?navigation-tab=footer), as the Theme builder's.
                             Tab::make(__('Header'))
+                                ->key('header', isInheritable: false)
                                 ->icon(Heroicon::OutlinedBars3)
-                                ->schema([$this->headerRepeater()]),
+                                ->schema(array_values(array_filter([StandardHeaderAndFooter::notice('header', 'navigation'), $this->headerRepeater()]))),
                             Tab::make(__('Mobile menu'))
+                                ->key('mobile', isInheritable: false)
                                 ->icon(Heroicon::OutlinedDevicePhoneMobile)
                                 ->schema($this->mobileFields()),
                             Tab::make(__('Footer'))
+                                ->key('footer', isInheritable: false)
                                 ->icon(Heroicon::OutlinedRectangleGroup)
-                                ->schema($this->footerFields()),
+                                ->schema(array_values(array_filter([StandardHeaderAndFooter::notice('footer', 'navigation'), ...$this->footerFields()]))),
                         ]),
                 ])
                     ->livewireSubmitHandler('save')

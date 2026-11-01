@@ -15,6 +15,7 @@ use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageBranding;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\CreateTemplate;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\EditTemplate;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\TemplateVisualEditor;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
@@ -241,6 +242,12 @@ class HeaderBehaviourTest extends PageTestCase
         $footer = Template::query()->create(['name' => 'Main footer', 'type' => 'footer', 'blocks' => []]);
 
         Livewire::test(TemplateVisualEditor::class, ['record' => $footer->getRouteKey()])->assertActionHidden('headerSettings');
+
+        // Drawn in the toolbar: neither Header settings, nor Discard changes with nothing to discard.
+        $toolbar = $this->get(TemplateResource::getUrl('visual', ['record' => $footer]))->assertSuccessful()->getContent();
+        $this->assertStringNotContainsString('Header settings', $toolbar);
+        $this->assertStringNotContainsString('Discard changes', $toolbar);
+        $this->assertStringContainsString('Header settings', $this->get(TemplateResource::getUrl('visual', ['record' => $this->headerTemplate()]))->getContent());
 
         $html = $this->get(app(VisualDrafts::class)->open($footer, $this->user())->canvasUrl())->assertSuccessful()->getContent();
         $this->assertStringNotContainsString('data-sb-sample', $html);

@@ -23,7 +23,7 @@ class TemplatesTable
             ->defaultSort('updated_at', 'desc')
             ->recordUrl(fn (Template $record): ?string => TemplateResource::canEdit($record) ? TemplateResource::getUrl('visual', ['record' => $record]) : null)
             ->emptyStateHeading(__('No templates yet'))
-            ->emptyStateDescription(__('The standard header and footer show, styled in Branding and Navigation. Make a template to build your own from blocks.'))
+            ->emptyStateDescription(__('The standard header and footer above show on every page: their links come from Navigation and their colours from Branding. Make a template to build your own from blocks, starting from a ready-made layout, or Customise the standard one.'))
             ->emptyStateIcon(Heroicon::OutlinedRectangleGroup)
             ->emptyStateActions([CreateAction::make()->label(__('New template'))])
             ->columns([

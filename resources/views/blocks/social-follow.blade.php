@@ -1,11 +1,12 @@
-@php($isCentered = ($block['align'] ?? 'center') === 'center')
+@php($align = in_array($block['align'] ?? null, ['left', 'right'], true) ? $block['align'] : 'center')
+@php($isCentered = $align === 'center')
 
 @if ($links !== [])
-    <div @class(['text-center' => $isCentered])>
+    <div @class(['text-center' => $isCentered, 'text-right' => $align === 'right'])>
         @if (filled($block['heading'] ?? null))
             <h2 class="section-heading mb-5 text-xl">{{ $block['heading'] }}</h2>
         @endif
-        <div @class(['flex flex-wrap gap-3', 'justify-center' => $isCentered])>
+        <div @class(['flex flex-wrap gap-3', 'justify-center' => $isCentered, 'justify-end' => $align === 'right'])>
             @foreach ($links as $network => $link)
                 <a href="{{ $link['url'] }}" target="_blank" rel="noopener" title="{{ $link['label'] }}"
                    class="inline-flex h-11 w-11 items-center justify-center rounded-full border border-current opacity-80 transition hover:opacity-100 hover:bg-current/10 [&_svg]:h-5 [&_svg]:w-5">

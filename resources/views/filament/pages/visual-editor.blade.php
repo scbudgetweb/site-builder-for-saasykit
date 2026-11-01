@@ -751,13 +751,13 @@
             </div>
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
-                {{-- A header template's own settings (TemplateVisualEditor). --}}
-                @if (method_exists($this, 'headerSettingsAction'))
-                    {{ $this->headerSettingsAction }}
-                @endif
-                {{ $this->editAsFormAction }}
-                {{ $this->discardAction }}
-                {{ $this->publishAction }}
+                {{-- Printed here, an action shows even when hidden, so each is checked: Header settings only for a
+                     header template (TemplateVisualEditor), Discard changes only when there are some. --}}
+                @foreach ([method_exists($this, 'headerSettingsAction') ? $this->headerSettingsAction : null, $this->editAsFormAction, $this->discardAction, $this->publishAction] as $toolbarAction)
+                    @if ($toolbarAction?->isVisible())
+                        {{ $toolbarAction }}
+                    @endif
+                @endforeach
             </div>
         </header>
 

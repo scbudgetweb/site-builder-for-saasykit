@@ -154,17 +154,18 @@ class TemplatesTest extends PageTestCase
             ->assertRedirect(TemplateResource::getUrl('visual', ['record' => Template::query()->sole()]));
 
         $template = Template::query()->sole();
+        $this->assertSame(['site_header'], array_column($template->blocks, 'type'), 'It starts from the standard header.');
 
         $editor = Livewire::test(TemplateVisualEditor::class, ['record' => $template->getRouteKey()]);
         $this->assertSame('header', app(BlockRegistry::class)->editingTemplateType(), 'Its pickers offer header blocks.');
 
         $editor->callAction(TestAction::make('addBlock'), ['type' => 'text'])->assertSet('mountedActions.0.name', 'editBlock');
-        $this->assertCount(1, app(VisualDrafts::class)->open($template, $this->user())->blocks);
+        $this->assertCount(2, app(VisualDrafts::class)->open($template, $this->user())->blocks);
 
         $editor = Livewire::test(TemplateVisualEditor::class, ['record' => $template->getRouteKey()]);
         $this->assertTrue($editor->instance()->getAction('publish')->isConfirmationRequired(), 'It\'s on, so Save says visitors see it straight away.');
         $editor->callAction('publish')->assertNotified('Template saved');
-        $this->assertCount(1, $template->fresh()->blocks);
+        $this->assertCount(2, $template->fresh()->blocks);
 
         $this->get(app(VisualDrafts::class)->open($template->fresh(), $this->user())->canvasUrl())->assertSuccessful()->assertSee('data-sb-node="block"', false);
 

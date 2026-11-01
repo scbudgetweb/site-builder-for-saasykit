@@ -5,6 +5,16 @@
 
 The Theme builder lets you build the site's **header** and **footer** from blocks, as you build a page, and choose where each one is shown. With a blog, it can also lay out **blog posts** and the **blog's pages of posts** (see [Blog post templates](#blog-post-templates) and [Blog archive templates](#blog-archive-templates)). Wherever a template applies, it's shown in place of the standard header or footer. With no template, the standard ones show, styled in [Branding](branding.md) and filled from [Navigation](navigation.md), so the site looks right without any templates at all.
 
+## The standard header and footer
+
+At the top of the Theme builder, a card for the **standard header** and one for the **standard footer** says where each is shown (on every page, everywhere except where a template applies, or not at all because a template is shown on every page instead). Each has:
+
+- **Edit links:** Website › Navigation, on its Header or Footer tab;
+- **Edit colours:** Branding › Header & footer;
+- **Customise:** makes a template from the standard one, as blocks you can change, and opens it in the visual builder. A customised header keeps the standard header's behaviour from Branding. The new template is **off** until you turn it on, so visitors keep seeing the standard one meanwhile.
+
+Navigation and Branding also say when a template is shown instead of the standard header or footer, naming it with a link to open it.
+
 ## Making a template
 
 1. Go to *Website › Theme builder* and click **New template**.
@@ -12,9 +22,14 @@ The Theme builder lets you build the site's **header** and **footer** from block
    - **Every page**;
    - **Only the pages chosen**;
    - **Every page except those chosen**.
-3. Click **Create**. It opens in the visual builder, on its own (the site's current header and footer are hidden while you work on it).
-4. Add blocks with **+**, as on a page. The quickest header is one **Header bar** block: the logo, links, account links and a button, laid out by its Style. For a layout of your own, use a **Section** with a row of columns (for example ¼ + ½ + ¼): the **Logo** in the first column, the **Menu** in the middle and the **Account links** at the end.
-5. **Save**. If the template is on, visitors see it straight away wherever it applies.
+3. Under **Start from**, pick a ready-made layout from the pictures:
+   - **Headers:** the standard header (logo on the left, links and buttons on the right), links in the middle, logo in the middle with the links underneath, logo between the links, logo and a menu button, a **Top bar** above the standard header, or start empty.
+   - **Footers:** the standard footer (logo, tagline and social icons beside the link columns, with the copyright line underneath), simple (the copyright line and social icons in one bar), logo and link columns with a bar underneath, centred, a call to action above the columns, or start empty.
+
+   The layouts are ordinary blocks, so everything in them can be changed. Their links still come from Navigation, and footers sit on the Branding footer colours (**Background › Footer colours**), so later changes there still apply. The footer's tagline is copied in as text.
+4. Click **Create**. It opens in the visual builder, on its own (the site's current header and footer are hidden while you work on it).
+5. Change it, or add blocks with **+**, as on a page. The quickest header is one **Header bar** block: the logo, links, account links and a button, laid out by its Style. For a layout of your own, use a **Section** with a row of columns (for example ¼ + ½ + ¼): the **Logo** in the first column, the **Menu** in the middle and the **Account links** at the end.
+6. **Save**. If the template is on, visitors see it straight away wherever it applies.
 
 **On** (in the list, and in the template's form) turns a template on and off. Turn it off to work on it without visitors seeing it.
 
@@ -25,6 +40,10 @@ What a template is (header or footer) can't change once it's made, because some 
 A header template's **Header settings** (in the visual builder's toolbar, or the template's form) choose whether it **stays at the top** (always, or only when scrolling back up), **shrinks** and gets a **shadow** once the page scrolls, and sits **over the first section** when a page opens with a Hero or Banner. They're the same settings as the standard header's in [Branding](branding.md#header--footer), but the template's own. They're saved straight away (not with Save), and the canvas shows the header over a **sample page**, so you can scroll and see them work. The sample page is never shown to visitors.
 
 Over the first section, a **Header bar** on the Branding header colours turns see-through, as do the **Logo**, **Menu** and **Account links** blocks. A Header bar or Section with a **Background** of its own keeps it.
+
+### Header and footer colours as a background
+
+In a template, a Section's (or any block's, row's or column's) **Background** can also be **Header colours (Branding)** or **Footer colours (Branding)**: the background and text colours from Branding › Header & footer, so the template changes with them. On the footer colours, links, social icons and the site's name take the footer's link, social and heading colours, as in the standard footer.
 
 ### Which template is shown
 
@@ -37,6 +56,7 @@ Besides every ordinary block (text, buttons, images, social icons…), templates
 | Block | In | What it shows and its settings |
 |---|---|---|
 | **Header bar** | Header | A whole header in one block. **Style:** logo on the left with the links on the right; logo on the left with the links in the middle; logo in the middle with the links underneath; logo in the middle of the links; or the logo and a menu button only (the mobile menu at every size). Each part can be turned off: the **logo** (and its height), the **links** from Navigation (**Edit links** changes them there and then, for the whole site), **Log in** (the account menu once signed in) and a **button** (its text and link, shown to visitors who aren't signed in or to everyone, in the Branding header button's colours or one of the site's button styles, and optionally kept beside the menu button on phones). **Show the menu button** below desktop or tablet width; the links, Log in and the button then move into the mobile menu. Layout: its height, content width, background (the Branding header colours, or see-through) and a line underneath. Its own link and mobile menu colours, as the Menu block's |
+| **Top bar** | Header | A slim row above the header (Divi's secondary menu bar): a short line (such as opening hours), a **phone number** and **email** that can be tapped, and **social icons** (from Settings › General Settings › Social Links). Contact details on the left and icons on the right, or everything in the middle; its content width; and **Hide on phones**. On the site colour, dark, unless its Background says otherwise |
 | **Logo** | Header, footer | The Branding logo (the header's or the footer's), linking to the home page; its height and line-up. With no logo uploaded, the site's name |
 | **Menu** | Header, footer | The header links from Navigation, with dropdowns and mega menus, and a menu button for the mobile menu on smaller screens. Its line-up, where the menu button takes over (tablet or desktop size), and its own link, hover and mobile menu colours (blank: the Branding header colours) |
 | **Account links** | Header, footer | *Log in* and a button (e.g. *Get started*) for visitors, and the account menu once signed in. Their text, the button's link, and whether to show the button |

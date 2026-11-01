@@ -14,6 +14,7 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use ScBudgetWeb\SiteBuilder\Blocks\Panel\PanelToggle;
+use ScBudgetWeb\SiteBuilder\Branding\Branding;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 
@@ -36,6 +37,9 @@ class BlockAppearance
         'custom' => 'Custom colour',
         'gradient' => 'Gradient',
         'image' => 'Image',
+        // Theme builder templates only (backgroundFields()).
+        'header' => 'Header colours (Branding)',
+        'footer' => 'Footer colours (Branding)',
     ];
 
     /** Background image size => label: cover crops to fill, contain shows it all, auto keeps the uploaded size. */
@@ -174,7 +178,12 @@ class BlockAppearance
         'custom' => '',
         'gradient' => '',
         'image' => 'bg-gray-900',
+        'header' => 'bg-sb-header-bg',
+        'footer' => 'bg-sb-footer-bg',
     ];
+
+    /** Branding's header and footer backgrounds take their own text colour (unless Text colour says otherwise). */
+    private const BRANDING_TEXT_CLASSES = ['header' => 'text-sb-header-text', 'footer' => 'text-sb-footer-text'];
 
     private const DARK_BACKGROUNDS = ['brand', 'brand_dark', 'dark', 'image'];
 
@@ -354,7 +363,12 @@ class BlockAppearance
             Select::make('background')
                 ->label(__('Background'))
                 ->hintIcon(PageBlock::HELP_ICON, __('The colour or picture behind it. The site colours follow Branding, so they change if your brand colour does.'))
-                ->options(self::translated($withImage ? self::BACKGROUNDS : array_diff_key(self::BACKGROUNDS, ['image' => true])))
+                ->options(fn (): array => self::translated(array_diff_key(self::BACKGROUNDS, array_filter([
+                    'image' => ! $withImage,
+                    // Branding's header and footer colours, for blocks in a Theme builder template.
+                    'header' => app(BlockRegistry::class)->editingTemplateType() === null,
+                    'footer' => app(BlockRegistry::class)->editingTemplateType() === null,
+                ]))))
                 ->default($defaultBackground)
                 ->selectablePlaceholder(false)
                 ->live(),
@@ -654,7 +668,7 @@ class BlockAppearance
                 $isPanel ? '' : $backgroundClasses,
                 self::SPACING_CLASSES[$spacing],
                 self::OVERLAP_CLASSES[self::pick($appearance['overlap'] ?? null, self::OVERLAPS, 'none')],
-                $inheritsText ? '' : ($isDark ? 'text-white' : 'text-gray-900'),
+                $inheritsText ? '' : self::textClass($background, $text, $isDark),
                 $sizes['class'],
                 $isPanel ? '' : $imageLook['class'],
                 self::cssClasses($appearance['css_class'] ?? null),
@@ -826,11 +840,7 @@ class BlockAppearance
         return [
             'class' => trim(implode(' ', array_filter([
                 self::BACKGROUND_CLASSES[$background],
-                match ($textScheme) {
-                    'light' => 'text-white',
-                    'dark' => 'text-gray-900',
-                    default => '',
-                },
+                $textScheme === null ? '' : self::textClass($background, $text, $textScheme === 'light'),
                 $imageLook['class'],
             ]))),
             'style' => trim(match (true) {
@@ -846,6 +856,19 @@ class BlockAppearance
     }
 
     /**
+     * The text colour class: Branding's header or footer text on those backgrounds (with Automatic text), otherwise
+     * white or near-black.
+     */
+    private static function textClass(string $background, string $text, bool $isDark): string
+    {
+        if ($text === 'auto' && isset(self::BRANDING_TEXT_CLASSES[$background])) {
+            return self::BRANDING_TEXT_CLASSES[$background];
+        }
+
+        return $isDark ? 'text-white' : 'text-gray-900';
+    }
+
+    /**
      * Whether a background is dark enough for light text: a dark preset, or a custom colour or gradient that white
      * text reads well on.
      *
@@ -854,6 +877,13 @@ class BlockAppearance
     private static function isDarkBackground(string $background, mixed $customColor, array $gradientStops): bool
     {
         $customHex = Colour::hex($customColor);
+
+        if (isset(self::BRANDING_TEXT_CLASSES[$background])) {
+            $brandingHex = Colour::hex(app(Branding::class)->string($background === 'header' ? Branding::HEADER_BG_COLOR : Branding::FOOTER_BG_COLOR));
+
+            // Blank: the standard header is white and the standard footer dark grey.
+            return $brandingHex === null ? $background === 'footer' : Colour::isReadableTextOn('#ffffff', $brandingHex);
+        }
 
         return in_array($background, self::DARK_BACKGROUNDS, true)
             || ($background === 'custom' && $customHex !== null && Colour::isReadableTextOn('#ffffff', $customHex))

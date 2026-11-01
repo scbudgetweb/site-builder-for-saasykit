@@ -66,6 +66,7 @@ class BlockRegistry
         Core\LatestPostsBlock::class,
         // Theme Builder (templates only)
         Core\SiteHeaderBlock::class,
+        Core\SiteTopBarBlock::class,
         Core\SiteLogoBlock::class,
         Core\SiteMenuBlock::class,
         Core\SiteAccountLinksBlock::class,

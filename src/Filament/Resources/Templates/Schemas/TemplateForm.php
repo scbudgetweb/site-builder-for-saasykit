@@ -6,6 +6,7 @@ use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
@@ -17,6 +18,7 @@ use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
+use ScBudgetWeb\SiteBuilder\Templates\TemplateLayouts;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
@@ -108,6 +110,18 @@ class TemplateForm
                                 ->helperText(__('Off: it isn\'t used anywhere, so you can work on it first.'))
                                 ->default(true),
                         ]),
+                    ]),
+                Section::make(__('Start from'))
+                    ->description(__('A ready-made layout, changed in the visual builder. Links still come from Navigation and colours from Branding.'))
+                    ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && TemplateLayouts::has($get('type')))
+                    ->schema([
+                        ViewField::make('layout')
+                            ->hiddenLabel()
+                            ->label(__('Start from'))
+                            ->view('site-builder::filament.forms.layout-picker')
+                            ->viewData(fn (Get $get): array => ['layouts' => TemplateLayouts::options($get('type')), 'type' => $get('type')])
+                            ->default(TemplateLayouts::STANDARD)
+                            ->in(fn (Get $get): array => array_keys(TemplateLayouts::options($get('type')))),
                     ]),
                 Section::make(__('Header behaviour'))
                     ->description(__('How this header behaves as the page scrolls. Also under Header settings in the visual builder, where you can try it on a sample page.'))

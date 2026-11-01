@@ -43,6 +43,7 @@ use ScBudgetWeb\SiteBuilder\Branding\BrandingSection;
 use ScBudgetWeb\SiteBuilder\Branding\BrandingStyle;
 use ScBudgetWeb\SiteBuilder\Branding\ColourGroup;
 use ScBudgetWeb\SiteBuilder\Filament\Forms\SiteColour;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\StandardHeaderAndFooter;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
 use ScBudgetWeb\SiteBuilder\Support\Colour;
 use ScBudgetWeb\SiteBuilder\Support\CustomCss;
@@ -330,8 +331,14 @@ class ManageBranding extends Page
                                 ->icon('heroicon-o-swatch')
                                 ->schema([$this->shapesSection()]),
                             Tab::make(__('Header & footer'))
+                                // For links from elsewhere (?branding-tab=header-footer), as the Theme builder's.
+                                ->key('header-footer', isInheritable: false)
                                 ->icon('heroicon-o-window')
                                 ->schema([
+                                    ...array_values(array_filter([
+                                        StandardHeaderAndFooter::notice('header', 'branding'),
+                                        StandardHeaderAndFooter::notice('footer', 'branding'),
+                                    ])),
                                     Section::make(__('Header'))
                                         ->description(__('Colours for the site header and the mobile menu. Hover colours are also used when a link or button is pressed or reached with the keyboard. Leave blank to keep the standard look.'))
                                         ->schema([

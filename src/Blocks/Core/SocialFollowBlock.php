@@ -57,7 +57,7 @@ class SocialFollowBlock extends PageBlock
         return [
             Select::make('align')
                 ->label(__('Alignment'))
-                ->options(['left' => __('Left'), 'center' => __('Centre')])
+                ->options(['left' => __('Left'), 'center' => __('Centre'), 'right' => __('Right')])
                 ->default('center')
                 ->selectablePlaceholder(false),
         ];

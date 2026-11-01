@@ -73,6 +73,7 @@ class BlockRegistry
         Core\PostImageBlock::class,
         Core\PostContentBlock::class,
         Core\PostShareBlock::class,
+        Core\PostNavBlock::class,
         Core\RelatedPostsBlock::class,
         Core\ArchiveTitleBlock::class,
         Core\PostListBlock::class,

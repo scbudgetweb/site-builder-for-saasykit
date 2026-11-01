@@ -62,6 +62,7 @@ class BlockFeaturesTest extends PageTestCase
         'post_image' => [false, [], false],
         'post_content' => [false, [], true],
         'post_share' => [false, ['decoration', 'size'], false],
+        'post_nav' => [false, [], false],
         'related_posts' => [false, ['align', 'decoration', 'size'], true],
         'latest_posts' => [false, ['align', 'decoration', 'size'], true],
         'archive_title' => [false, ['decoration', 'size'], true],

@@ -13,6 +13,7 @@ use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\CreateTemplate;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\TemplateVisualEditor;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
+use ScBudgetWeb\SiteBuilder\Tests\Fixtures\Blog\Post;
 
 /**
  * The Theme Builder's Blog post template: offered when the app has a blog, applied by the post's category, its blocks
@@ -82,10 +83,46 @@ class BlogPostTemplateTest extends BlogTestCase
         $this->assertStringContainsString('You might also like', $html);
         $this->assertMatchesRegularExpression('/<h3 class="sb-item-title[^"]*">\s*<a href="http:\/\/localhost\/blog\/older-news"[^>]*>Older news<\/a>/', $html);
         $this->assertStringContainsString('<span>Events</span>', $html);
-        $this->assertSame(1, substr_count($html, 'Summer fair'), 'Three asked for, two to show.');
+        $this->assertSame(2, substr_count($html, '<h3 class="sb-item-title'), 'Three asked for, two to show.');
         $this->assertStringNotContainsString('Not out yet', $html);
         $this->assertNotNull($older);
         $this->assertNotNull($event);
+    }
+
+    public function test_previous_and_next_posts_go_by_date(): void
+    {
+        $older = $this->blogPost(['title' => 'Older news', 'slug' => 'older-news']);
+        $this->blogPost(['title' => 'Summer fair', 'slug' => 'summer-fair', 'blog_post_category_id' => $this->events->id]);
+        $post = $this->blogPost();
+        $sameDay = $this->blogPost(['title' => 'Same day', 'slug' => 'same-day', 'published_at' => $post->published_at]);
+        $this->blogPost(['title' => 'Not out yet', 'slug' => 'not-out-yet', 'is_published' => false]);
+        $titles = fn (array $adjacent): array => array_map(fn (?BlogPost $post): ?string => $post?->title, $adjacent);
+        $blog = app(Blog::class);
+
+        $this->assertSame(['previous' => 'Summer fair', 'next' => 'Same day'], $titles($blog->adjacent(BlogPost::fromModel($post))), 'The same date goes by the order they were added; never a draft.');
+        $this->assertSame(['previous' => 'Older news', 'next' => 'Same day'], $titles($blog->adjacent(BlogPost::fromModel($post), sameCategory: true)));
+        $this->assertSame(['previous' => 'New kitchen opens', 'next' => null], $titles($blog->adjacent(BlogPost::fromModel($sameDay))));
+        $this->assertSame(['previous' => null, 'next' => 'Summer fair'], $titles($blog->adjacent(BlogPost::fromModel($older))));
+        $this->assertSame(['previous' => 'Same day', 'next' => null], $titles($blog->adjacent(BlogPost::fromModel($this->blogPost(['slug' => 'draft', 'is_published' => false])))), 'A draft has no date: the latest post comes before it.');
+    }
+
+    public function test_the_previous_and_next_posts_block(): void
+    {
+        $this->template(['blocks' => [self::block('post_nav', ['next_label' => 'Read on', 'show_image' => true])]]);
+        $older = $this->blogPost(['title' => 'Older news', 'slug' => 'older-news', 'image' => null]);
+        $post = $this->blogPost();
+        $this->blogPost(['title' => 'Summer fair', 'slug' => 'summer-fair', 'image' => 'https://example.com/fair.jpg']);
+
+        $html = (string) app(Blog::class)->renderPost($post);
+        $this->assertMatchesRegularExpression('/<a href="http:\/\/localhost\/blog\/older-news" rel="prev".*Previous post.*Older news/s', $html);
+        $this->assertMatchesRegularExpression('/<a href="http:\/\/localhost\/blog\/summer-fair" rel="next".*<img src="https:\/\/example.com\/fair.jpg".*Read on.*Summer fair/s', $html);
+
+        $html = (string) app(Blog::class)->renderPost($older);
+        $this->assertStringNotContainsString('rel="prev"', $html);
+        $this->assertMatchesRegularExpression('/rel="next" class="[^"]*sm:col-start-2/', $html, 'Next stays on the right.');
+
+        Post::query()->whereKeyNot($post->id)->delete();
+        $this->assertStringNotContainsString('More posts', (string) app(Blog::class)->renderPost($post), 'No other posts: hidden, as When empty says.');
     }
 
     public function test_a_template_applies_by_the_posts_category(): void
@@ -160,7 +197,7 @@ class BlogPostTemplateTest extends BlogTestCase
     public function test_post_blocks_and_tags_belong_to_blog_post_templates(): void
     {
         $registry = app(BlockRegistry::class);
-        $postBlocks = ['post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'related_posts'];
+        $postBlocks = ['post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'post_nav', 'related_posts'];
 
         $this->assertSame([], array_intersect($postBlocks, array_keys($registry->offered())), 'Not on pages.');
         $this->assertSame($postBlocks, array_values(array_intersect(array_keys($registry->editingTemplate(Templates::BLOG_POST)->offered()), $postBlocks)));
@@ -191,7 +228,7 @@ class BlogPostTemplateTest extends BlogTestCase
         $template = Template::query()->sole();
         $this->assertSame([$this->events->id], $template->category_ids);
         $this->assertSame(['section', 'related_posts'], array_column($template->blocks, 'type'));
-        $this->assertSame(['post_title', 'post_meta', 'post_image', 'post_content', 'post_share'], array_column(array_merge(...array_map(fn (array $row): array => array_merge(...array_column($row['columns'], 'blocks')), $template->blocks[0]['data']['rows'])), 'type'), 'The post in a Section, related posts under it.');
+        $this->assertSame(['post_title', 'post_meta', 'post_image', 'post_content', 'post_share', 'post_nav'], array_column(array_merge(...array_map(fn (array $row): array => array_merge(...array_column($row['columns'], 'blocks')), $template->blocks[0]['data']['rows'])), 'type'), 'The post in a Section, related posts under it.');
     }
 
     public function test_its_canvas_shows_the_latest_post_or_a_sample(): void

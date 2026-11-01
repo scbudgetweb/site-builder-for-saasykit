@@ -43,7 +43,7 @@ Everything else works as on a page: design options, copying and pasting styles, 
 When your app has SaaSykit's blog, the Theme builder offers a third kind of template, **Blog post**. It lays out each post's page: the template's blocks are the page, between the site's header and footer, and the post's title, description and image still go to search engines and share previews.
 
 - **Shown on:** every post, only posts in the categories chosen, or every post except those in the categories chosen. As with pages, one for chosen categories wins, then the most recently saved. With no Blog post template, posts show as they always have.
-- **A new one starts with the standard layout:** a narrow Section holding the post's title, details, image, text and share links, then Related posts under it. Change, move or remove any of them, or add any other block (a Mailing list sign-up, say).
+- **A new one starts with the standard layout:** a narrow Section holding the post's title, details, image, text, share links and links to the previous and next posts, then Related posts under it. Change, move or remove any of them, or add any other block (a Mailing list sign-up, say).
 - **On the canvas,** your latest published post fills the blocks, or a sample post before there are any.
 
 Its own blocks:
@@ -55,6 +55,7 @@ Its own blocks:
 | **Featured image** | The post's first image, as uploaded or trimmed to a shape, with corners, border and shadow. Nothing shows for a post without one |
 | **Post content** | The post's text, as written in Blog › Posts, styled by Design › Heading text and Body text |
 | **Share links** | Icons to share the post on X, LinkedIn or Facebook, or by email, with an optional heading |
+| **Previous and next posts** | Links to the post before this one and the one after it, by date, each with a label (*Previous post*, *Next post*, or your own) and the post's title, and optionally its image. Optionally only from the same category. **When empty** decides what shows when there are no others |
 | **Related posts** | Cards for more posts, from the same category first (or just the latest), up to 12, in 2 to 4 columns. Each card can show its image, date, category and description; Design › Items styles them. **When empty** decides what shows when there are no other posts |
 
 Any text can also show the post's details as [dynamic content](pages.md#block-settings): `{{ post_title }}`, `{{ post_excerpt }}` (its description), `{{ post_date }}`, `{{ post_author }}` and `{{ post_category }}`. On other pages they're blank, or their fallback (`{{ post_title | our news }}`).

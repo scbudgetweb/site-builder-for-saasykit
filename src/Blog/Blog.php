@@ -202,6 +202,48 @@ class Blog
     }
 
     /**
+     * The published posts either side of $post by date: the one before it (older) and the one after it (newer),
+     * optionally from its category. A draft has no date, so only the latest post comes before it.
+     *
+     * @return array{previous: BlogPost|null, next: BlogPost|null}
+     */
+    public function adjacent(BlogPost $post, bool $sameCategory = false): array
+    {
+        $query = $this->published();
+
+        if ($query === null) {
+            return ['previous' => null, 'next' => null];
+        }
+
+        $model = $query->getModel();
+        $key = $model->getQualifiedKeyName();
+        $date = $model->qualifyColumn('published_at');
+        $at = $post->isPublished ? $post->publishedAt : null;
+        $query
+            ->when($sameCategory && $post->categoryId !== null, fn (Builder $query) => $query->where('blog_post_category_id', $post->categoryId))
+            ->when($post->id !== null, fn (Builder $query) => $query->whereKeyNot($post->id));
+
+        $previous = (clone $query)
+            ->when($at !== null, fn (Builder $query) => $query->where(fn (Builder $query) => $query
+                ->where($date, '<', $at)
+                ->orWhere(fn (Builder $query) => $query->where($date, $at)->where($key, '<', (int) $post->id))))
+            ->first();
+
+        $next = $at === null ? null : (clone $query)
+            ->where(fn (Builder $query) => $query
+                ->where($date, '>', $at)
+                ->orWhere(fn (Builder $query) => $query->where($date, $at)->where($key, '>', (int) $post->id)))
+            ->reorder($date)
+            ->orderBy($key)
+            ->first();
+
+        return [
+            'previous' => $previous === null ? null : BlogPost::fromModel($previous),
+            'next' => $next === null ? null : BlogPost::fromModel($next),
+        ];
+    }
+
+    /**
      * The categories, by name, for choosing where a template applies.
      *
      * @return array<int, string> id => name

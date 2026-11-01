@@ -58,8 +58,8 @@ class Templates
 
     /**
      * The blocks a new template of this type starts with: the standard layout (for a blog post, its title, details,
-     * image, text, share links and related posts; for the blog's archive, its title and posts), so it's changed rather
-     * than built from nothing. Empty for the rest.
+     * image, text, share links, previous and next posts, and related posts; for the blog's archive, its title and
+     * posts), so it's changed rather than built from nothing. Empty for the rest.
      *
      * @return array<int, array{type: string, data: array<string, mixed>}>
      */
@@ -80,6 +80,7 @@ class Templates
                         ['layout' => 'stacked', 'blocks' => [
                             ['type' => 'post_content', 'data' => []],
                             ['type' => 'post_share', 'data' => ['heading' => __('Share this post')]],
+                            ['type' => 'post_nav', 'data' => []],
                         ]],
                     ],
                 ]],

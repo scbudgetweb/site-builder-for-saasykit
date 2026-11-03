@@ -584,7 +584,7 @@ final class PageImport
      *
      * @param  array<int|string, mixed>  $input
      * @param  array<int|string, mixed>|null  $output
-     * @param  array<string, true>  $known  every setting's state path, and the paths of the groups holding them
+     * @param  array<string, bool>  $known  every setting's state path, and the paths of the groups holding them
      */
     private function compare(array $input, mixed $raw, ?array $output, array $known, string $path, string $statePath): void
     {
@@ -757,28 +757,19 @@ final class PageImport
     /**
      * Whether the field at this state path keeps its value whole: a field with nothing of the form's below it.
      *
-     * @param  array<string, true>  $known
+     * @param  array<string, bool>  $known
      */
     private static function holdsWholeValue(array $known, string $statePath): bool
     {
-        if (! isset($known[$statePath])) {
-            return false;
-        }
-
-        foreach (array_keys($known) as $path) {
-            if (str_starts_with($path, $statePath.'.')) {
-                return false;
-            }
-        }
-
-        return true;
+        return ($known[$statePath] ?? null) === false;
     }
 
     /**
      * The state path of every setting in the form, hidden ones too (e.g. "data.blocks.{uuid}.data.heading"), and of each
-     * group or list holding them, so a key the form has no field for (a typo) can be told from one it hides.
+     * group or list holding them, so a key the form has no field for (a typo) can be told from one it hides. True for
+     * a path with settings under it, false for a field holding its value whole.
      *
-     * @return array<string, true>
+     * @return array<string, bool>
      */
     private static function settingPaths(Schema $schema): array
     {
@@ -787,9 +778,12 @@ final class PageImport
         foreach ($schema->getFlatFields(withHidden: true) as $field) {
             $path = $field->getStatePath();
 
-            while (str_contains($path, '.')) {
+            if (str_contains($path, '.')) {
+                $paths[$path] ??= false;
+            }
+
+            while (str_contains($path = Str::beforeLast($path, '.'), '.')) {
                 $paths[$path] = true;
-                $path = Str::beforeLast($path, '.');
             }
         }
 

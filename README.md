@@ -29,7 +29,7 @@
 
 ![Changing the Hero's heading in its panel, and the page following as it's typed, then cancelling](docs/images/live-preview.gif)
 
-**Drag and drop.** Move blocks by their *Move* handle and rows by their *Row* handle. Every change can be undone.
+**Drag and drop.** Move blocks by their *Move* handle and rows by their ⠿ handle. Every change can be undone.
 
 ![Dragging the features above the stats, then undoing it](docs/images/drag-and-drop.gif)
 

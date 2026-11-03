@@ -15,6 +15,8 @@
 ### Changed
 
 - The visual builder's + buttons are colour-coded: green adds a row, grey adds a block.
+- The row you're pointing at is outlined, and its ⚙ and ⠿ handle sit outside its left edge, off the first block.
+- Imports check large pages faster.
 - README lists every block, with a line on what it does.
 
 ### Fixed

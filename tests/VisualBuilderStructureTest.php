@@ -210,6 +210,16 @@ class VisualBuilderStructureTest extends PageTestCase
         $this->assertSame('Intro [A | B / - | - / C / - | - | -]', $this->draftOutline($page), 'Neither changed anything.');
     }
 
+    public function test_the_hovered_row_is_outlined_with_its_controls_beside_it(): void
+    {
+        $this->editor($this->structurePage())
+            ->assertSee("this.rowBox = this.makeBox('is-row')", false)
+            ->assertSee('.sb-canvas-box.is-row', false)
+            ->assertSee('row.left >= 30 ? row.left - 28 : row.left + 4', false)
+            ->assertSee('isBesideHoveredRow(event)', false)
+            ->assertDontSee("'⠿ ' + \"Row\"", false);
+    }
+
     public function test_row_and_column_settings_open_on_their_own(): void
     {
         $page = $this->structurePage();

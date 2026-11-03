@@ -148,6 +148,9 @@
                     .sb-canvas-box[data-level="section"] { --sb-level: ${config.levels.section}; }
                     .sb-canvas-box.is-hover { outline: 2px dashed var(--sb-level); outline-offset: -2px; }
                     .sb-canvas-box.is-selected { outline: 2px solid var(--sb-level); outline-offset: -2px; }
+                    /* The row the pointer is in: a light outline, so its ⚙, handle and + clearly belong to it. */
+                    .sb-canvas-box.is-row { --sb-level: ${config.levels.row}; z-index: 2147483645; outline: 1px dashed var(--sb-level); outline-offset: 2px; }
+                    .sb-canvas-box.is-row .sb-canvas-label { display: none; }
                     .sb-canvas-label { position: absolute; top: 0; left: 0; transform: translateY(-100%); padding: 2px 8px; border-radius: 4px 4px 0 0; background: var(--sb-level); color: #fff; font: 600 12px/18px system-ui, sans-serif; white-space: nowrap; }
                     .sb-canvas-box.is-top .sb-canvas-label { transform: none; border-radius: 0 0 4px 0; }
                     .sb-canvas-control { position: fixed; z-index: 2147483647; display: none; align-items: center; justify-content: center; border: 0; color: #fff; background: ${config.colour}; box-shadow: 0 2px 6px rgb(0 0 0 / 0.25); cursor: pointer; font: 600 12px/1 system-ui, sans-serif; }
@@ -156,6 +159,7 @@
                     .sb-canvas-handle { height: 22px; padding: 0 8px; border-radius: 4px; cursor: grab; gap: 4px; }
                     .sb-canvas-handle[data-kind="block"] { background: ${config.levels.block}; }
                     .sb-canvas-handle[data-kind="row"], .sb-canvas-settings { background: ${config.levels.row}; }
+                    .sb-canvas-handle[data-kind="row"] { width: 22px; padding: 0; font-size: 14px; }
                     .sb-canvas-settings { width: 22px; height: 22px; border-radius: 4px; font-size: 14px; }
                     .sb-canvas-row-plus { width: 22px; height: 22px; border-radius: 9999px; font-size: 16px; background: ${config.levels.row}; }
                     .sb-canvas-add-row { height: 24px; padding: 0 10px; border-radius: 9999px; background: ${config.levels.row}; }
@@ -168,11 +172,12 @@
 
                 this.hoverBox = this.makeBox('is-hover');
                 this.selectBox = this.makeBox('is-selected');
+                this.rowBox = this.makeBox('is-row');
                 this.controls = {
                     before: this.makeControl('sb-canvas-plus', '+', @js(__('Add a block above'))),
                     after: this.makeControl('sb-canvas-plus', '+', @js(__('Add a block below'))),
                     blockHandle: this.makeControl('sb-canvas-handle', '⠿ ' + @js(__('Move')), @js(__('Drag to move this block')), 'block'),
-                    rowHandle: this.makeControl('sb-canvas-handle', '⠿ ' + @js(__('Row')), @js(__('Drag to move this row')), 'row'),
+                    rowHandle: this.makeControl('sb-canvas-handle', '⠿', @js(__('Drag to move this row')), 'row'),
                     rowSettings: this.makeControl('sb-canvas-settings', '⚙', @js(__('Row settings')), 'row'),
                     rowAfter: this.makeControl('sb-canvas-row-plus', '+', @js(__('Add a row below')), 'row'),
                     sectionRow: this.makeControl('sb-canvas-add-row', '+ ' + @js(__('Add row')), @js(__('Add a row to this section')), 'section'),
@@ -183,7 +188,7 @@
 
                 doc.addEventListener('mouseover', (event) => {
                     // Moving onto a + or a handle keeps the block it belongs to.
-                    if (this.drag || event.target.closest?.('.sb-canvas-control')) {
+                    if (this.drag || event.target.closest?.('.sb-canvas-control') || this.isBesideHoveredRow(event)) {
                         return;
                     }
 
@@ -342,6 +347,7 @@
                 const show = (control, left, top) => Object.assign(control.style, { display: 'flex', left: `${left}px`, top: `${top}px` });
 
                 Object.values(this.controls ?? {}).forEach((control) => (control.style.display = 'none'));
+                this.rowBox && (this.rowBox.style.display = 'none');
 
                 if (! rect) {
                     return;
@@ -360,9 +366,14 @@
                 const row = this.hoveredRow && this.nodes[this.hoveredRow.dataset.sbUid] ? this.hoveredRow.getBoundingClientRect() : null;
 
                 if (row) {
-                    show(this.controls.rowSettings, Math.max(2, row.left + 4), Math.max(2, row.top + 4));
-                    show(this.controls.rowHandle, Math.max(2, row.left + 30), Math.max(2, row.top + 4));
-                    show(this.controls.rowAfter, Math.max(2, row.left + 4), Math.min(this.doc.defaultView.innerHeight - 24, row.bottom - 11));
+                    Object.assign(this.rowBox.style, { display: 'block', top: `${row.top}px`, left: `${row.left}px`, width: `${row.width}px`, height: `${row.height}px` });
+
+                    // Its ⚙ and handle stand just outside its left edge, off the first block (inside it when there's no room).
+                    const left = row.left >= 30 ? row.left - 28 : row.left + 4;
+                    const top = Math.max(2, row.top);
+                    show(this.controls.rowSettings, left, top);
+                    show(this.controls.rowHandle, left, top + 26);
+                    show(this.controls.rowAfter, left, Math.max(top + 52, Math.min(this.doc.defaultView.innerHeight - 24, row.bottom - 11)));
                 }
 
                 // The Section the pointer is in: + Add row near its bottom edge, above the block's own + below.
@@ -375,6 +386,17 @@
                     this.controls.sectionRow.style.display = 'flex';
                     show(this.controls.sectionRow, (sectionRect.left + sectionRect.right - this.controls.sectionRow.offsetWidth) / 2, Math.max(sectionRect.top + 4, bottom));
                 }
+            },
+
+            // On the way out to the hovered row's ⚙ and handle, just left of it: the row stays hovered.
+            isBesideHoveredRow(event) {
+                if (! this.hoveredRow?.isConnected || event.target.closest?.('[data-sb-node="row"]')) {
+                    return false;
+                }
+
+                const row = this.hoveredRow.getBoundingClientRect();
+
+                return event.clientX >= row.left - 32 && event.clientX < row.left && event.clientY >= row.top && event.clientY <= row.bottom;
             },
 
             // The Section an element is in, or is.

@@ -19,6 +19,7 @@
             clipboard: config.clipboard,
             menu: { open: false, x: 0, y: 0, uid: null, rowUid: null, columnUid: null, isNested: false, mode: 'main' },
             hoveredRow: null,
+            hoveredSection: null,
             drag: null,
             // The layers panel: the page as a tree (VisualEditor::layers()), open or not (remembered in this browser),
             // the parts folded away, the one being renamed, and a drag in the panel.
@@ -150,11 +151,14 @@
                     .sb-canvas-label { position: absolute; top: 0; left: 0; transform: translateY(-100%); padding: 2px 8px; border-radius: 4px 4px 0 0; background: var(--sb-level); color: #fff; font: 600 12px/18px system-ui, sans-serif; white-space: nowrap; }
                     .sb-canvas-box.is-top .sb-canvas-label { transform: none; border-radius: 0 0 4px 0; }
                     .sb-canvas-control { position: fixed; z-index: 2147483647; display: none; align-items: center; justify-content: center; border: 0; color: #fff; background: ${config.colour}; box-shadow: 0 2px 6px rgb(0 0 0 / 0.25); cursor: pointer; font: 600 12px/1 system-ui, sans-serif; }
-                    .sb-canvas-plus { width: 26px; height: 26px; border-radius: 9999px; font-size: 18px; }
+                    /* Each + in the colour of what it adds: a block's dark grey, a row's green. */
+                    .sb-canvas-plus { width: 26px; height: 26px; border-radius: 9999px; font-size: 18px; background: ${config.levels.block}; }
                     .sb-canvas-handle { height: 22px; padding: 0 8px; border-radius: 4px; cursor: grab; gap: 4px; }
                     .sb-canvas-handle[data-kind="block"] { background: ${config.levels.block}; }
                     .sb-canvas-handle[data-kind="row"], .sb-canvas-settings { background: ${config.levels.row}; }
                     .sb-canvas-settings { width: 22px; height: 22px; border-radius: 4px; font-size: 14px; }
+                    .sb-canvas-row-plus { width: 22px; height: 22px; border-radius: 9999px; font-size: 16px; background: ${config.levels.row}; }
+                    .sb-canvas-add-row { height: 24px; padding: 0 10px; border-radius: 9999px; background: ${config.levels.row}; }
                     .sb-canvas-drop { position: fixed; z-index: 2147483646; pointer-events: none; display: none; background: ${config.colour}; border-radius: 2px; }
                     .sb-canvas-drop.is-into { background: color-mix(in srgb, ${config.colour} 15%, transparent); outline: 2px dashed ${config.colour}; }
                     .sb-canvas-ghost { position: fixed; z-index: 2147483647; pointer-events: none; padding: 4px 10px; border-radius: 6px; background: ${config.colour}; color: #fff; font: 600 12px/18px system-ui, sans-serif; box-shadow: 0 4px 12px rgb(0 0 0 / 0.3); }
@@ -170,6 +174,8 @@
                     blockHandle: this.makeControl('sb-canvas-handle', '⠿ ' + @js(__('Move')), @js(__('Drag to move this block')), 'block'),
                     rowHandle: this.makeControl('sb-canvas-handle', '⠿ ' + @js(__('Row')), @js(__('Drag to move this row')), 'row'),
                     rowSettings: this.makeControl('sb-canvas-settings', '⚙', @js(__('Row settings')), 'row'),
+                    rowAfter: this.makeControl('sb-canvas-row-plus', '+', @js(__('Add a row below')), 'row'),
+                    sectionRow: this.makeControl('sb-canvas-add-row', '+ ' + @js(__('Add row')), @js(__('Add a row to this section')), 'section'),
                 };
                 this.dropLine = doc.createElement('div');
                 this.dropLine.className = 'sb-canvas-drop';
@@ -196,6 +202,8 @@
                     if (control) {
                         control.classList.contains('sb-canvas-plus') && this.addBlock(this.hoveredUid, control === this.controls.before ? 'before' : 'after');
                         control === this.controls.rowSettings && this.openPanel('editRow', this.hoveredRow?.dataset.sbUid);
+                        control === this.controls.rowAfter && this.addRow(this.hoveredRow?.dataset.sbUid);
+                        control === this.controls.sectionRow && this.addRow(this.hoveredSection);
 
                         return;
                     }
@@ -354,7 +362,42 @@
                 if (row) {
                     show(this.controls.rowSettings, Math.max(2, row.left + 4), Math.max(2, row.top + 4));
                     show(this.controls.rowHandle, Math.max(2, row.left + 30), Math.max(2, row.top + 4));
+                    show(this.controls.rowAfter, Math.max(2, row.left + 4), Math.min(this.doc.defaultView.innerHeight - 24, row.bottom - 11));
                 }
+
+                // The Section the pointer is in: + Add row near its bottom edge, above the block's own + below.
+                const section = this.sectionOf(element);
+                const sectionRect = section ? this.rectOf(section) : null;
+                this.hoveredSection = sectionRect ? section.dataset.sbUid : null;
+
+                if (sectionRect) {
+                    const bottom = Math.min(this.doc.defaultView.innerHeight - 30, sectionRect.bottom - 42);
+                    this.controls.sectionRow.style.display = 'flex';
+                    show(this.controls.sectionRow, (sectionRect.left + sectionRect.right - this.controls.sectionRow.offsetWidth) / 2, Math.max(sectionRect.top + 4, bottom));
+                }
+            },
+
+            // The Section an element is in, or is.
+            sectionOf(element) {
+                while (element) {
+                    if (this.nodes[element.dataset.sbUid]?.isSection) {
+                        return element;
+                    }
+
+                    element = element.parentElement?.closest('[data-sb-node="block"]') ?? null;
+                }
+
+                return null;
+            },
+
+            importInto(uid) {
+                this.closeMenu();
+                uid && this.$wire.mountAction('importPart', { uid });
+            },
+
+            addRow(uid) {
+                this.closeMenu();
+                uid && this.$wire.mountAction('addRow', { uid });
             },
 
             // The column a target is in: a side-by-side column, or a stacked row's one column.
@@ -873,6 +916,10 @@
                 {{ $this->undoAction }}
                 {{ $this->redoAction }}
                 {{ $this->revisionsAction }}
+                @if ($this->importPageAction->isVisible())
+                    {{ $this->importPageAction }}
+                @endif
+                {{ $this->exportAction }}
             </div>
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
@@ -915,7 +962,9 @@
             x-data="{ groups: @js(collect(\ScBudgetWeb\SiteBuilder\Blocks\StyleClipboard::GROUPS)->map(fn (string $label): string => __($label))->all()) }"
         >
             {{-- Filament caps a dropdown at 14rem with !important; this menu's labels are longer, so they wrap too. --}}
-            <div class="fi-dropdown-panel sb-canvas-menu" style="position: static; width: 18rem !important; max-width: calc(100vw - 2rem) !important; max-height: calc(100vh - 2rem); overflow-y: auto;">
+            {{-- It scrolls in the space below where it opened, so its last items are never off the screen. --}}
+            <div class="fi-dropdown-panel sb-canvas-menu" style="position: static; width: 18rem !important; max-width: calc(100vw - 2rem) !important; overflow-y: auto;"
+                 x-bind:style="{ maxHeight: `calc(100vh - ${menu.y}px - 0.5rem)` }">
                 <div class="fi-dropdown-list" style="padding: 0.25rem;">
                     <template x-if="menu.mode === 'main'">
                         <div>
@@ -948,11 +997,17 @@
                                     </button>
                                 </div>
                             </template>
+                            <button type="button" class="fi-dropdown-list-item" x-on:click="importInto(menu.uid)">
+                                <span class="fi-dropdown-list-item-label">{{ __('Import…') }}</span>
+                            </button>
+                            <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('exportPart', menu.uid)">
+                                <span class="fi-dropdown-list-item-label" x-text="menuNode().isSection ? @js(__('Export section')) : @js(__('Export block'))"></span>
+                            </button>
                             <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('deleteNode', menu.uid)">
                                 <span class="fi-dropdown-list-item-label">{{ __('Delete') }}</span>
                             </button>
                             <template x-if="menuNode().isSection">
-                                <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('addRow', menu.uid)">
+                                <button type="button" class="fi-dropdown-list-item" x-on:click="addRow(menu.uid)">
                                     <span class="fi-dropdown-list-item-label">{{ __('Add a row') }}</span>
                                 </button>
                             </template>
@@ -980,7 +1035,7 @@
                                     <button type="button" class="fi-dropdown-list-item" x-on:click="menuPanel('editRow', menu.rowUid)">
                                         <span class="fi-dropdown-list-item-label">{{ __('Row settings') }}</span>
                                     </button>
-                                    <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('addRow', menu.rowUid)">
+                                    <button type="button" class="fi-dropdown-list-item" x-on:click="addRow(menu.rowUid)">
                                         <span class="fi-dropdown-list-item-label">{{ __('Add a row below') }}</span>
                                     </button>
                                     <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('duplicateNode', menu.rowUid)">
@@ -992,13 +1047,27 @@
                                     <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('stepNode', menu.rowUid, 'down')">
                                         <span class="fi-dropdown-list-item-label">{{ __('Move row down') }}</span>
                                     </button>
+                                    <button type="button" class="fi-dropdown-list-item" x-on:click="importInto(menu.rowUid)">
+                                        <span class="fi-dropdown-list-item-label">{{ __('Import a row below…') }}</span>
+                                    </button>
+                                    <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('exportPart', menu.rowUid)">
+                                        <span class="fi-dropdown-list-item-label">{{ __('Export row') }}</span>
+                                    </button>
                                     <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('deleteNode', menu.rowUid)">
                                         <span class="fi-dropdown-list-item-label">{{ __('Delete row') }}</span>
                                     </button>
                                     <template x-if="menu.columnUid">
-                                        <button type="button" class="fi-dropdown-list-item" x-on:click="menuPanel('editColumn', menu.columnUid)">
-                                            <span class="fi-dropdown-list-item-label" x-text="(nodes[menu.columnUid]?.label ?? '') + ': ' + @js(__('settings'))"></span>
-                                        </button>
+                                        <div>
+                                            <button type="button" class="fi-dropdown-list-item" x-on:click="menuPanel('editColumn', menu.columnUid)">
+                                                <span class="fi-dropdown-list-item-label" x-text="(nodes[menu.columnUid]?.label ?? '') + ': ' + @js(__('settings'))"></span>
+                                            </button>
+                                            <button type="button" class="fi-dropdown-list-item" x-on:click="importInto(menu.columnUid)">
+                                                <span class="fi-dropdown-list-item-label" x-text="@js(__('Import into')) + ' ' + (nodes[menu.columnUid]?.label ?? '').toLowerCase() + '…'"></span>
+                                            </button>
+                                            <button type="button" class="fi-dropdown-list-item" x-on:click="menuRun('exportPart', menu.columnUid)">
+                                                <span class="fi-dropdown-list-item-label" x-text="@js(__('Export')) + ' ' + (nodes[menu.columnUid]?.label ?? '').toLowerCase()"></span>
+                                            </button>
+                                        </div>
                                     </template>
                                 </div>
                             </template>

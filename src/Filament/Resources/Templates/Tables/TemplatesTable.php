@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Schemas\TemplateForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 class TemplatesTable
@@ -63,6 +64,7 @@ class TemplatesTable
                 EditAction::make()
                     ->label(__('Edit as a form'))
                     ->tooltip(__('Its name, where it\'s shown, and its blocks as a list')),
+                PageExport::recordAction(),
                 DeleteAction::make(),
             ]);
     }

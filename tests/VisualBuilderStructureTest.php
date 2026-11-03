@@ -180,13 +180,34 @@ class VisualBuilderStructureTest extends PageTestCase
         $this->editor($page)->call('dropNode', $u['C'], $u['B'], 'before');
         $this->assertSame('Intro Intro [C B | - / -]', $this->draftOutline($page));
 
-        $this->editor($page)->call('addRow', $u['row1']);
+        $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['row1']]), ['layout' => 'stacked']);
         $this->assertSame('Intro Intro [C B | - / - / -]', $this->draftOutline($page));
 
         $this->editor($page)->call('dropNode', $u['section'], $u['C'], 'after')->assertNotified('That can\'t be done there.');
 
         $this->editor($page)->call('undo');
         $this->assertSame('Intro Intro [C B | - / -]', $this->draftOutline($page), 'Undo takes back the last one.');
+    }
+
+    public function test_a_new_row_gets_the_columns_chosen_for_it(): void
+    {
+        $page = $this->structurePage();
+        $u = self::uids($page->blocks);
+
+        $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['section']]), ['layout' => '3']);
+        $this->assertSame('Intro [A | B / C / - | - | -]', $this->draftOutline($page), 'On a Section: at its end.');
+
+        $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['row1']]), ['layout' => '1-2']);
+        $this->assertSame('Intro [A | B / - | - / C / - | - | -]', $this->draftOutline($page), 'On a row: just after it.');
+
+        $rows = array_values(app(VisualDrafts::class)->open($page, $this->user())->blocks[1]['data']['rows']);
+        $this->assertSame(['2', '1-2', 'stacked', '3'], array_map(fn (array $row): string => (string) $row['layout'], $rows));
+
+        $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['section']]), ['layout' => '7'])
+            ->assertHasActionErrors(['layout' => 'in']);
+        $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['Intro']]), ['layout' => 'stacked'])
+            ->assertNotified('That can\'t be done there.');
+        $this->assertSame('Intro [A | B / - | - / C / - | - | -]', $this->draftOutline($page), 'Neither changed anything.');
     }
 
     public function test_row_and_column_settings_open_on_their_own(): void

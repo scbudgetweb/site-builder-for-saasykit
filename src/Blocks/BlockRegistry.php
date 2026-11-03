@@ -8,6 +8,8 @@ use Filament\Forms\Components\Builder\Block;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
+use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Support\Enums\Width;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Gate;
@@ -16,8 +18,15 @@ use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\CreatePage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
+use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
+use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
+use ScBudgetWeb\SiteBuilder\Pages\PageImport;
+use ScBudgetWeb\SiteBuilder\Pages\PageImportResult;
 use ScBudgetWeb\SiteBuilder\SiteBuilder;
+use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
  * Every block, in the order they appear in the block picker: the core blocks, then the app's own
@@ -206,8 +215,174 @@ class BlockRegistry
                 }))
             ->addAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments, Builder $component): string => $this->inPlace($component, $this->addHeading($arguments))))
             ->addBetweenAction(fn (Action $action): Action => $this->slideOver($action)->modalHeading(fn (array $arguments, Builder $component): string => $this->inPlace($component, $this->addHeading($arguments))))
-            ->extraItemActions($this->libraryItemActions())
+            ->extraItemActions([...$this->libraryItemActions(), $this->importItemAction(), $this->exportItemAction()])
             ->default([]);
+    }
+
+    /**
+     * Export on a block card: the block (or Section) as it is in the form, checked first as Save would, as a file to
+     * import elsewhere (PageExport). A linked library block is written out as the block it shows.
+     */
+    private function exportItemAction(): Action
+    {
+        return Action::make('exportBlock')
+            ->label(__('Export'))
+            ->tooltip(__('Export'))
+            ->icon(Heroicon::OutlinedArrowDownTray)
+            ->iconButton()
+            ->color('gray')
+            ->action(function (array $arguments, Builder $component): StreamedResponse {
+                $key = $arguments['item'];
+                $type = (string) $component->getRawState()[$key]['type'];
+                $export = app(PageExport::class);
+                $blockClass = $this->find($type);
+                $data = PageImport::listed($component->getItemState($key));
+
+                return $export->download(
+                    $export->block(['type' => $type, 'data' => is_array($data) ? $data : []], isNested: Core\SectionBlock::placeOf($component) !== null),
+                    $blockClass ? $blockClass::editorTitle(is_array($data) ? $data : []) : $type,
+                );
+            });
+    }
+
+    /**
+     * Import after this on a block card: a page's, Section's or blocks' file from Export, checked as Save checks blocks,
+     * added after the card. In a Section's column, only blocks that can go in one. Rows and columns are imported in the
+     * visual builder (right-click › Import), where their place is clear.
+     */
+    private function importItemAction(): Action
+    {
+        return Action::make('importBlocks')
+            ->label(__('Import after this'))
+            ->tooltip(__('Import after this'))
+            ->icon(Heroicon::OutlinedArrowUpTray)
+            ->iconButton()
+            ->color('gray')
+            ->modalHeading(__('Import after this block'))
+            ->modalDescription(__('A page, Section or blocks from Export, on this site or another. Images that aren\'t on this site are left out.'))
+            ->modalWidth(Width::Large)
+            ->modalSubmitActionLabel(__('Import'))
+            ->schema([VisualEditor::exportFileField()])
+            ->action(function (array $arguments, array $data, Builder $component, Action $action): void {
+                $result = $this->importForForm(VisualEditor::readUploadedExport($data['file'] ?? null), inColumn: Core\SectionBlock::placeOf($component) !== null);
+
+                if (is_string($result) || $result->failed()) {
+                    VisualEditor::importRefused($result);
+                    $action->halt();
+                }
+
+                $this->insertItems($component, $result->blocks, after: $arguments['item']);
+                VisualEditor::imported($result, __('Save to keep it.'));
+            });
+    }
+
+    /**
+     * Import in a form's header (a page's, or a template's): the file's blocks in place of the form's (the default,
+     * with a warning) or after them. Into the form only: nothing is kept until Save. A template's file brings a
+     * header's settings too, and only goes into a template of its own type.
+     */
+    public static function importPageAction(): Action
+    {
+        $isTemplate = fn (mixed $livewire): bool => $livewire->getRecord() instanceof Template;
+
+        return Action::make('importPage')
+            ->label(__('Import'))
+            ->icon(Heroicon::OutlinedArrowUpTray)
+            ->color('gray')
+            ->hidden(fn (mixed $livewire): bool => $livewire->getRecord() instanceof Page && $livewire->getRecord()->trashed())
+            ->modalHeading(fn (mixed $livewire): string => $isTemplate($livewire) ? __('Import a template') : __('Import a page'))
+            ->modalDescription(__('A file from Export, on this site or another. Only the content comes in: never the title, address or SEO. Images that aren\'t on this site are left out.'))
+            ->modalWidth(Width::TwoExtraLarge)
+            ->modalSubmitActionLabel(__('Import'))
+            ->schema(fn (mixed $livewire): array => [
+                VisualEditor::exportFileField(),
+                Toggle::make('replace')
+                    ->label($isTemplate($livewire) ? __('Replace the template\'s blocks') : __('Replace the page\'s blocks'))
+                    ->helperText(__('Off: what\'s in the file is added at the end.'))
+                    ->default(true)
+                    ->live(),
+                Callout::make(__('Every block in the form will be replaced'))
+                    ->description(__('Nothing is kept until you save, so leaving without saving keeps what was there.'))
+                    ->danger()
+                    ->visible(fn (Get $get): bool => (bool) $get('replace')),
+            ])
+            ->action(function (array $data, mixed $livewire, Action $action) use ($isTemplate): void {
+                $export = VisualEditor::readUploadedExport($data['file'] ?? null);
+                $record = $livewire->getRecord();
+                $type = is_array($export) ? ($export['template']['type'] ?? null) : null;
+                $result = is_array($export) && $export['kind'] === 'template' && $record instanceof Template && $type !== $record->type
+                    ? __('This file is a template of another type (:type). Import it into a :type template.', ['type' => (string) $type])
+                    : app(self::class)->importForForm($export);
+                $builder = collect($livewire->getSchema('form')?->getFlatComponents(withHidden: true) ?? [])
+                    ->first(fn (mixed $component): bool => $component instanceof Builder && $component->getStatePath() === 'data.blocks');
+
+                if (is_string($result) || $result->failed() || ! $builder instanceof Builder) {
+                    VisualEditor::importRefused($result instanceof PageImportResult || is_string($result) ? $result : __('There\'s nowhere to import into here.'));
+                    $action->halt();
+                }
+
+                $replace = (bool) ($data['replace'] ?? true);
+                app(self::class)->insertItems($builder, $result->blocks, replace: $replace);
+
+                if ($replace && $isTemplate($livewire) && $record->type === 'header' && is_array($export['template']['settings'] ?? null)) {
+                    $livewire->data['settings'] = HeaderBehaviour::clean($export['template']['settings']);
+                }
+
+                VisualEditor::imported($result, __('Save to keep it.'));
+            });
+    }
+
+    /**
+     * An export's blocks checked for a form's builder (PageImport::blocks()), or why they can't come in.
+     *
+     * @param  array<string, mixed>|string  $export
+     */
+    public function importForForm(array|string $export, bool $inColumn = false): PageImportResult|string
+    {
+        if (is_string($export)) {
+            return $export;
+        }
+
+        if (in_array($export['kind'], ['row', 'column'], true)) {
+            return __('Rows and columns are imported in the visual builder: right-click where it should go and choose Import.');
+        }
+
+        return ($export['blocks'] ?? []) === [] ? __('There are no blocks in this file.') : app(PageImport::class)->blocks($export['blocks'], $inColumn);
+    }
+
+    /**
+     * Adds blocks to a form's builder after the item $after (or at the end), or in place of all its items ($replace).
+     *
+     * @param  array<int, array<string, mixed>>  $blocks
+     */
+    public function insertItems(Builder $component, array $blocks, ?string $after = null, bool $replace = false): void
+    {
+        $new = [];
+
+        foreach ($blocks as $block) {
+            $new[$component->generateUuid() ?? (string) Str::uuid()] = BlockLibrary::withFreshKeys($block);
+        }
+
+        $items = [];
+        $isAdded = false;
+
+        foreach ($replace ? [] : (array) $component->getRawState() as $key => $existing) {
+            $items[$key] = $existing;
+
+            if ($key === $after) {
+                $items = [...$items, ...$new];
+                $isAdded = true;
+            }
+        }
+
+        $items = $isAdded ? $items : [...$items, ...$new];
+        $component->rawState($items);
+
+        foreach ($new as $key => $item) {
+            $component->getChildSchema($key)->fill(is_array($item['data'] ?? null) ? $item['data'] : []);
+        }
+
+        $component->callAfterStateUpdated();
     }
 
     /**

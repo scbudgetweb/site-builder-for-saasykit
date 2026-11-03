@@ -15,6 +15,7 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
 use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
+use ScBudgetWeb\SiteBuilder\Templates\Templates;
 
 /**
  * Theme builder › Visual builder: a template built like a page, shown on its own (the site's header and footer
@@ -80,16 +81,7 @@ class TemplateVisualEditor extends VisualEditor
             ->modalSubmitActionLabel(__('Save settings'))
             ->action(function (array $data): void {
                 $template = $this->template();
-                $draft = $this->draft();
-                $wasUpToDate = ! app(VisualDrafts::class)->isOutOfDate($draft, $template);
-
-                $template->update(['settings' => HeaderBehaviour::clean($data)]);
-
-                if ($wasUpToDate && $draft->exists) {
-                    $draft->forceFill(['base_updated_at' => $template->updated_at])->save();
-                }
-
-                $this->resetDraft();
+                $this->saveHeaderSettings($data);
                 $this->dispatch('site-builder-canvas-reload');
 
                 Notification::make()
@@ -98,6 +90,50 @@ class TemplateVisualEditor extends VisualEditor
                     ->success()
                     ->send();
             });
+    }
+
+    /**
+     * Saves a header's settings straight away. The draft stays up to date if it was, so saving the settings isn't
+     * someone else's change to the blocks.
+     *
+     * @param  array<string, mixed>  $settings
+     */
+    private function saveHeaderSettings(array $settings): void
+    {
+        $template = $this->template();
+        $draft = $this->draft();
+        $wasUpToDate = ! app(VisualDrafts::class)->isOutOfDate($draft, $template);
+
+        $template->update(['settings' => HeaderBehaviour::clean($settings)]);
+
+        if ($wasUpToDate && $draft->exists) {
+            $draft->forceFill(['base_updated_at' => $template->updated_at])->save();
+        }
+
+        $this->resetDraft();
+    }
+
+    /**
+     * Only a template of this type comes in whole: a footer's file into a footer.
+     */
+    protected function importRefusal(array $export): ?string
+    {
+        $type = $export['template']['type'] ?? null;
+        $types = app(Templates::class)->types();
+
+        return $export['kind'] === 'template' && $type !== $this->template()->type
+            ? __('This file is a :type template, and this is a :this template. Import it into a :type template, or right-click here to import its Sections one at a time.', [
+                'type' => mb_strtolower((string) ($types[$type] ?? $type)),
+                'this' => mb_strtolower((string) ($types[$this->template()->type] ?? $this->template()->type)),
+            ])
+            : null;
+    }
+
+    protected function importTemplateSettings(array $template): void
+    {
+        if ($this->template()->type === 'header' && is_array($template['settings'] ?? null)) {
+            $this->saveHeaderSettings($template['settings']);
+        }
     }
 
     protected function publishTexts(): array

@@ -1,5 +1,26 @@
 # Changelog
 
+## 1.7.1 - 2026-11-03
+
+**Upgrading:** run `npm run build`. If your app overrides `filament/pages/visual-editor`, compare it with the package's.
+
+### Added
+
+- Export a page, template, library block, Section, row, column or block as a JSON file: from the visual builder (toolbar and right-click), Edit as a form, and the Pages, Theme builder and Block library lists.
+- Import into any of them: right-click Import… in the visual builder, Import page (replace the content, with a warning, or add at the end), Import and Import after this in Edit as a form, and Import on the Theme builder and Block library lists.
+- Imports are checked like the editor's own changes, and problems say where they are in words (Block 1 › Row 1 › Column 2); images from another site are left out and listed.
+- + Add row on a Section and a + under each row in the visual builder.
+- A column layout picker when adding a row.
+
+### Changed
+
+- The visual builder's + buttons are colour-coded: green adds a row, grey adds a block.
+- README lists every block, with a line on what it does.
+
+### Fixed
+
+- The visual builder's right-click menu ran off the bottom of the window; it now scrolls.
+
 ## 1.7.0 - 2026-11-01
 
 ### Upgrading

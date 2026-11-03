@@ -15,6 +15,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 
 class SavedBlocksTable
 {
@@ -64,6 +65,7 @@ class SavedBlocksTable
                     ->icon(Heroicon::OutlinedPaintBrush)
                     ->url(fn (SavedBlock $record): string => SavedBlockResource::getUrl('visual', ['record' => $record])),
                 EditAction::make(),
+                PageExport::recordAction(),
                 EditSavedBlock::refuseDeleteWhileInUse(DeleteAction::make()),
             ]);
     }

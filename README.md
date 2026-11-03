@@ -13,6 +13,7 @@
 ## What's inside
 
 - **A visual builder** with live preview, drag and drop, a layers panel, undo and redo, right-click menus, copy and paste styles, and phone, tablet and desktop views. Or edit the same page as a form.
+- **Import and export** a whole page, template or library block, or one Section, row, column or block, as a file to use on this site or another.
 - **45+ blocks:** heroes, banners, features, pricing tables, testimonials, team, FAQ, tabs, stats, counters, a countdown, galleries, video, audio, maps, contact forms, mailing list sign-ups, blog posts and more. Sections hold rows of up to five columns.
 - **A theme builder** for headers and footers, starting from ready-made layouts: a top bar, a header that stays at the top, shrinks or sits over the first section, a mobile menu with style, and Back to top.
 - **Blog templates** for SaaSykit's blog posts and archives.
@@ -40,16 +41,25 @@
 
 ![Switching the canvas between tablet, phone and desktop](docs/images/screen-sizes.gif)
 
-**Sections, rows and columns.** A row's panel lists its columns; each column opens its own settings, with a back arrow to the row.
+**Sections, rows and columns.** Point at a Section for **+ Add row** (rows have their own **+** too), then choose the row's columns. A row's panel lists its columns; each column opens its own settings, with a back arrow to the row.
+
+| | |
+|---|---|
+| ![The Lumora footer with a text block pointed at: the grey + buttons add a block, the green + adds a row below and + Add row adds one to the Section](docs/images/add-row.jpg) | ![Add a row: twelve column layouts as small pictures, from one column to five](docs/images/row-layouts.jpg) |
+| Each **+** is the colour of what it adds: grey for a block, green for a row. | A new row starts with the columns you choose. |
 
 ![In the footer template: a row's settings, then its second column's, then back to the row](docs/images/rows-and-columns.gif)
 
 | | |
 |---|---|
 | ![A Features block's panel, with presets and Content, Design and Advanced tabs](docs/images/block-panel.jpg) | ![The right-click menu on the Features block](docs/images/context-menu.jpg) |
-| Each block's panel has **Content**, **Design** and **Advanced** tabs, a search across them and presets. | Right-click to add, duplicate, move or delete, and to copy and paste styles. |
+| Each block's panel has **Content**, **Design** and **Advanced** tabs, a search across them and presets. | Right-click to add, duplicate, move, import, export or delete, and to copy and paste styles. |
 | ![The layers panel beside the page, one layer pointed at](docs/images/layers.jpg) | ![A footer's Section as a form, its row of two columns opened out](docs/images/form-builder-section.jpg) |
 | The layers panel stays open beside the canvas, in your browser. | Prefer a form? **Edit as a form** has the same blocks and panels. The coloured edges show the level: Sections blue, rows green, columns purple, blocks grey. |
+
+**Import and export.** Export downloads a page, template or library block, or one Section, row, column or block, as a JSON file. Import puts it where you right-clicked, or over the whole page with a warning first. Everything is checked as Save checks it, lands in the draft (so undo takes it back), and links to the block library and saved styles are written out in full, so a file works on another site. Images that aren't on the site are left out and listed.
+
+![Import a page: the file, Replace the page's content switched on, and a red warning that everything on the page will be replaced](docs/images/import-page.jpg)
 
 ## The Website menu
 
@@ -70,7 +80,75 @@ Your own pages, each built from blocks in the visual builder above or as a form.
 
 ![The Pages list: Lumora, published at /lumora, with Preview, Visual builder and Edit as a form](docs/images/pages-list.png)
 
-**45+ blocks**, grouped in the builder's picker: Section (rows of one to five columns), Hero, Banner, Heading, Text, Image + text, Image, Features, Image cards, Steps, Stats, Countdown, Circle and Bar counters, Pricing table, Call to action, Mailing list sign-up, Contact form, Buttons, Icon, Testimonials, Team, FAQ, Toggle, Tabs, Gallery, Video, Map, Audio, Logo strip, Social follow, Divider and Latest posts, plus the header, footer and blog blocks for templates. Each has a **Design** tab for spacing, sizing, typography, borders, shadows, effects, animation, sticky positioning, hover states and per-screen visibility.
+Every block has a **Design** tab for spacing, sizing, typography, borders, shadows, effects, animation, sticky positioning, hover states and per-screen visibility.
+
+<details>
+<summary><strong>All the blocks</strong></summary>
+
+| Block | What it does |
+|---|---|
+| Section | Rows of one to five columns, each with its own blocks, on a shared background. |
+| Hero | A tall opening banner with a big heading, buttons and an image. |
+| Banner | A full-width banner: the Branding banner, or its own image. |
+| Heading | A heading on its own (H1 to H6), with an optional small heading. |
+| Text | Formatted text, with optional buttons. |
+| Image + text | An image beside a heading, text and buttons. |
+| Image | One image, with a caption and an optional link. |
+| Features | Icons with a title and text, in columns. |
+| Image cards | Cards with an image, title, text and button; a carousel when there are more. |
+| Steps | How it works, step by step, joined by lines or arrows. |
+| Stats | Big numbers with labels, counting up as they come into view. |
+| Countdown | Days, hours, minutes and seconds to a date. |
+| Circle counters | Percentages as rings that fill as they come into view. |
+| Bar counters | Percentages as bars. |
+| Pricing table | Plans side by side, or SaaSykit's own plans with their checkout links. |
+| Call to action | A heading, a line of text and buttons. |
+| Mailing list sign-up | A sign-up form for your Brevo list. |
+| Contact form | A form whose messages arrive in Contact messages and by email. |
+| Buttons | A row of buttons. |
+| Icon | One icon, optionally a link. |
+| Testimonials | Quotes with names, roles and star ratings. |
+| Team | People with photos, roles, a short bio and LinkedIn. |
+| FAQ | Questions and answers that open and close, marked up for search engines. |
+| Toggle | One title that opens and closes its content. |
+| Tabs | Content in tabs. |
+| Gallery | Images in a grid, with captions. |
+| Video | A YouTube, Vimeo or Adilo video that waits for cookie consent. |
+| Map | A Google map of an address, with no API key, after cookie consent. |
+| Audio | An uploaded sound file, or a SoundCloud or Spotify player. |
+| Logo strip | Partner logos in a row, a scrolling loop or a carousel. |
+| Social follow | Links to your social profiles, from SaaSykit's settings. |
+| Divider / spacer | A line, with an optional label, or space between blocks. |
+| Latest posts | The newest blog posts as cards, optionally from one category. |
+| Saved block (library) | A block from the block library, the same everywhere it's used. |
+
+**For headers and footers** (Theme builder)
+
+| Block | What it does |
+|---|---|
+| Header bar | A whole header in one block: logo, links, account links, a button and the mobile menu. |
+| Top bar | A slim row above the header: a short line, phone, email and social icons. |
+| Logo | The Branding logo, linking home. |
+| Menu | The header links from Navigation, with the mobile menu button. |
+| Account links | Log in and a button for visitors, or the account menu once signed in. |
+| Footer links | The footer's link columns from Navigation. |
+| Copyright | The copyright line, with the year filled in. |
+
+**For blog templates** (Theme builder)
+
+| Block | What it does |
+|---|---|
+| Post title | The post's title. |
+| Post details | Its date, author and category. |
+| Featured image | Its image, as it is or trimmed to a shape. |
+| Post content | Its text. |
+| Share links | Share on X, LinkedIn, Facebook or by email, with nothing loaded from them. |
+| Previous and next posts | Links to the posts before and after it. |
+| Related posts | More posts to read, from its category first. |
+| Archive title | The blog's or category's title. |
+| Post list | The archive's posts as cards, a page at a time. |
+
+</details>
 
 ### Media
 
@@ -80,7 +158,7 @@ Every image and sound file uploaded to your pages, as thumbnails or a list, with
 
 ### Theme builder
 
-Headers and footers built from blocks, in the same visual builder, for every page or the pages you choose. Links still come from **Navigation** and colours from **Branding**, so the standard header and footer and your own templates stay in step. Blog post and blog archive templates live here too.
+Headers and footers built from blocks, in the same visual builder, for every page or the pages you choose. Links still come from **Navigation** and colours from **Branding**, so the standard header and footer and your own templates stay in step. Blog post and blog archive templates live here too. A template exports to a file, with a header's settings, and **Import** on the list makes a new one from it, turned off until you're ready.
 
 **A header that behaves.** Stay at the top, or only when scrolling back up; shrink and add a shadow once the page scrolls; sit see-through over the first section, with the other logo, then turn solid.
 
@@ -111,7 +189,7 @@ Save a block once and use it on many pages. Change it in the library and every p
 | | |
 |---|---|
 | ![Lumora's pricing, a library block, open in the visual builder](docs/images/block-library.jpg) | ![The block library list, showing the pricing block used on one page](docs/images/block-library-list.png) |
-| A library block opens in the visual builder or as a form, like a page. | The list shows what each block is and where it's used. |
+| A library block opens in the visual builder or as a form, like a page. | The list shows what each block is and where it's used, and imports one from a file. |
 
 ### Contact messages
 

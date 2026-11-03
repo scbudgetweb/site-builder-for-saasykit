@@ -21,6 +21,7 @@ use Filament\Tables\Table;
 use Illuminate\Support\Str;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
 
@@ -98,6 +99,7 @@ class PagesTable
 
                         Notification::make()->title(__('Page duplicated as a draft'))->success()->send();
                     }),
+                PageExport::recordAction(),
                 DeleteAction::make(),
                 RestoreAction::make(),
                 // Only shown for pages in the bin; removes the page and its images for good.

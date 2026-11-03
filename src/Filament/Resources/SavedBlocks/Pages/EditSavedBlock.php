@@ -11,6 +11,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 
 /**
  * @method SavedBlock getRecord()
@@ -29,6 +30,7 @@ class EditSavedBlock extends EditRecord
                 ->tooltip(__('Change this block as it looks: click a part to edit it'))
                 ->icon(Heroicon::OutlinedPaintBrush)
                 ->url(fn (SavedBlock $record): string => SavedBlockResource::getUrl('visual', ['record' => $record])),
+            PageExport::recordAction(),
             self::refuseDeleteWhileInUse(DeleteAction::make()),
         ];
     }

@@ -2,13 +2,17 @@
 
 namespace ScBudgetWeb\SiteBuilder\Pages;
 
+use Closure;
+use Filament\Schemas\Components\Component;
 use Filament\Schemas\Schema;
 use finfo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use JsonException;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockSchema;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Schemas\PageForm;
@@ -17,6 +21,7 @@ use ScBudgetWeb\SiteBuilder\Models\MediaFile;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Support\SafeSvg;
+use ScBudgetWeb\SiteBuilder\Templates\Templates;
 use Throwable;
 
 /**
@@ -40,6 +45,9 @@ final class PageImport
     /** Starts an image to upload from a file, e.g. "file:images/hero.jpg". */
     public const FILE_PREFIX = 'file:';
 
+    /** A 1 × 1 PNG: the stand-in for an image that isn't on this site while imported blocks are checked. */
+    private const STAND_IN_PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+
     private const UUID_PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/';
 
     /** @var array<int, string> */
@@ -51,7 +59,224 @@ final class PageImport
     /** @var array<int, string> Files uploaded by this import, removed again if it isn't saved. */
     private array $storedFiles = [];
 
+    /** Whether an image that isn't uploaded here is left out with a warning (an export from another site), not refused. */
+    private bool $leavesOutMissingImages = false;
+
+    /** Whether problems are worded for people importing a file (the builders), not for someone writing JSON. */
+    private bool $forPeople = false;
+
     public function __construct(private BlockRegistry $registry, private PageService $pages) {}
+
+    /**
+     * An export file's content (PageExport) with its blocks in today's shape, or why it can't be used: not JSON, not
+     * an export, or from a newer site builder.
+     *
+     * @return array{kind: string, blocks?: array<int, mixed>, row?: array<string, mixed>, column?: array<string, mixed>, template?: array<string, mixed>}|string
+     */
+    public static function readExport(string $json): array|string
+    {
+        try {
+            $file = json_decode($json, true, flags: JSON_THROW_ON_ERROR);
+        } catch (JsonException) {
+            return __('This isn\'t a site builder export: it isn\'t a JSON file.');
+        }
+
+        if (! is_array($file) || ! is_int($file['site_builder'] ?? null) || ! in_array($file['kind'] ?? null, PageExport::KINDS, true)) {
+            return __('This isn\'t a site builder export. Use a file made with Export.');
+        }
+
+        $schema = is_int($file['schema'] ?? null) ? $file['schema'] : 1;
+
+        if ($file['site_builder'] > PageExport::FORMAT || $schema > BlockSchema::VERSION) {
+            return __('This file was exported from a newer version of the site builder. Update the site builder here to import it.');
+        }
+
+        $key = match ($file['kind']) {
+            'row', 'column' => $file['kind'],
+            default => 'blocks',
+        };
+        $content = $file[$key] ?? null;
+
+        if (! is_array($content) || ($key === 'blocks') !== array_is_list($content) || ($key !== 'blocks' && $content === [])) {
+            return __('This export is damaged: it has no :part.', ['part' => $key]);
+        }
+
+        // Blocks saved in an older shape are upgraded as stored ones are: a row or column inside a Section.
+        $content = match ($key) {
+            'row' => BlockSchema::upgrade([self::sectionOf([$content])], $schema)[0]['data']['rows'][0],
+            'column' => BlockSchema::upgrade([self::sectionOf([['layout' => 'stacked', 'columns' => [$content]]])], $schema)[0]['data']['rows'][0]['columns'][0],
+            default => BlockSchema::upgrade($content, $schema),
+        };
+
+        return [
+            'kind' => $file['kind'],
+            $key => $content,
+            ...($file['kind'] === 'template' && is_array($file['template'] ?? null) ? ['template' => $file['template']] : []),
+        ];
+    }
+
+    /**
+     * Blocks from an export, for the visual builder: checked as the page form checks them, with new uids. An image
+     * that isn't uploaded on this site (an export from another one) is left out with a warning instead of stopping
+     * the import, and "file:" images aren't uploaded. With $inColumn, only blocks that can go in a Section's column.
+     *
+     * @param  array<int, mixed>  $blocks
+     */
+    public function blocks(array $blocks, bool $inColumn = false): PageImportResult
+    {
+        $this->errors = $this->warnings = $this->storedFiles = [];
+        $this->forPeople = true;
+        $this->checkBlocks($blocks, 'blocks', $inColumn);
+
+        if ($this->errors !== []) {
+            return $this->result();
+        }
+
+        $checked = $this->checkedParts($inColumn ? [self::sectionOf([['layout' => 'stacked', 'columns' => [['blocks' => $blocks]]]])] : $blocks, $inColumn ? 'blocks.0.data.rows.0.columns.0.blocks' : null);
+
+        return $checked === null
+            ? $this->result()
+            : new PageImportResult([], $this->warnings, blocks: BlockSchema::withNewUids($inColumn ? $checked[0]['data']['rows'][0]['columns'][0]['blocks'] : $checked));
+    }
+
+    /**
+     * A row from an export, checked in a Section, with new uids (PageImportResult's blocks: the row on its own).
+     *
+     * @param  array<string, mixed>  $row
+     */
+    public function row(array $row): PageImportResult
+    {
+        return $this->part(self::sectionOf([$row]), 'blocks.0.data.rows.0', 'row', fn (array $section): array => $section['data']['rows'][0]);
+    }
+
+    /**
+     * A column from an export, checked in a one-column row (PageImportResult's blocks: the column on its own).
+     *
+     * @param  array<string, mixed>  $column
+     */
+    public function column(array $column): PageImportResult
+    {
+        return $this->part(self::sectionOf([['layout' => 'stacked', 'columns' => [$column]]]), 'blocks.0.data.rows.0.columns.0', 'column', fn (array $section): array => $section['data']['rows'][0]['columns'][0]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $section
+     * @param  Closure(array<string, mixed>): array<string, mixed>  $unwrap
+     */
+    private function part(array $section, string $prefix, string $name, Closure $unwrap): PageImportResult
+    {
+        $this->errors = $this->warnings = $this->storedFiles = [];
+        $this->forPeople = true;
+        $this->checkBlocks([$section], 'blocks', inColumn: false);
+
+        $checked = $this->errors === [] ? $this->checkedParts([$section], $prefix, $name) : null;
+
+        if ($checked === null) {
+            $this->errors = array_map(fn (string $error): string => self::withoutWrapper($error, $prefix, $name), $this->errors);
+
+            return $this->result();
+        }
+
+        return new PageImportResult([], $this->warnings, blocks: [$unwrap(BlockSchema::withNewUids($checked)[0])]);
+    }
+
+    /**
+     * The blocks through the page form (with a stand-in title and address), or null when it refused them. Problems and
+     * warnings name places from the part the person imported: inside $prefix, as $name.
+     *
+     * @param  array<int, mixed>  $blocks
+     * @return array<int, array<string, mixed>>|null
+     */
+    private function checkedParts(array $blocks, ?string $prefix, string $name = 'blocks'): ?array
+    {
+        // An upload that isn't on this site points at a stand-in while the form checks the blocks, so a block whose
+        // image is required still comes in: afterwards it has no image, as a block just added has none.
+        $disk = Storage::disk($this->pages->uploadDisk());
+        $standIn = $this->pages->uploadDirectory().'/import-'.Str::lower(Str::random(24)).'.png';
+        $missing = [];
+        $blocks = $this->withStandIns($blocks, $standIn, 'blocks', $missing);
+        $this->leavesOutMissingImages = true;
+
+        try {
+            if ($missing !== []) {
+                $disk->put($standIn, (string) base64_decode(self::STAND_IN_PNG));
+            }
+
+            [$state] = $this->validated(['title' => 'Import', 'slug' => 'site-builder-import-'.Str::lower(Str::random(16)), 'blocks' => $blocks], null);
+        } finally {
+            $this->leavesOutMissingImages = false;
+            $missing !== [] && $disk->delete($standIn);
+        }
+
+        foreach ($missing as $path) {
+            $this->warnings[] = "{$path}: ".__('An image that isn\'t uploaded on this site, so it was left out. Choose another in its settings.');
+        }
+
+        $state = $state === null ? null : self::withoutStandIns($state, $standIn);
+
+        if ($prefix !== null) {
+            $this->errors = array_map(fn (string $error): string => self::withoutWrapper($error, $prefix, $name), $this->errors);
+            $this->warnings = array_map(fn (string $warning): string => self::withoutWrapper($warning, $prefix, $name), $this->warnings);
+        }
+
+        return $state === null || $this->errors !== [] ? null : array_values($state['blocks'] ?? []);
+    }
+
+    /**
+     * The value with each page upload that isn't on this site, or "file:" image (not uploaded from the visual
+     * builder), swapped for $standIn, and their paths in $missing.
+     *
+     * @param  array<int, string>  $missing
+     */
+    private function withStandIns(mixed $value, string $standIn, string $path, array &$missing): mixed
+    {
+        if (is_array($value)) {
+            foreach ($value as $key => $item) {
+                $value[$key] = $this->withStandIns($item, $standIn, "{$path}.{$key}", $missing);
+            }
+
+            return $value;
+        }
+
+        $isMissing = is_string($value) && (str_starts_with($value, self::FILE_PREFIX)
+            || ($this->pages->isPageUpload($value) && ! Storage::disk($this->pages->uploadDisk())->exists($value)));
+
+        if (! $isMissing) {
+            return $value;
+        }
+
+        $missing[] = $path;
+
+        return $standIn;
+    }
+
+    private static function withoutStandIns(mixed $value, string $standIn): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn (mixed $item): mixed => self::withoutStandIns($item, $standIn), $value);
+        }
+
+        return $value === $standIn ? null : $value;
+    }
+
+    /**
+     * "blocks.0.data.rows.0.columns.0.blocks.2.data…: …" as "blocks.2.data…: …" for blocks imported into a column.
+     */
+    private static function withoutWrapper(string $message, string $prefix, string $name): string
+    {
+        return str_starts_with($message, $prefix) ? $name.Str::after($message, $prefix) : $message;
+    }
+
+    /**
+     * A Section holding these rows.
+     *
+     * @param  array<int, mixed>  $rows
+     * @return array{type: string, data: array{rows: array<int, mixed>}}
+     */
+    private static function sectionOf(array $rows): array
+    {
+        return ['type' => SectionBlock::NAME, 'data' => ['rows' => $rows]];
+    }
 
     /**
      * Checks the page and, unless there's a problem or it's a $dryRun, saves it. With $update, a page that already has
@@ -62,6 +287,7 @@ final class PageImport
     public function import(mixed $input, ?string $baseDirectory = null, bool $update = false, bool $dryRun = false): PageImportResult
     {
         $this->errors = $this->warnings = $this->storedFiles = [];
+        $this->forPeople = false;
 
         if (! is_array($input) || ($input !== [] && array_is_list($input))) {
             return new PageImportResult([__('page: Expected a JSON object with the page\'s settings, e.g. {"title": …, "slug": …, "blocks": […]}.')]);
@@ -191,9 +417,7 @@ final class PageImport
             }
 
             if (! isset($allowed[$block['type']])) {
-                $this->error("{$at}.type", isset($offered[$block['type']])
-                    ? __('A :block can\'t go in a Section\'s column.', ['block' => $this->registry->labelFor($block['type'])])
-                    : __('Unknown block type ":type". The types are: :types.', ['type' => $block['type'], 'types' => implode(', ', array_keys($allowed))]));
+                $this->error("{$at}.type", $this->notAllowedHere($block['type'], isset($offered[$block['type']]), $allowed));
 
                 continue;
             }
@@ -208,6 +432,78 @@ final class PageImport
                 $this->checkRows($block['data']['rows'] ?? [], "{$at}.data.rows");
             }
         }
+    }
+
+    /**
+     * Why a block type can't go where it is: not in a Section's column, only made for another kind of template (a
+     * footer's links in a header), or not a block this site has.
+     *
+     * @param  array<string, class-string<PageBlock>>  $allowed
+     */
+    private function notAllowedHere(string $type, bool $isOffered, array $allowed): string
+    {
+        $label = $this->registry->labelFor($type);
+
+        if ($isOffered) {
+            return __('A :block can\'t go in a Section\'s column.', ['block' => $label]);
+        }
+
+        $block = $this->registry->find($type);
+        $templateTypes = $block === null ? null : $block::templateTypes();
+
+        if ($templateTypes !== null) {
+            $names = app(Templates::class)->types();
+            $kinds = implode(__(' or '), array_map(fn (string $kind): string => Str::lower($names[$kind] ?? $kind), $templateTypes));
+            $editing = $this->registry->editingTemplateType();
+
+            return $editing === null
+                ? __('The ":block" block is only for :kinds templates, so it can\'t go on a page or in the block library.', ['block' => $label, 'kinds' => $kinds])
+                : __('The ":block" block is only for :kinds templates, so it can\'t go in a :here template.', ['block' => $label, 'kinds' => $kinds, 'here' => Str::lower($names[$editing] ?? $editing)]);
+        }
+
+        return $this->forPeople
+            ? __('This site has no ":type" block. The file may be from a newer version of the site builder, or use a block from an add-on this site doesn\'t have.', ['type' => $type])
+            : __('Unknown block type ":type". The types are: :types.', ['type' => $type, 'types' => implode(', ', array_keys($allowed))]);
+    }
+
+    /**
+     * A problem or warning ("blocks.0.data.rows.0.columns.1.blocks.0.type: …") with its place in words, for people:
+     * "Block 1 › Row 1 › Column 2 › Block 1: …". Settings are named from their keys ("Button text").
+     */
+    public static function forPeople(string $problem): string
+    {
+        if (! str_contains($problem, ': ')) {
+            return $problem;
+        }
+
+        [$path, $message] = explode(': ', $problem, 2);
+
+        if (preg_match('/^[\w.]+$/', $path) !== 1) {
+            return $problem;
+        }
+
+        $segments = explode('.', $path);
+        $place = [];
+
+        foreach ($segments as $index => $segment) {
+            $next = $segments[$index + 1] ?? null;
+
+            if (ctype_digit($segment) || in_array($segment, ['data', 'type', 'replaces'], true)) {
+                continue;
+            }
+
+            $name = match ($segment) {
+                'blocks' => __('Block'),
+                'rows' => __('Row'),
+                'columns' => __('Column'),
+                'row' => __('The row'),
+                'column' => __('The column'),
+                default => Str::headline($segment),
+            };
+            $place[] = $next !== null && ctype_digit($next) ? Str::singular($name).' '.((int) $next + 1) : $name;
+        }
+
+        return $place === [] ? $message : implode(' › ', $place).': '.$message;
     }
 
     private function checkRows(mixed $rows, string $path): void
@@ -227,14 +523,55 @@ final class PageImport
                 continue;
             }
 
+            $this->checkNodeSettings(array_diff_key($row, ['columns' => true, 'uid' => true]), SectionBlock::rowSettingsPanel(inForm: true), "{$path}.{$rowIndex}");
+
             foreach ($columns as $columnIndex => $column) {
                 $at = "{$path}.{$rowIndex}.columns.{$columnIndex}";
 
-                is_array($column)
-                    ? $this->checkBlocks($column['blocks'] ?? [], "{$at}.blocks", inColumn: true)
-                    : $this->error($at, __('Expected a column, e.g. {"blocks": […]}.'));
+                if (! is_array($column)) {
+                    $this->error($at, __('Expected a column, e.g. {"blocks": […]}.'));
+
+                    continue;
+                }
+
+                $this->checkNodeSettings(array_diff_key($column, ['blocks' => true, 'uid' => true]), SectionBlock::columnSettingsPanel(), $at);
+                $this->checkBlocks($column['blocks'] ?? [], "{$at}.blocks", inColumn: true);
             }
         }
+    }
+
+    /**
+     * A row's or column's settings, checked by its own panel (the visual builder's Row or Column settings): the page
+     * form only carries them along, hidden, so this is where a typo or a bad value is caught.
+     *
+     * @param  array<string, mixed>  $settings
+     * @param  array<int, Component>  $panel
+     */
+    private function checkNodeSettings(array $settings, array $panel, string $path): void
+    {
+        if ($settings === []) {
+            return;
+        }
+
+        $form = new PageImportForm;
+        $schema = Schema::make($form)->statePath('data')->components($panel);
+        $schema->fill($settings);
+        $known = self::settingPaths($schema);
+        $raw = $form->data ?? [];
+
+        try {
+            $state = self::listed($schema->getState());
+        } catch (ValidationException $exception) {
+            foreach ($exception->errors() as $key => $messages) {
+                foreach ($messages as $message) {
+                    $this->error($path.'.'.self::readablePath((string) $key, $raw), $message);
+                }
+            }
+
+            $state = null;
+        }
+
+        $this->compare($settings, $raw, is_array($state) ? $state : null, $known, $path, 'data');
     }
 
     /**
@@ -280,7 +617,8 @@ final class PageImport
             $after = $output[$key] ?? null;
 
             if (is_array($value)) {
-                if (is_array($raw[$rawKey])) {
+                // A field that holds a whole value (a row's settings, carried along hidden) isn't looked inside.
+                if (is_array($raw[$rawKey]) && ! self::holdsWholeValue($known, $atState)) {
                     $this->compare($value, $raw[$rawKey], $output !== null && is_array($after) ? $after : null, $known, $at, $atState);
                 }
 
@@ -295,6 +633,8 @@ final class PageImport
                 $this->error($at, __('Must be a number.'));
             } elseif (is_string($value) && is_bool($after) && ! in_array(Str::lower($value), ['0', '1', 'true', 'false'], true)) {
                 $this->error($at, __('Must be true or false.'));
+            } elseif ($this->leavesOutMissingImages && is_string($value) && Str::contains($value, ['/', '.']) && ($after === null || $after === [])) {
+                $this->warnings[] = "{$at}: ".__('An image that isn\'t uploaded on this site, so it was left out. Choose another in its settings.');
             } elseif ($value !== null && $value !== '' && $value !== false && ($after === null || $after === [])) {
                 $this->error($at, is_string($value) && Str::contains($value, ['/', '.'])
                     ? __('Not accepted. An image must be a file already uploaded to :folder, or "file:…" to upload one.', ['folder' => $this->pages->uploadDirectory()])
@@ -415,6 +755,26 @@ final class PageImport
     }
 
     /**
+     * Whether the field at this state path keeps its value whole: a field with nothing of the form's below it.
+     *
+     * @param  array<string, true>  $known
+     */
+    private static function holdsWholeValue(array $known, string $statePath): bool
+    {
+        if (! isset($known[$statePath])) {
+            return false;
+        }
+
+        foreach (array_keys($known) as $path) {
+            if (str_starts_with($path, $statePath.'.')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * The state path of every setting in the form, hidden ones too (e.g. "data.blocks.{uuid}.data.heading"), and of each
      * group or list holding them, so a key the form has no field for (a typo) can be told from one it hides.
      *
@@ -439,7 +799,7 @@ final class PageImport
     /**
      * The form's state with its lists (keyed by uuids) as plain lists, to line up with the JSON.
      */
-    private static function listed(mixed $value): mixed
+    public static function listed(mixed $value): mixed
     {
         if (! is_array($value)) {
             return $value;

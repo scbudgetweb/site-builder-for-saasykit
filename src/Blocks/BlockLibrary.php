@@ -77,21 +77,34 @@ class BlockLibrary
         $block = is_numeric($id) ? SavedBlock::query()->find((int) $id)?->block() : null;
         $block = $block === null ? null : BlockSchema::withNewUids([$block])[0];
 
-        if ($block !== null && $block['type'] === SectionBlock::NAME && is_array($block['data']['rows'] ?? null)) {
-            $freshKeys = fn (array $items): array => collect($items)->mapWithKeys(fn (mixed $item): array => [(string) Str::uuid() => $item])->all();
-            $rows = [];
+        return $block === null ? null : self::withFreshKeys($block);
+    }
 
-            foreach ($block['data']['rows'] as $row) {
-                if (is_array($row)) {
-                    $row = SectionBlock::normaliseRow($row);
-                    $row['columns'] = $freshKeys(array_map(fn (array $column): array => [...$column, 'blocks' => $freshKeys($column['blocks'])], $row['columns']));
-                }
+    /**
+     * A block for a form's builder: a Section's rows, columns and blocks keyed by fresh ids, as the form keys them.
+     *
+     * @param  array<string, mixed>  $block
+     * @return array<string, mixed>
+     */
+    public static function withFreshKeys(array $block): array
+    {
+        if (($block['type'] ?? null) !== SectionBlock::NAME || ! is_array($block['data']['rows'] ?? null)) {
+            return $block;
+        }
 
-                $rows[] = $row;
+        $freshKeys = fn (array $items): array => collect($items)->mapWithKeys(fn (mixed $item): array => [(string) Str::uuid() => $item])->all();
+        $rows = [];
+
+        foreach ($block['data']['rows'] as $row) {
+            if (is_array($row)) {
+                $row = SectionBlock::normaliseRow($row);
+                $row['columns'] = $freshKeys(array_map(fn (array $column): array => [...$column, 'blocks' => $freshKeys($column['blocks'])], $row['columns']));
             }
 
-            $block['data']['rows'] = $freshKeys($rows);
+            $rows[] = $row;
         }
+
+        $block['data']['rows'] = $freshKeys($rows);
 
         return $block;
     }

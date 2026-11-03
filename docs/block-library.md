@@ -36,6 +36,12 @@ The list of library blocks shows each block's name and kind, how many pages use 
 
 A library block that pages use can't be deleted. You're told which pages use it, so you can remove it from them or make an editable copy there first. A library block nothing uses deletes straight away.
 
+## Import and export
+
+**Export** on a library block's row (or at the top of its form, or in its visual builder) downloads it as a file. A library block it holds is written out in full.
+
+**Import** on the Block library list makes a new library block from a file holding exactly one block, such as an exported Section or block. Give it a name and choose the file; it opens in the visual builder. For a page file, import it into a page, then **Save to library** the part you want. See [Import and export](pages.md#import-and-export) for what's checked and how images are handled.
+
 ## Images
 
 Images in a library block are in the [media library](media.md#library), and stay there until someone deletes them. One that a library block uses can't be deleted.

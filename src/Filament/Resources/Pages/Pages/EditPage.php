@@ -14,6 +14,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Models\Page;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 use ScBudgetWeb\SiteBuilder\Pages\PageRevisions;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
 
@@ -63,6 +64,8 @@ class EditPage extends EditRecord
                 ]))
                 ->modalSubmitAction(false)
                 ->modalCancelActionLabel(__('Close')),
+            BlockRegistry::importPageAction(),
+            PageExport::recordAction(),
             DeleteAction::make(),
             RestoreAction::make(),
             ForceDeleteAction::make()

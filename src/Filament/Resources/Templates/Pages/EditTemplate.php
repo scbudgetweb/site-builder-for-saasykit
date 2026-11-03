@@ -10,6 +10,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Template;
+use ScBudgetWeb\SiteBuilder\Pages\PageExport;
 use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 
 class EditTemplate extends EditRecord
@@ -60,6 +61,8 @@ class EditTemplate extends EditRecord
                 ->tooltip(__('Build it from blocks, as it looks'))
                 ->icon(Heroicon::OutlinedPaintBrush)
                 ->url(fn (Template $record): string => TemplateResource::getUrl('visual', ['record' => $record])),
+            BlockRegistry::importPageAction(),
+            PageExport::recordAction(),
             DeleteAction::make(),
         ];
     }

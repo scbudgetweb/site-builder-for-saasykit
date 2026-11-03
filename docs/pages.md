@@ -25,8 +25,9 @@ Clicking a page in the list opens the **visual builder**: the page as visitors s
 - **The page updates as you edit**, before you save. *Cancel* puts it back. A newly uploaded image shows once you save.
 - **Your changes are saved as you go** into your own draft, and visitors see nothing until you press **Publish** (**Save** for a page that's still a draft). **Discard changes** goes back to the page as it is. If someone else saves the page while you're working, Publish asks before replacing their changes.
 - **Add blocks** with the round **+** at the top and bottom of the block you're pointing at, or **Add a block above / below** in its right-click menu. Choose the block, and its settings open. Inside a Section's column, only blocks that fit in one are offered. Click an empty column, or an empty page, to add the first block there.
+- **Add rows** with the green **+ Add row** at the bottom of a Section you're pointing at, or the green **+** under a row (a new row below it). First choose the row's columns from the pictures (one column, two to five equal columns, or uneven ones such as ⅓ + ⅔); the row arrives with that many empty columns. The + buttons are colour-coded: green adds a row, grey adds a block.
 - **Move things** by dragging: point at a block and drag its **Move** handle, or a row's **Row** handle. A blue line shows where it'll land: above or below a block, or into a column (a row: into a Section). The page scrolls when you drag near its top or bottom. Or use the right-click menu: **Move up / down** and **Move to the column on the left / right**.
-- **The right-click menu** also has **Duplicate** and **Delete** (no question asked: Ctrl+Z puts it back). Inside a Section, it has **Row settings** (layout, line-up, row style), **Add a row below**, **Duplicate row**, **Move row up / down**, **Delete row**, and **Column … settings** (background, line-up, space, border). On a Section itself: **Add a row**.
+- **The right-click menu** also has **Duplicate** and **Delete** (no question asked: Ctrl+Z puts it back). Inside a Section, it has **Row settings** (layout, line-up, row style), **Add a row below**, **Duplicate row**, **Move row up / down**, **Delete row**, and **Column … settings** (background, line-up, space, border). On a Section itself: **Add a row**. Every part also has **Import…** and **Export** (see [Import and export](#import-and-export)). A long menu scrolls.
 - A block with nothing to show yet (just added, say) shows as a dashed box on the canvas, so you can click it and fill it in. Visitors never see it.
 - **Layers** (the stack in the toolbar) opens a panel beside the canvas listing everything on the page as a tree: blocks, Sections, their rows and columns, and the blocks in each column. Each shows its admin label (or what it is) and a few words of its content. The panel stays open next time, in this browser.
   - **Click** one to scroll to it and open its settings; **point** at one to outline it on the canvas.
@@ -143,6 +144,34 @@ A block library item opens in the visual builder too: **Visual builder** on its 
 - an item is one block (often a Section), so you add and move blocks inside it, not around it;
 - **Save** replaces Publish, and says first how many pages use the item: they all change when you save;
 - there are no revisions.
+
+## Import and export
+
+Any page, template or library block, or one part of it, can be saved as a file and brought into another page, on this site or another one with the site builder.
+
+**Export** downloads a `.json` file named after the page, the part (if you renamed it in Layers) and the date, e.g. `about-us-page-2026-11-03.json`:
+
+- **The whole page:** **Export** in the visual builder's toolbar, at the top of *Edit as a form*, or on its row in the list of pages.
+- **One part:** right-click a block, Section, row or column › **Export block / section / row / column**. In *Edit as a form*, each block card has **Export** too.
+
+A page's file holds its blocks only: not its title, address, search settings or banner, and not the site's header and footer (templates have their own export, see the [Theme builder](theme-builder.md#import-and-export)). Linked library blocks and saved styles are written out in full, as they won't exist on another site. Images are saved as links to this site's uploads, so on another site they're left out (see below). The export is of your draft, so it's what you see in the builder.
+
+**Import** puts a file's blocks into your draft, so nothing changes for visitors until you publish, and **Undo** takes it back:
+
+- **Into the page:** **Import page** in the toolbar. **Replace the page's content** is on as standard, with a red warning: everything on the page is replaced. Turn it off to add the file's blocks at the bottom instead.
+- **Next to a part:** right-click › **Import…** (on a row: *Import a row below…*; on a column: *Import into column…*). Where it goes:
+
+  | Right-clicked on | A block or Section file | A row file | A column file |
+  |---|---|---|---|
+  | A block or Section on the page | after it | at the end of the Section | — |
+  | A row | — | after it | — |
+  | A column | at the end of the column (blocks that fit in a column) | — | its blocks, at the end of the column |
+  | A block in a column | after it (blocks that fit in a column) | after its row | its blocks, after it |
+
+  Where something can't go (—), the message says where it can.
+- **In *Edit as a form*:** **Import** at the top replaces the page's blocks (or adds them at the end), and **Import after this** on a block card adds after it. Both change the form only, so press **Save** to keep them. Rows and columns are imported in the visual builder.
+
+Every import is checked first, against the same rules as the editor. A file that isn't a site builder export, is from a newer version, has a block this site doesn't have, or has a setting that doesn't exist or isn't allowed, is refused, and nothing changes; the message lists the problems. An image that isn't uploaded on this site is left out instead, and listed after the import, so you can choose a new one. Files can be up to 5 MB.
 
 ## Sections and rows
 

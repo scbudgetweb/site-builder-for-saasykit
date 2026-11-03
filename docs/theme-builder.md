@@ -49,6 +49,14 @@ In a template, a Section's (or any block's, row's or column's) **Background** ca
 
 Where more than one template could apply to a page, the one for **chosen pages** wins; otherwise the **most recently saved**. Pages that aren't built in the site builder (the blog, for example) use templates shown on **every page** (or every page except those chosen).
 
+## Import and export
+
+**Export** a template from its row in the list, the top of its form, or the visual builder's toolbar. The file holds its blocks, what it is (header, footer, blog post or blog archive) and, for a header, its Header settings. Where it's shown is left out, since it points at this site's pages.
+
+**Import** on the Theme builder list makes a new template from a file: give it a name, choose the file, and it opens in the visual builder. It's made **off**, so choose where it's shown and turn it on when it's ready. Its blocks are checked against what that kind of template offers.
+
+**Import page** in a template's visual builder (or **Import** in its form) replaces its blocks with a template of the same kind, with the same warning and Undo as a page. A header's settings come with it, and are saved straight away. A file of another kind is refused. You can also import and export single parts, as on a [page](pages.md#import-and-export).
+
 ## Template blocks
 
 Besides every ordinary block (text, buttons, images, social icons…), templates have blocks of their own. They're only offered in templates.

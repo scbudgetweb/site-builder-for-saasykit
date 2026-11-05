@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Tests;
 use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockAppearance;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
@@ -201,6 +202,37 @@ class TemplateLayoutsTest extends PageTestCase
             ->callAction(TestAction::make('footerCustomise')->schemaComponent('footerActions', 'content'))
             ->assertRedirect(TemplateResource::getUrl('visual', ['record' => Template::query()->where('type', 'footer')->sole()]));
         $this->assertSame(['section'], array_column(Template::query()->where('type', 'footer')->sole()->blocks, 'type'));
+    }
+
+    public function test_the_card_edits_the_template_shown_on_every_page_instead_of_customising_again(): void
+    {
+        $this->actingAs($this->user());
+
+        Livewire::test(ListTemplates::class)
+            ->assertActionVisible(TestAction::make('headerCustomise')->schemaComponent('headerActions', 'content'))
+            ->assertDontSee('Edit &quot;', false);
+
+        Template::query()->create(['name' => 'Shop header', 'type' => 'header', 'applies_to' => Template::ONLY, 'page_ids' => [1], 'blocks' => []]);
+
+        Livewire::test(ListTemplates::class)
+            ->assertActionVisible(TestAction::make('headerCustomise')->schemaComponent('headerActions', 'content'))
+            ->assertDontSee('Edit &quot;', false);
+
+        Template::query()->create(['name' => 'Draft header', 'type' => 'header', 'is_active' => false, 'blocks' => []]);
+        $main = Template::query()->create(['name' => 'Main header', 'type' => 'header', 'blocks' => []]);
+
+        $list = Livewire::test(ListTemplates::class);
+        $headerCard = Str::between($list->html(), 'Standard header', 'Standard footer');
+        $this->assertStringContainsString('Edit &quot;Main header&quot;', $headerCard);
+        $this->assertStringNotContainsString('Customise', $headerCard, 'No second header is offered.');
+
+        $list
+            ->assertActionVisible(TestAction::make('headerEditInUse')->schemaComponent('headerActions', 'content'))
+            ->assertActionHasLabel(TestAction::make('headerEditInUse')->schemaComponent('headerActions', 'content'), 'Edit "Main header"')
+            ->assertActionHasUrl(TestAction::make('headerEditInUse')->schemaComponent('headerActions', 'content'), TemplateResource::getUrl('visual', ['record' => $main]))
+            ->assertActionVisible(TestAction::make('footerCustomise')->schemaComponent('footerActions', 'content'));
+
+        $this->assertSame(3, Template::query()->count(), 'Nothing new was made.');
     }
 
     public function test_navigation_and_branding_say_when_a_template_is_shown_instead(): void

@@ -113,6 +113,9 @@
 .sb-d-icc .sb-item-icon { color: var(--sb-icc); }
 .sb-d-icc-h .sb-item:hover .sb-item-icon { color: var(--sb-icc-h); }
 
+/* Social links are a little faded as standard; colours of their own show at full strength. */
+:is(.sb-d-ibg, .sb-d-ibc, .sb-d-icc) .sb-social-link { opacity: 1; }
+
 /* A highlighted item (a step marked "Highlight this step"): its marker is ringed and a little larger. */
 .sb-item-highlight .sb-item-icon { outline: 3px solid var(--sb-icb, var(--color-primary-600)); outline-offset: 3px; scale: 1.1; }
 

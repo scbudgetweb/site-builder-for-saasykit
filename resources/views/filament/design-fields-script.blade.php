@@ -26,10 +26,21 @@
             return match ? { number: match[1], unit: units.includes(match[2]) ? match[2] : units[0] } : { number: '', unit: null };
         };
 
-        window.Alpine.data('sbDeviceValue', ({ state, units, responsive }) => ({
+        // The number inputs take any decimal (step="any"), so ↑ and ↓ step by the field's own step here, from the value
+        // shown (or the one it falls back to), kept in range and tidied to 3 places as the server does.
+        const stepped = (number, fallback, direction, { step, min, max }) => {
+            const current = parseFloat(number);
+            const from = Number.isFinite(current) ? current : (parseFloat(fallback) || 0);
+            const next = Math.min(max, Math.max(min, from + direction * step));
+
+            return String(Number(next.toFixed(3)));
+        };
+
+        window.Alpine.data('sbDeviceValue', ({ state, units, responsive, step = 1, min = 0, max = 1000 }) => ({
             state,
             units,
             responsive,
+            range: { step, min, max },
             number: '',
             unit: units[0],
 
@@ -75,13 +86,19 @@
 
                 return from ? this.values()[from] : '';
             },
+
+            nudge(direction) {
+                this.number = stepped(this.number, split(this.fallback(), this.units).number, direction, this.range);
+                this.write();
+            },
         }));
 
-        window.Alpine.data('sbBoxSides', ({ state, units, parts, responsive }) => ({
+        window.Alpine.data('sbBoxSides', ({ state, units, parts, responsive, step = 1, min = 0, max = 1000 }) => ({
             state,
             units,
             parts,
             responsive,
+            range: { step, min, max },
             numbers: {},
             unit: units[0],
             linked: false,
@@ -166,6 +183,11 @@
                 const from = fallbackOrder[this.device()].find((device) => (this.sidesFor(device)[part] ?? '') !== '');
 
                 return from ? this.sidesFor(from)[part] : '';
+            },
+
+            nudge(part, direction) {
+                this.numbers[part] = stepped(this.numbers[part], split(this.fallback(part), this.units).number, direction, this.range);
+                this.write(part);
             },
         }));
 

@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockPresets;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockSchema;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\ListPages;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
@@ -82,7 +83,7 @@ class PageExportTest extends PageTestCase
         $page = $this->exportPage();
         $file = app(PageExport::class)->page($page->blocks);
 
-        $this->assertSame([1, 'page', 3, '2026-11-03T12:00:00+00:00'], [$file['site_builder'], $file['kind'], $file['schema'], $file['exported_at']]);
+        $this->assertSame([1, 'page', BlockSchema::VERSION, '2026-11-03T12:00:00+00:00'], [$file['site_builder'], $file['kind'], $file['schema'], $file['exported_at']]);
         $this->assertSame(['site_builder', 'kind', 'schema', 'exported_at', 'blocks'], array_keys($file), 'No title, address or SEO.');
         $this->assertSame(['text', 'section'], array_column($file['blocks'], 'type'));
         $this->assertNotContains('uid', self::keys($file), 'An import gives new ones.');

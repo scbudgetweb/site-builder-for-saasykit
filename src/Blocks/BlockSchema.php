@@ -3,6 +3,7 @@
 namespace ScBudgetWeb\SiteBuilder\Blocks;
 
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Blocks\Core\ContactFormBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
 
 /**
@@ -12,14 +13,14 @@ use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
  * row and column has a `uid`, unique in its list of blocks and kept from save to save, so an editor can point at one
  * (a block is {uid, type, data}, a row {uid, layout, …, columns}, a column {uid, blocks, …its settings}). Version 3
  * (1.7): a Features or Image cards block's card colours, shadow, icon and text styles are in Design › Items
- * (CardStyle::upgrade()).
+ * (CardStyle::upgrade()). Version 4 (1.7.2): a Contact form's fields are a list (ContactFormBlock::upgrade()).
  *
  * Code may still save blocks in an older shape (a host's import, say), so each upgrade must leave blocks already in
  * its shape as they are.
  */
 class BlockSchema
 {
-    public const VERSION = 3;
+    public const VERSION = 4;
 
     /** A uid that can be kept: letters, numbers, - and _ only, so it's safe in an HTML attribute or a CSS selector. */
     public const UID_PATTERN = '/^[A-Za-z0-9_-]{1,64}$/';
@@ -75,6 +76,12 @@ class BlockSchema
         if ($from < 3) {
             $blocks = BlockTree::map($blocks, fn (array $block): array => in_array($block['type'] ?? null, CardStyle::BLOCK_TYPES, true) && is_array($block['data'] ?? null)
                 ? [...$block, 'data' => CardStyle::upgrade($block['data'])]
+                : $block);
+        }
+
+        if ($from < 4) {
+            $blocks = BlockTree::map($blocks, fn (array $block): array => ($block['type'] ?? null) === ContactFormBlock::NAME && is_array($block['data'] ?? null)
+                ? [...$block, 'data' => ContactFormBlock::upgrade($block['data'])]
                 : $block);
         }
 

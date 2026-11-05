@@ -7,6 +7,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Grid;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blog\Blog;
 use ScBudgetWeb\SiteBuilder\Blog\BlogPost;
@@ -136,5 +137,14 @@ class PostShareBlock extends PageBlock
     protected static function itemLabel(array $state): string
     {
         return static::label();
+    }
+
+    /**
+     * Design › Icon buttons and Icons: each social link's circle (background, border, corners, padding) and its icon
+     * (size and colour, apart from the border's). With nothing set it looks as standard.
+     */
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Icon buttons'))->icon(__('Icons'));
     }
 }

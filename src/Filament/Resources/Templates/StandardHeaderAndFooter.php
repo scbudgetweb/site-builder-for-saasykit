@@ -20,7 +20,8 @@ use ScBudgetWeb\SiteBuilder\Templates\TemplateLayouts;
  * One home for each piece of the header and footer:
  *  - the Theme builder list shows the standard header and footer as cards: where they're shown (or which template is
  *    shown instead), with Edit links (Navigation), Edit colours (Branding) and Customise, which makes a template from
- *    the standard one (TemplateLayouts::STANDARD) and opens it in the visual builder;
+ *    the standard one (TemplateLayouts::STANDARD) and opens it in the visual builder. When a template is shown on every
+ *    page instead, Customise gives way to Edit "<name>", which opens that template;
  *  - Navigation and Branding say when a template is shown instead, naming it and linking to it.
  */
 class StandardHeaderAndFooter
@@ -88,6 +89,7 @@ class StandardHeaderAndFooter
                         ->size('sm')
                         ->url(self::coloursUrl()),
                     self::customiseAction($type),
+                    self::editInUseAction($type),
                 ])->key("{$type}Actions"),
             ]), self::TYPES))
             ->columnSpanFull();
@@ -104,7 +106,7 @@ class StandardHeaderAndFooter
             ->label(__('Customise'))
             ->icon(Heroicon::OutlinedPaintBrush)
             ->size('sm')
-            ->visible(fn (): bool => TemplateResource::canCreate())
+            ->visible(fn (): bool => TemplateResource::canCreate() && self::replacements($type)['everywhere'] === null)
             ->requiresConfirmation()
             ->modalIcon(Heroicon::OutlinedPaintBrush)
             ->modalHeading($type === 'header' ? __('Customise the standard header?') : __('Customise the standard footer?'))
@@ -124,6 +126,23 @@ class StandardHeaderAndFooter
 
                 $action->redirect(TemplateResource::getUrl('visual', ['record' => $template]));
             });
+    }
+
+    /**
+     * Edit "<name>": when a template is shown on every page instead of the standard one, the card opens it in the visual
+     * builder rather than offering to make another (Customise). With templates on some pages only, the standard one
+     * still shows everywhere else, so Customise stays.
+     */
+    public static function editInUseAction(string $type): Action
+    {
+        return Action::make("{$type}EditInUse")
+            ->label(fn (): string => __('Edit ":name"', ['name' => self::replacements($type)['everywhere']?->name]))
+            ->icon(Heroicon::OutlinedPaintBrush)
+            ->size('sm')
+            ->visible(fn (): bool => ($template = self::replacements($type)['everywhere']) !== null && TemplateResource::canEdit($template))
+            ->url(fn (): ?string => ($template = self::replacements($type)['everywhere']) !== null
+                ? TemplateResource::getUrl('visual', ['record' => $template])
+                : null);
     }
 
     /**

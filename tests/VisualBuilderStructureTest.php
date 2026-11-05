@@ -210,6 +210,30 @@ class VisualBuilderStructureTest extends PageTestCase
         $this->assertSame('Intro [A | B / - | - / C / - | - | -]', $this->draftOutline($page), 'Neither changed anything.');
     }
 
+    public function test_blocks_can_be_added_to_a_new_rows_columns(): void
+    {
+        $page = $this->structurePage();
+        $u = self::uids($page->blocks);
+
+        $editor = $this->editor($page)->callAction(TestAction::make('addRow')->arguments(['uid' => $u['section']]), ['layout' => '2']);
+
+        $draft = app(VisualDrafts::class)->open($page, $this->user());
+        $newRow = array_values($draft->blocks[1]['data']['rows'])[2];
+        $columnUids = array_column($newRow['columns'], 'uid');
+        $this->assertCount(2, array_filter($columnUids, 'is_string'), 'Each new column has a uid, so the canvas can point at it.');
+        $this->assertCount(2, array_unique($columnUids));
+        $editor->assertDispatched('site-builder-canvas-updated', fn (string $name, array $params): bool => str_contains($params['html'], $columnUids[0])
+            && str_contains($params['html'], $columnUids[1]));
+
+        foreach (['text', 'image_text'] as $type) {
+            $this->editor($page)
+                ->callAction(TestAction::make('addBlock')->arguments(['target' => $columnUids[0], 'position' => 'in']), ['type' => $type])
+                ->assertNotNotified('That block can\'t go there.');
+        }
+
+        $this->assertSame('Intro [A | B / C / text image_text | -]', $this->draftOutline($page), 'The canvas drew the columns with the uids the draft keeps.');
+    }
+
     public function test_the_hovered_row_is_outlined_with_its_controls_beside_it(): void
     {
         $this->editor($this->structurePage())

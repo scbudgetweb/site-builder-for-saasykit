@@ -104,7 +104,7 @@ Every block has a **Design** tab for spacing, sizing, typography, borders, shado
 | Pricing table | Plans side by side, or SaaSykit's own plans with their checkout links. |
 | Call to action | A heading, a line of text and buttons. |
 | Mailing list sign-up | A sign-up form for your Brevo list. |
-| Contact form | A form whose messages arrive in Contact messages and by email. |
+| Contact form | A form with the fields you choose (text, email, phone, dropdowns, radio buttons, checkboxes…); messages arrive in Contact messages and by email. |
 | Buttons | A row of buttons. |
 | Icon | One icon, optionally a link. |
 | Testimonials | Quotes with names, roles and star ratings. |
@@ -117,7 +117,7 @@ Every block has a **Design** tab for spacing, sizing, typography, borders, shado
 | Map | A Google map of an address, with no API key, after cookie consent. |
 | Audio | An uploaded sound file, or a SoundCloud or Spotify player. |
 | Logo strip | Partner logos in a row, a scrolling loop or a carousel. |
-| Social follow | Links to your social profiles, from SaaSykit's settings. |
+| Social follow | Links to your social profiles, from SaaSykit's settings, with icon colours, borders and backgrounds of your own. |
 | Divider / spacer | A line, with an optional label, or space between blocks. |
 | Latest posts | The newest blog posts as cards, optionally from one category. |
 | Saved block (library) | A block from the block library, the same everywhere it's used. |
@@ -169,7 +169,7 @@ Headers and footers built from blocks, in the same visual builder, for every pag
 | ![A new template's ready-made layouts, as small pictures](docs/images/layout-picker.png) | ![Header settings: stays at the top, shrinks, a shadow, and over the first section with light text and the logo for dark backgrounds](docs/images/header-settings.jpg) |
 | New headers and footers start from a **ready-made layout**: the standard one, links in the middle, logo in the middle, a top bar and more. | **Header settings**, tried out on a sample page under the header. |
 | ![The Templates list, with cards for the standard header and footer above](docs/images/theme-builder-list.png) | ![The Lumora footer in the visual builder, with a row's panel listing its two columns](docs/images/row-panel.jpg) |
-| The standard header and footer have their own cards: **Edit links**, **Edit colours**, or **Customise** to turn them into blocks. | A footer from the *Logo and link columns* layout, on the Branding footer colours. |
+| The standard header and footer have their own cards: **Edit links**, **Edit colours**, or **Customise** to turn them into blocks (or **Edit** the template shown instead). | A footer from the *Logo and link columns* layout, on the Branding footer colours. |
 
 ### Navigation
 
@@ -193,7 +193,7 @@ Save a block once and use it on many pages. Change it in the library and every p
 
 ### Contact messages
 
-Messages sent through **Contact form** blocks, kept here and emailed to you, with the visitor's address as Reply-To. Unread ones are counted in the menu, **Reply by email** opens your mail app, and old messages are deleted after a year (you choose how long). Spam checks are built in, and no IP address is kept.
+Messages sent through **Contact form** blocks, kept here with every answer and emailed to you, with the visitor's address as Reply-To. Unread ones are counted in the menu, **Reply by email** opens your mail app, and old messages are deleted after a year (you choose how long). Spam checks are built in, and no IP address is kept.
 
 | | |
 |---|---|

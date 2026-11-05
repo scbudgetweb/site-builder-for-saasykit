@@ -6,6 +6,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Text;
 use Filament\Support\Icons\Heroicon;
+use ScBudgetWeb\SiteBuilder\Blocks\Design\ItemParts;
 use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 
@@ -96,5 +97,14 @@ class SocialFollowBlock extends PageBlock
     public static function viewData(array $data, Page $page): array
     {
         return ['links' => static::links()];
+    }
+
+    /**
+     * Design › Icon buttons and Icons: each social link's circle (background, border, corners, padding) and its icon
+     * (size and colour, apart from the border's). With nothing set it looks as standard.
+     */
+    public static function itemParts(): ItemParts
+    {
+        return ItemParts::make(__('Icon buttons'))->icon(__('Icons'));
     }
 }

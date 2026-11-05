@@ -116,6 +116,49 @@ class BlockDesignTest extends PageTestCase
                 && str_contains($params['html'], '--sb-minh: 50vh;'));
     }
 
+    public function test_the_number_fields_take_decimals(): void
+    {
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+        $this->actingAs($this->user());
+        $page = $this->page(['blocks' => [self::block('text', ['content' => '<p>Hi</p>'])]]);
+        $uid = $page->blocks[0]['uid'];
+
+        Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->callAction(TestAction::make('editBlock')->arguments(['uid' => $uid]), [
+                'design.spacing.padding' => ['desktop' => ['top' => '1.1rem']],
+                'design.typography.body.line_height' => ['desktop' => '1.15'],
+                'design.typography.body.letter_spacing' => ['desktop' => '-0.025em'],
+            ])
+            ->assertHasNoActionErrors()
+            ->assertDispatched('site-builder-canvas-updated', fn (string $name, array $params): bool => str_contains($params['html'], '--sb-pt: 1.1rem;')
+                && str_contains($params['html'], ': 1.15;')
+                && str_contains($params['html'], ': -0.025em;'));
+
+        Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->callAction(TestAction::make('editBlock')->arguments(['uid' => $uid]), [
+                'design.typography.body.letter_spacing' => ['desktop' => '-20.5em'],
+            ])
+            ->assertHasActionErrors(['design.typography.body.letter_spacing']);
+    }
+
+    public function test_the_number_inputs_take_any_decimal_and_the_arrow_keys_still_step(): void
+    {
+        $deviceValue = file_get_contents(__DIR__.'/../resources/views/filament/forms/device-value.blade.php');
+        $boxSides = file_get_contents(__DIR__.'/../resources/views/filament/forms/box-sides.blade.php');
+        $script = file_get_contents(__DIR__.'/../resources/views/filament/design-fields-script.blade.php');
+
+        foreach ([$deviceValue, $boxSides] as $view) {
+            $this->assertStringContainsString('step="any"', $view, 'The browser takes any decimal.');
+            $this->assertStringNotContainsString(':step=', $view);
+            $this->assertStringContainsString('x-on:keydown.up.prevent="nudge(', $view);
+            $this->assertStringContainsString('x-on:keydown.down.prevent="nudge(', $view);
+            $this->assertStringContainsString('step: @js($getStep())', $view, 'The arrow keys use the field\'s own step.');
+        }
+
+        $this->assertSame(2, substr_count($script, 'nudge('), 'Both fields can step.');
+        $this->assertStringContainsString('toFixed(3)', $script, 'Stepping is tidied to 3 places, as the server does.');
+    }
+
     public function test_the_admin_panel_loads_the_design_fields_script(): void
     {
         Filament::setCurrentPanel(Filament::getPanel('admin'));

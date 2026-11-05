@@ -12,6 +12,7 @@ At the top of the Theme builder, a card for the **standard header** and one for 
 - **Edit links:** Website › Navigation, on its Header or Footer tab;
 - **Edit colours:** Branding › Header & footer;
 - **Customise:** makes a template from the standard one, as blocks you can change, and opens it in the visual builder. A customised header keeps the standard header's behaviour from Branding. The new template is **off** until you turn it on, so visitors keep seeing the standard one meanwhile.
+- **Edit "<name>":** in place of Customise when one of your templates is shown on every page instead. It opens that template in the visual builder, rather than making another. With templates on some pages only, Customise stays, as the standard one still shows everywhere else.
 
 Navigation and Branding also say when a template is shown instead of the standard header or footer, naming it with a link to open it.
 
@@ -64,7 +65,7 @@ Besides every ordinary block (text, buttons, images, social icons…), templates
 | Block | In | What it shows and its settings |
 |---|---|---|
 | **Header bar** | Header | A whole header in one block. **Style:** logo on the left with the links on the right; logo on the left with the links in the middle; logo in the middle with the links underneath; logo in the middle of the links; or the logo and a menu button only (the mobile menu at every size). Each part can be turned off: the **logo** (and its height), the **links** from Navigation (**Edit links** changes them there and then, for the whole site), **Log in** (the account menu once signed in) and a **button** (its text and link, shown to visitors who aren't signed in or to everyone, in the Branding header button's colours or one of the site's button styles, and optionally kept beside the menu button on phones). **Show the menu button** below desktop or tablet width; the links, Log in and the button then move into the mobile menu. Layout: its height, content width, background (the Branding header colours, or see-through) and a line underneath. Its own link and mobile menu colours, as the Menu block's |
-| **Top bar** | Header | A slim row above the header: a short line (such as opening hours), a **phone number** and **email** that can be tapped, and **social icons** (from Settings › General Settings › Social Links). Contact details on the left and icons on the right, or everything in the middle; its content width; and **Hide on phones**. On the site colour, dark, unless its Background says otherwise |
+| **Top bar** | Header | A slim row above the header: a short line (such as opening hours), a **phone number** and **email** that can be tapped, and **social icons** (from Settings › General Settings › Social Links), styled in Design › Icon buttons and Icons. Contact details on the left and icons on the right, or everything in the middle; its content width; and **Hide on phones**. On the site colour, dark, unless its Background says otherwise |
 | **Logo** | Header, footer | The Branding logo (the header's or the footer's), linking to the home page; its height and line-up. With no logo uploaded, the site's name |
 | **Menu** | Header, footer | The header links from Navigation, with dropdowns and mega menus, and a menu button for the mobile menu on smaller screens. Its line-up, where the menu button takes over (tablet or desktop size), and its own link, hover and mobile menu colours (blank: the Branding header colours) |
 | **Account links** | Header, footer | *Log in* and a button (e.g. *Get started*) for visitors, and the account menu once signed in. Their text, the button's link, and whether to show the button |
@@ -89,7 +90,7 @@ Its own blocks:
 | **Post details** | The date, author and category on one line, each optional; the category, as a pill or a link, goes to its posts |
 | **Featured image** | The post's first image, as uploaded or trimmed to a shape, with corners, border and shadow. Nothing shows for a post without one |
 | **Post content** | The post's text, as written in Blog › Posts, styled by Design › Heading text and Body text |
-| **Share links** | Icons to share the post on X, LinkedIn or Facebook, or by email, with an optional heading |
+| **Share links** | Icons to share the post on X, LinkedIn or Facebook, or by email, with an optional heading. Design › Icon buttons and Icons style them, as on Social follow |
 | **Previous and next posts** | Links to the post before this one and the one after it, by date, each with a label (*Previous post*, *Next post*, or your own) and the post's title, and optionally its image. Optionally only from the same category. **When empty** decides what shows when there are no others |
 | **Related posts** | Cards for more posts, from the same category first (or just the latest), up to 12, in 2 to 4 columns. Each card can show its image, date, category and description; Design › Items styles them. **When empty** decides what shows when there are no other posts |
 

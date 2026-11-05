@@ -258,6 +258,53 @@ class CoreBlocksTest extends PageTestCase
         config(['app.social_links' => []]);
         $this->page(['blocks' => [self::block('social_follow', ['heading' => 'Follow us'])]]);
 
-        $this->get('/about-us')->assertDontSee('Follow us');
+        $this->get('/about-us')->assertDontSee('Follow us')->assertDontSee('No social links to show yet');
+    }
+
+    public function test_social_follow_says_on_the_canvas_when_there_are_no_links_to_show(): void
+    {
+        $canvas = view('site-builder::blocks.social-follow', ['block' => ['heading' => 'Follow us'], 'links' => [], 'marksNodes' => true])->render();
+        $this->assertStringContainsString('No social links to show yet.', $canvas);
+        $this->assertStringContainsString('Settings › General Settings › Social Links', $canvas);
+
+        $this->assertSame('', trim(view('site-builder::blocks.social-follow', ['block' => [], 'links' => []])->render()), 'Visitors see nothing.');
+
+        $withLinks = view('site-builder::blocks.social-follow', ['block' => [], 'links' => ['youtube' => ['url' => 'https://youtube.com/@villagehall', 'label' => 'YouTube']], 'marksNodes' => true])->render();
+        $this->assertStringNotContainsString('No social links to show yet.', $withLinks);
+    }
+
+    public function test_social_icons_can_be_styled_with_the_icon_colour_apart_from_the_border(): void
+    {
+        config(['app.social_links' => ['youtube' => 'https://youtube.com/@villagehall']]);
+
+        foreach (['social_follow', 'post_share', 'site_top_bar'] as $name) {
+            $parts = app(BlockRegistry::class)->find($name)::itemParts();
+            $this->assertNotNull($parts, "{$name} offers Design › Icon buttons and Icons.");
+            $this->assertSame(['sb-items', 'sb-item', 'sb-item-icon'], $parts->classes());
+        }
+
+        $this->page(['blocks' => [self::block('social_follow', ['heading' => 'Follow us', 'design' => ['items' => [
+            'box' => ['background' => '#0b1f44', 'border_width' => 2, 'border_colour' => '#fde047', 'radius' => ['desktop' => '8px']],
+            'icon' => ['colour' => '#ffffff', 'colour_hover' => '#fde047', 'size' => ['desktop' => '28px']],
+        ]]])]]);
+
+        $html = $this->get('/about-us')->assertSuccessful()->getContent();
+
+        foreach (['--sb-ibg: #0b1f44;', '--sb-ibw: 2px;', '--sb-ibc: #fde047;', '--sb-ir: 8px;', '--sb-icc: #ffffff;', '--sb-icc-h: #fde047;', '--sb-ics: 28px;'] as $property) {
+            $this->assertStringContainsString($property, $html);
+        }
+
+        $this->assertMatchesRegularExpression('/<a [^>]*class="sb-item sb-social-link[^"]*"[^>]*>\s*<span class="sb-item-icon/', $html, 'The icon has its own colour, apart from the border on the link.');
+    }
+
+    public function test_social_icons_look_as_standard_with_nothing_set(): void
+    {
+        config(['app.social_links' => ['youtube' => 'https://youtube.com/@villagehall']]);
+        $this->page(['blocks' => [self::block('social_follow', ['heading' => 'Follow us'])]]);
+
+        $this->get('/about-us')
+            ->assertSee('rounded-full border border-current p-[11px] opacity-80', false)
+            ->assertDontSee('--sb-ibg', false)
+            ->assertDontSee('--sb-icc', false);
     }
 }

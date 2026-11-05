@@ -114,7 +114,15 @@ class ContactMessageResource extends Resource
                     TextEntry::make('message')
                         ->label(__('Message'))
                         ->columnSpanFull()
-                        ->extraAttributes(['class' => 'whitespace-pre-line']),
+                        ->extraAttributes(['class' => 'whitespace-pre-line'])
+                        ->visible(fn (ContactMessage $record): bool => ! is_array($record->fields)),
+                    // Every answer, in the form's order (forms with fields of their own, 1.7.2 on).
+                    TextEntry::make('answers')
+                        ->label(__('Answers'))
+                        ->state(fn (ContactMessage $record): string => self::answersList($record))
+                        ->html()
+                        ->visible(fn (ContactMessage $record): bool => is_array($record->fields))
+                        ->columnSpanFull(),
                     TextEntry::make('form_name')->label(__('Form'))->placeholder('-'),
                     TextEntry::make('page_url')
                         ->label(__('Sent from'))
@@ -123,6 +131,17 @@ class ContactMessageResource extends Resource
                     TextEntry::make('created_at')->label(__('Received'))->dateTime(),
                 ]),
         ]);
+    }
+
+    /**
+     * A message's answers as a list of labels and answers, escaped. A blank answer shows as "-".
+     */
+    public static function answersList(ContactMessage $record): string
+    {
+        $items = array_map(fn (array $answer): string => '<div class="py-1.5"><dt class="text-sm font-medium opacity-70">'.e($answer['label']).'</dt>'
+            .'<dd class="whitespace-pre-line">'.e($answer['value'] !== '' ? $answer['value'] : '-').'</dd></div>', $record->answers());
+
+        return '<dl>'.implode('', $items).'</dl>';
     }
 
     public static function table(Table $table): Table

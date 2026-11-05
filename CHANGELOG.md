@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.2 - 2026-11-05
+
+**Upgrading:** run `php artisan migrate` (contact messages keep every answer) and `npm run build`. If your app overrides `livewire/contact-form`, `mail/contact-message`, `blocks/social-follow`, `blocks/post-share` or `blocks/site-top-bar`, compare them with the package's. Saved contact forms are updated as they're read and look the same; if your code embeds `site-builder.contact-form` itself, its `nameField`, `phoneField` and `subjectField` became one `fields` list (`ContactFormBlock::formFields()`).
+
+### Added
+
+- Contact form fields: add Name, Email, Phone, Text, Long text, Dropdown, Radio buttons or Checkboxes, each with a label, placeholder, required, full or half width, choices and help text.
+- Contact messages keep every answer, shown in order in View and in the email.
+- Social follow, Share links and the Top bar's icons take Design › Icon buttons and Icons: background, border, corners, padding and an icon colour apart from the border's.
+- Social follow says in the visual builder when there are no social links to show (only web addresses are linked).
+
+### Changed
+
+- When a template is shown on every page instead of the standard header or footer, its card offers Edit "<name>" in place of Customise.
+
+### Fixed
+
+- Adding a block to a column of a row just added said "That block can't go there" until the page was reloaded.
+- Sizes such as padding, margin, line height and letter spacing take decimals (1.1, -0.025); the arrow keys still step as before.
+
 ## 1.7.1 - 2026-11-03
 
 **Upgrading:** run `npm run build`. If your app overrides `filament/pages/visual-editor`, compare it with the package's.

@@ -1,10 +1,16 @@
-{{-- DeviceValue: a number and a unit, for the screen size being edited (sbDeviceValue, in the design-fields script). --}}
+{{--
+    DeviceValue: a number and a unit, for the screen size being edited (sbDeviceValue, in the design-fields script).
+    step="any" takes any decimal (1.1, -0.025); the ↑ and ↓ keys still step by the field's own step (nudge).
+--}}
 <x-dynamic-component :component="$getFieldWrapperView()" :field="$field">
     <div
         x-data="sbDeviceValue({
             state: $wire.{{ $applyStateBindingModifiers("\$entangle('{$getStatePath()}')") }},
             units: @js($getUnits()),
             responsive: @js($isResponsive()),
+            step: @js($getStep()),
+            min: @js($getMinValue()),
+            max: @js($getMaxValue()),
         })"
         style="display: flex; align-items: center; gap: 0.5rem;"
     >
@@ -15,11 +21,13 @@
                 type="number"
                 :id="$getId()"
                 inputmode="decimal"
-                :step="$getStep()"
+                step="any"
                 :min="$getMinValue()"
                 :max="$getMaxValue()"
                 x-model="number"
                 x-on:input="write()"
+                x-on:keydown.up.prevent="nudge(1)"
+                x-on:keydown.down.prevent="nudge(-1)"
                 x-bind:placeholder="fallback()"
             />
         </x-filament::input.wrapper>

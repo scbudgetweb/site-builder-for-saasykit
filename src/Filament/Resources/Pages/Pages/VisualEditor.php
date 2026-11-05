@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockDesign;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockSchema;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockTree;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SavedBlockBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\Core\SectionBlock;
@@ -508,6 +509,10 @@ class VisualEditor extends ResourcePage
      */
     private function changeBlocks(array $blocks, ?string $uid = null): void
     {
+        // New rows and columns (+ Add row, more columns in a row's layout) get their uids here, so the canvas is drawn
+        // with the same ones the draft keeps; otherwise clicking a new column points at a uid the draft doesn't have.
+        $blocks = BlockSchema::write($blocks);
+
         app(VisualDrafts::class)->change($this->draft(), $blocks);
         $this->isPreviewing = false;
 

@@ -1,6 +1,7 @@
 {{--
     Theme Builder › Top bar: a short line, a phone number and an email that can be tapped, and the social icons, in a
-    slim row above the header. Its colours are its Background's (the site colour, dark, as standard).
+    slim row above the header. Its colours are its Background's (the site colour, dark, as standard). The social
+    icons take Design › Icon buttons and Icons (.sb-items, .sb-item, .sb-item-icon).
 --}}
 <div @class(['sb-top-bar text-sm', 'hidden sm:block' => $hidesOnPhones])>
     <div @class([
@@ -29,10 +30,10 @@
         @endif
 
         @if ($socialLinks !== [])
-            <div class="flex items-center gap-3">
+            <div class="sb-items flex items-center gap-3">
                 @foreach ($socialLinks as $network => $link)
-                    <a href="{{ $link['url'] }}" target="_blank" rel="noopener" class="text-inherit opacity-80 transition-opacity hover:opacity-100 focus-visible:opacity-100 [&_svg]:h-4 [&_svg]:w-4">
-                        <x-site-builder::social-icon :network="$network" />
+                    <a href="{{ $link['url'] }}" target="_blank" rel="noopener" class="sb-item sb-social-link inline-flex items-center justify-center text-inherit opacity-80 transition hover:opacity-100 focus-visible:opacity-100 [&_svg]:h-4 [&_svg]:w-4">
+                        <span class="sb-item-icon inline-flex"><x-site-builder::social-icon :network="$network" /></span>
                         <span class="sr-only">{{ $link['label'] }}</span>
                     </a>
                 @endforeach

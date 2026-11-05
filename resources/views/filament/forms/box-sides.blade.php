@@ -9,6 +9,9 @@
             units: @js($getUnits()),
             parts: @js($getParts()),
             responsive: @js($isResponsive()),
+            step: @js($getStep()),
+            min: @js($getMinValue()),
+            max: @js($getMaxValue()),
         })"
         style="display: flex; flex-direction: column; gap: 0.5rem;"
     >
@@ -51,11 +54,13 @@
                             type="number"
                             inputmode="decimal"
                             :id="$part === $getParts()[0] ? $getId() : null"
-                            :step="$getStep()"
+                            step="any"
                             :min="$getMinValue()"
                             :max="$getMaxValue()"
                             x-model="numbers['{{ $part }}']"
                             x-on:input="write('{{ $part }}')"
+                            x-on:keydown.up.prevent="nudge('{{ $part }}', 1)"
+                            x-on:keydown.down.prevent="nudge('{{ $part }}', -1)"
                             x-bind:placeholder="fallback('{{ $part }}')"
                         />
                     </x-filament::input.wrapper>

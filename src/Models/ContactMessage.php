@@ -20,6 +20,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $phone
  * @property string|null $subject
  * @property string $message
+ * @property array<int, array{label: string, type: string, value: string|array<int, string>}>|null $fields
  * @property string|null $page_url
  * @property Carbon|null $read_at
  * @property Carbon|null $created_at
@@ -30,11 +31,44 @@ class ContactMessage extends Model
 
     protected $table = 'site_builder_contact_messages';
 
-    protected $fillable = ['page_id', 'form_name', 'name', 'email', 'phone', 'subject', 'message', 'page_url', 'read_at'];
+    protected $fillable = ['page_id', 'form_name', 'name', 'email', 'phone', 'subject', 'message', 'fields', 'page_url', 'read_at'];
 
     protected function casts(): array
     {
-        return ['read_at' => 'datetime'];
+        return ['read_at' => 'datetime', 'fields' => 'array'];
+    }
+
+    /**
+     * Each answer to show, in the form's order, as label => text (Checkboxes joined with commas). Messages from before
+     * 1.7.2 have no list, so it's made from the standard columns.
+     *
+     * @return array<int, array{label: string, value: string}>
+     */
+    public function answers(bool $withEmpty = true): array
+    {
+        $saved = is_array($this->fields) ? $this->fields : [
+            ['label' => __('Name'), 'value' => $this->name],
+            ['label' => __('Email address'), 'value' => $this->email],
+            ['label' => __('Phone number'), 'value' => $this->phone],
+            ['label' => __('Subject'), 'value' => $this->subject],
+            ['label' => __('Message'), 'value' => $this->message],
+        ];
+        $answers = [];
+
+        foreach ($saved as $answer) {
+            if (! is_array($answer) || ! is_string($answer['label'] ?? null)) {
+                continue;
+            }
+
+            $value = $answer['value'] ?? null;
+            $text = is_array($value) ? implode(', ', array_filter($value, 'is_string')) : (is_string($value) ? $value : '');
+
+            if ($withEmpty || $text !== '') {
+                $answers[] = ['label' => $answer['label'], 'value' => $text];
+            }
+        }
+
+        return $answers;
     }
 
     /**

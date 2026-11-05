@@ -101,7 +101,7 @@ Every block has a **Design** tab for spacing, sizing, typography, borders, shado
 | Countdown | Days, hours, minutes and seconds to a date. |
 | Circle counters | Percentages as rings that fill as they come into view. |
 | Bar counters | Percentages as bars. |
-| Pricing table | Plans side by side, or SaaSykit's own plans with their checkout links. |
+| Pricing table | Plans side by side, with an optional monthly and annual switch and prices by company size, or SaaSykit's own plans with their checkout links. |
 | Call to action | A heading, a line of text and buttons. |
 | Mailing list sign-up | A sign-up form for your Brevo list. |
 | Contact form | A form with the fields you choose (text, email, phone, dropdowns, radio buttons, checkboxes…); messages arrive in Contact messages and by email. |

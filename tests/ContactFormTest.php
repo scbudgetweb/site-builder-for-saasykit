@@ -347,6 +347,46 @@ class ContactFormTest extends PageTestCase
         $this->assertSame('Room · Radio buttons', ContactFormBlock::fieldTitle(['type' => 'radio', 'label' => 'Room']));
     }
 
+    public function test_fields_can_be_filled_in_from_the_link(): void
+    {
+        $fields = [
+            ['type' => 'email', 'label' => 'Email'],
+            ['type' => 'text', 'label' => 'Company size', 'fill_from' => 'size'],
+            ['type' => 'select', 'label' => 'Billing', 'options' => "Monthly\nAnnually", 'fill_from' => 'billing'],
+            ['type' => 'radio', 'label' => 'Plan', 'options' => "Essentials\nProfessional", 'fill_from' => 'plan'],
+            ['type' => 'checkboxes', 'label' => 'Interests', 'options' => "Hire\nEvents", 'fill_from' => 'interest'],
+            ['type' => 'select', 'label' => 'Team', 'options' => "Small\nLarge", 'fill_from' => 'size'],
+            ['type' => 'text', 'label' => 'Notes'],
+        ];
+
+        Livewire::withQueryParams(['size' => ' 21–50 employees ', 'billing' => 'annual', 'plan' => 'PROFESSIONAL', 'interest' => 'events', 'notes' => 'Hello'])
+            ->test(ContactForm::class, ['fields' => $fields])
+            ->assertSet('answers', ['', '21–50 employees', 'Annually', 'Professional', ['Events'], '', '']);
+
+        Livewire::withQueryParams(['size' => ['a', 'b']])
+            ->test(ContactForm::class, ['fields' => $fields])
+            ->assertSet('answers.1', '');
+    }
+
+    public function test_a_link_value_only_picks_a_choice_it_clearly_means(): void
+    {
+        $this->assertSame('Annual', ContactForm::matchingChoice(['Annual', 'Annually'], 'ANNUAL'), 'The same text first.');
+        $this->assertSame('Annually', ContactForm::matchingChoice(['Monthly', 'Annually'], 'annual'), 'The one starting with it.');
+        $this->assertNull(ContactForm::matchingChoice(['Annual plan', 'Annually'], 'annual'), 'Two start with it.');
+        $this->assertNull(ContactForm::matchingChoice(['Monthly'], 'weekly'));
+    }
+
+    public function test_only_a_link_name_is_kept_as_filled_in_from_the_link(): void
+    {
+        $fields = ContactFormBlock::formFields(['fields' => [
+            ['type' => 'email', 'label' => 'Email', 'fill_from' => 'email'],
+            ['type' => 'text', 'label' => 'Size', 'fill_from' => 'size here!'],
+            ['type' => 'text', 'label' => 'Notes'],
+        ]]);
+
+        $this->assertSame(['email', null, null], array_column($fields, 'fill_from'));
+    }
+
     public function test_bots_get_a_thank_you_but_nothing_is_kept(): void
     {
         $this->fill()->set('website', 'https://spam.example')->call('send')->assertSet('isSent', true);

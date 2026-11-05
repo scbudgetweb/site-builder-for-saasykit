@@ -1,6 +1,7 @@
 {{--
     Block buttons. $buttons: the saved buttons, re-checked here (text and an allowed link, lesson 11);
-    $isDark: the background behind them is dark; $align: left / center / right.
+    $isDark: the background behind them is dark; $align: left / center / right. $choiceQuery (a Pricing table passing the
+    visitor's choice): added to links to a page, and kept up to date by the Alpine component's link() around them.
     Each takes the block's button look (Style › Buttons, $block['button_design']) unless it has its own
     (PageBlock::withLook()). Classes and colours come from PageBlock::buttonLook().
 --}}
@@ -17,7 +18,9 @@
     ])>
         @foreach ($buttons as $button)
             @php($look = \ScBudgetWeb\SiteBuilder\Blocks\PageBlock::buttonLook(\ScBudgetWeb\SiteBuilder\Blocks\PageBlock::withLook($button, $block['button_design'] ?? null), $isDark ?? false))
-            <a href="{{ $button['url'] }}"
+            @php($carriesChoice = isset($choiceQuery) && preg_match(\ScBudgetWeb\SiteBuilder\Blocks\Core\PricingTableBlock::CHOICE_LINK_PATTERN, $button['url']) === 1)
+            <a href="{{ $carriesChoice ? \ScBudgetWeb\SiteBuilder\Blocks\Core\PricingTableBlock::withChoice($button['url'], $choiceQuery) : $button['url'] }}"
+               @if ($carriesChoice) x-bind:href="link(@js($button['url']))" @endif
                @if (! empty($button['new_tab'])) target="_blank" rel="noopener" @endif
                class="{{ $look['class'] }}"
                @if ($look['style'] !== '') style="{{ $look['style'] }}" @endif>

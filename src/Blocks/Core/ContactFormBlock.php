@@ -52,6 +52,9 @@ class ContactFormBlock extends PageBlock
 
     public const MAX_CHOICES = 50;
 
+    /** A field's Filled in from the link: a query string name, e.g. size. */
+    public const FILL_FROM_PATTERN = '/^[A-Za-z0-9_-]{1,40}$/';
+
     /** Before 1.7.2: a field's choice => label (name_field, phone_field, subject_field). */
     public const FIELD_CHOICES = ['required' => 'Asked, required', 'optional' => 'Asked, optional', 'hidden' => 'Not asked'];
 
@@ -193,6 +196,14 @@ class ContactFormBlock extends PageBlock
                         ->hintIcon(self::HELP_ICON, __('A short line under the field.'))
                         ->maxLength(200)
                         ->columnSpanFull(),
+                    TextInput::make('fill_from')
+                        ->label(__('Filled in from the link (optional)'))
+                        ->hintIcon(self::HELP_ICON, __('The name in the page\'s link to fill this field from, e.g. size for /contact?size=21-50. A Pricing table passing the visitor\'s choice sends size and billing. Choices are matched by their text.'))
+                        ->placeholder('size')
+                        ->maxLength(40)
+                        ->regex(self::FILL_FROM_PATTERN)
+                        ->validationMessages(['regex' => __('Use letters, numbers, - and _ only.')])
+                        ->columnSpanFull(),
                     Toggle::make('required')
                         ->label(__('Required'))
                         ->default(true)
@@ -287,7 +298,7 @@ class ContactFormBlock extends PageBlock
      * and exactly one Email field (always required) and at most one Name field, whatever was saved.
      *
      * @param  array<string, mixed>  $data
-     * @return array<int, array{type: string, label: string, placeholder: string|null, required: bool, width: string, options: array<int, string>, help: string|null}>
+     * @return array<int, array{type: string, label: string, placeholder: string|null, required: bool, width: string, options: array<int, string>, help: string|null, fill_from: string|null}>
      */
     public static function formFields(array $data): array
     {
@@ -317,6 +328,7 @@ class ContactFormBlock extends PageBlock
                 'width' => static::pick($field['width'] ?? null, self::WIDTHS, 'full'),
                 'options' => $options,
                 'help' => $text($field['help'] ?? null, 200),
+                'fill_from' => is_string($field['fill_from'] ?? null) && preg_match(self::FILL_FROM_PATTERN, $field['fill_from']) === 1 ? $field['fill_from'] : null,
             ];
 
             if (count($fields) === self::MAX_FIELDS) {
@@ -325,7 +337,7 @@ class ContactFormBlock extends PageBlock
         }
 
         if (! in_array('email', array_column($fields, 'type'), true)) {
-            array_unshift($fields, ['type' => 'email', 'label' => __('Email address'), 'placeholder' => null, 'required' => true, 'width' => 'full', 'options' => [], 'help' => null]);
+            array_unshift($fields, ['type' => 'email', 'label' => __('Email address'), 'placeholder' => null, 'required' => true, 'width' => 'full', 'options' => [], 'help' => null, 'fill_from' => null]);
         }
 
         return $fields;

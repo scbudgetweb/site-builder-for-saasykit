@@ -41,7 +41,7 @@ class ContactForm extends Component
     /**
      * The block's fields (ContactFormBlock::formFields()).
      *
-     * @var array<int, array{type: string, label: string, placeholder: string|null, required: bool, width: string, options: array<int, string>, help: string|null}>
+     * @var array<int, array{type: string, label: string, placeholder: string|null, required: bool, width: string, options: array<int, string>, help: string|null, fill_from: string|null}>
      */
     #[Locked]
     public array $fields = [];
@@ -102,6 +102,7 @@ class ContactForm extends Component
         // Without fields of its own (an older embed), the standard form: Name, Email and Message.
         $this->fields = ContactFormBlock::formFields($this->fields === [] ? [] : ['fields' => $this->fields]);
         $this->resetAnswers();
+        $this->fillFromLink();
         $this->renderedAt = now()->getTimestamp();
         $this->pageUrl = url()->current();
     }
@@ -109,6 +110,60 @@ class ContactForm extends Component
     private function resetAnswers(): void
     {
         $this->answers = array_map(fn (array $field): string|array => $field['type'] === 'checkboxes' ? [] : '', $this->fields);
+    }
+
+    /**
+     * Fields with a Filled in from the link take the page link's value (e.g. ?size=21-50 from a Pricing table's
+     * button): text as it is, a choice when it matches one. Anything else is left blank; sending checks it as usual.
+     */
+    private function fillFromLink(): void
+    {
+        foreach ($this->fields as $index => $field) {
+            $value = $field['fill_from'] !== null ? request()->query($field['fill_from']) : null;
+            $value = is_string($value) ? trim($value) : '';
+
+            if ($value === '') {
+                continue;
+            }
+
+            if (in_array($field['type'], ContactFormBlock::CHOICE_TYPES, true)) {
+                $choice = self::matchingChoice($field['options'], $value);
+
+                if ($choice !== null) {
+                    $this->answers[$index] = $field['type'] === 'checkboxes' ? [$choice] : $choice;
+                }
+
+                continue;
+            }
+
+            $this->answers[$index] = mb_substr($value, 0, $field['type'] === 'textarea' ? self::MAX_MESSAGE_LENGTH : self::MAX_TEXT_LENGTH);
+        }
+    }
+
+    /**
+     * The choice a link's value means: the same text (ignoring case), or else the only choice starting with it, so
+     * billing=annual picks "Annually".
+     *
+     * @param  array<int, string>  $choices
+     */
+    public static function matchingChoice(array $choices, string $value): ?string
+    {
+        $value = mb_strtolower($value);
+        $starting = [];
+
+        foreach ($choices as $choice) {
+            $lower = mb_strtolower($choice);
+
+            if ($lower === $value) {
+                return $choice;
+            }
+
+            if (str_starts_with($lower, $value)) {
+                $starting[] = $choice;
+            }
+        }
+
+        return count($starting) === 1 ? $starting[0] : null;
     }
 
     /**

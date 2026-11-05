@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.3 - 2026-11-05
+
+**Upgrading:** run `npm run build`. If your app overrides `blocks/pricing-table`, `blocks/partials/buttons` or `livewire/contact-form`, compare them with the package's. Existing pricing tables look the same.
+
+### Added
+
+- Pricing table: a Monthly and Annual switch, with each monthly price worked out from an annual discount or set by hand, and the year's total under the annual price.
+- Pricing table: prices by company size, chosen from a list, with "Let's talk" for a blank price.
+- Pricing table: the visitor's size and billing can be added to the plan buttons' links (`?size=…&billing=…`).
+- Contact form fields can be filled in from the page's link (Filled in from the link).
+
 ## 1.7.2 - 2026-11-05
 
 **Upgrading:** run `php artisan migrate` (contact messages keep every answer) and `npm run build`. If your app overrides `livewire/contact-form`, `mail/contact-message`, `blocks/social-follow`, `blocks/post-share` or `blocks/site-top-bar`, compare them with the package's. Saved contact forms are updated as they're read and look the same; if your code embeds `site-builder.contact-form` itself, its `nameField`, `phoneField` and `subjectField` became one `fields` list (`ContactFormBlock::formFields()`).

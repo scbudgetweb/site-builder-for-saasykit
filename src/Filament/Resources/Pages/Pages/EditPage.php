@@ -12,6 +12,7 @@ use Filament\Support\Icons\Heroicon;
 use Illuminate\Contracts\View\View;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\LocksRecordForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageExport;
@@ -23,6 +24,7 @@ use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
  */
 class EditPage extends EditRecord
 {
+    use LocksRecordForm;
     use ReportsBlockValidationErrors;
 
     protected static string $resource = PageResource::class;
@@ -46,12 +48,7 @@ class EditPage extends EditRecord
                 ->icon(Heroicon::OutlinedEye)
                 ->color('gray')
                 ->url(fn (Page $record): string => $record->previewUrl(), shouldOpenInNewTab: true),
-            Action::make('view')
-                ->label(__('View page'))
-                ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
-                ->color('gray')
-                ->visible(fn (Page $record): bool => $record->isPublished() && ! $record->trashed())
-                ->url(fn (Page $record): string => $record->url(), shouldOpenInNewTab: true),
+            PageResource::viewPageAction(),
             Action::make('revisions')
                 ->label(__('Revisions'))
                 ->icon(Heroicon::OutlinedClock)
@@ -130,6 +127,10 @@ class EditPage extends EditRecord
      */
     public function restoreRevision(int $revisionId): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $revision = $this->getRecord()->revisions()->find($revisionId);
 
         if ($revision === null) {

@@ -141,7 +141,9 @@ class ExtendingCoreBlocksTest extends PageTestCase
         ]]);
 
         // Only the replacement says it can't be cached, so the renderer looked it up for the row's block.
-        $this->assertFalse(app(PageRenderer::class)->canCache($page, $page->blockList()));
+        $holes = [];
+        app(PageRenderer::class)->renderBlocks($page->blockList(), $page, holes: $holes);
+        $this->assertCount(1, $holes);
         $this->get('/about-us')->assertSuccessful()->assertSee('In a row');
     }
 }

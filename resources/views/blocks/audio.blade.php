@@ -1,5 +1,5 @@
 {{--
-    SoundCloud's or Spotify's own player ($embed), click-to-play until marketing cookies are allowed. Or a sound file in
+    SoundCloud's, Spotify's or Audioboom's own player ($embed), click-to-play until marketing cookies are allowed. Or a sound file in
     a card: the cover image (or a note), the title, artist and description, then the browser's own player.
     preload="none": nothing is downloaded until it's played. Without "Offer a download link", the player's menu leaves
     Download out too (where the browser supports controlslist).
@@ -7,11 +7,11 @@
 @include('site-builder::blocks.partials.heading')
 
 @if ($embed && $showsPlayerStraightAway)
-    {{-- SoundCloud's or Spotify's own player, at its own height. --}}
+    {{-- The provider's own player, at its own height. --}}
     <iframe src="{{ $embed['url'] }}" title="{{ $title }}" height="{{ $embed['height'] }}" class="block w-full overflow-hidden rounded-sb-card border-0"
             allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
 @elseif ($embed)
-    {{-- Click-to-play: nothing loads from SoundCloud or Spotify until the visitor presses play (GDPR). --}}
+    {{-- Click-to-play: nothing loads from the provider until the visitor presses play (GDPR). --}}
     <div x-data="{ playing: false }" class="relative w-full overflow-hidden rounded-sb-card bg-primary-900" style="height: {{ $embed['height'] }}px">
         <button type="button" x-show="! playing" @click="playing = true"
                 class="group absolute inset-0 flex h-full w-full items-center gap-4 px-5 text-left text-white focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"

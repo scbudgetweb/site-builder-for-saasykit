@@ -43,7 +43,8 @@
     $linkColors = 'text-sb-footer-link transition-colors hover:text-sb-footer-link-hover focus-visible:text-sb-footer-link-hover';
 @endphp
 
-<footer {{ $attributes->class(['mt-16 bg-sb-footer-bg text-sb-footer-text']) }}>
+{{-- Space above it on the app's own pages (blog, legal); a builder page's last block brings its own, so it meets the footer. --}}
+<footer {{ $attributes->class(['bg-sb-footer-bg text-sb-footer-text', 'mt-16' => request()->attributes->get(\ScBudgetWeb\SiteBuilder\Templates\Templates::PAGE_ATTRIBUTE) === null]) }}>
     <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
         <div @class(['grid grid-cols-1 gap-8', $gridColumns])>
             <div @class(['max-w-sm', $brandSpan])>

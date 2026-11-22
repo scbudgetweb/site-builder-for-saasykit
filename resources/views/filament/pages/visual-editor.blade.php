@@ -946,14 +946,19 @@
 
             <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem;">
                 {{-- Printed here, an action shows even when hidden, so each is checked: Header settings only for a
-                     header template (TemplateVisualEditor), Discard changes only when there are some. --}}
-                @foreach ([method_exists($this, 'headerSettingsAction') ? $this->headerSettingsAction : null, $this->editAsFormAction, $this->discardAction, $this->publishAction] as $toolbarAction)
+                     header template (TemplateVisualEditor), View page only for a published page, Discard changes
+                     only when there are some. --}}
+                @foreach ([method_exists($this, 'headerSettingsAction') ? $this->headerSettingsAction : null, $this->viewPageAction, $this->editAsFormAction, $this->discardAction, $this->publishAction] as $toolbarAction)
                     @if ($toolbarAction?->isVisible())
                         {{ $toolbarAction }}
                     @endif
                 @endforeach
             </div>
         </header>
+
+        <div @style(['padding: 0.5rem 1rem 0' => $this->editLockHolder !== null])>
+            @include('site-builder::filament.pages.partials.edit-lock', ['editor' => $this])
+        </div>
 
         <div wire:ignore style="flex: 1 1 auto; min-height: 0; display: flex; gap: 0.75rem; padding: 0.75rem; background: rgb(128 128 128 / 0.12);">
             @include('site-builder::filament.pages.partials.layers-panel')

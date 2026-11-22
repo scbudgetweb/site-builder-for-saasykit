@@ -7,11 +7,13 @@ use Filament\Panel;
 use Filament\PanelRegistry;
 use Filament\Support\Facades\FilamentView;
 use Filament\View\PanelsRenderHook;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\View\FileViewFinder;
 use Livewire\Livewire;
+use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockPresets;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
@@ -24,6 +26,9 @@ use ScBudgetWeb\SiteBuilder\Console\GeneratePageSitemapCommand;
 use ScBudgetWeb\SiteBuilder\Console\ImportPageCommand;
 use ScBudgetWeb\SiteBuilder\Console\InstallCommand;
 use ScBudgetWeb\SiteBuilder\Console\SyncMediaLibraryCommand;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Pages\EditTemplate;
 use ScBudgetWeb\SiteBuilder\Legal\LegalPage;
 use ScBudgetWeb\SiteBuilder\Livewire\ContactForm;
 use ScBudgetWeb\SiteBuilder\Livewire\MailingListSignup;
@@ -32,11 +37,13 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 use ScBudgetWeb\SiteBuilder\Models\Template;
 use ScBudgetWeb\SiteBuilder\Navigation\NavigationMenus;
+use ScBudgetWeb\SiteBuilder\Pages\EditLocks;
 use ScBudgetWeb\SiteBuilder\Pages\PagePolicy;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
 use ScBudgetWeb\SiteBuilder\Pages\SavedBlockPolicy;
 use ScBudgetWeb\SiteBuilder\Pages\Slot;
 use ScBudgetWeb\SiteBuilder\Pages\TemplatePolicy;
+use ScBudgetWeb\SiteBuilder\Podcasts\PodcastFeeds;
 use ScBudgetWeb\SiteBuilder\Settings\AudioUploads;
 use ScBudgetWeb\SiteBuilder\Settings\ImageUploads;
 use ScBudgetWeb\SiteBuilder\Settings\Settings;
@@ -57,8 +64,11 @@ class SiteBuilderServiceProvider extends ServiceProvider
         $this->app->singleton(Branding::class);
         $this->app->singleton(BrandingStyle::class);
         $this->app->singleton(PageService::class);
+        $this->app->scoped(EditLocks::class);
+        $this->app->scoped(PodcastFeeds::class);
         $this->app->scoped(MediaLibrary::class);
         $this->app->singleton(BlockRegistry::class);
+        $this->app->scoped(BlockLibrary::class);
         $this->app->singleton(PageRenderer::class);
         $this->app->singleton(BlockPresets::class);
         $this->app->singleton(Templates::class);
@@ -238,6 +248,14 @@ class SiteBuilderServiceProvider extends ServiceProvider
             fn (): HtmlString => new HtmlString('<style>:root { '.collect([50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950])
                 ->map(fn (int $shade): string => "--color-primary-{$shade}: var(--primary-{$shade})")
                 ->implode('; ').'; }</style>'),
+        );
+
+        // Edit as a form's edit lock: the heartbeat, and the banner for someone without the lock (the visual
+        // builder includes the same partial itself).
+        FilamentView::registerRenderHook(
+            PanelsRenderHook::PAGE_START,
+            fn (): View => view('site-builder::filament.pages.partials.edit-lock', ['editor' => Livewire::current()]),
+            scopes: [EditPage::class, EditSavedBlock::class, EditTemplate::class],
         );
 
         // Dashboard headings in the Typography heading font, when one is chosen.

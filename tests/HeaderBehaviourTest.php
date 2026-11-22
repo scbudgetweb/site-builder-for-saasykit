@@ -316,4 +316,25 @@ class HeaderBehaviourTest extends PageTestCase
         app(Branding::class)->save([Branding::BACK_TO_TOP => 'middle']);
         $this->assertNull(app(Branding::class)->backToTop(), 'An unknown place is ignored.');
     }
+
+    public function test_a_builder_page_meets_the_footer_and_the_apps_own_pages_keep_their_space_above_it(): void
+    {
+        $page = $this->page(['blocks' => [self::block('text', ['content' => '<p>Welcome to the Village Hall</p>'])]]);
+        $finder = $this->app['view']->getFinder();
+        $paths = $finder->getPaths();
+        $finder->prependLocation(SiteBuilderServiceProvider::themePath());
+        $footerTag = fn (): string => (string) preg_replace('/^.*?(<footer[^>]*>).*$/s', '$1', Blade::render('<x-layouts.app.footer />'));
+
+        try {
+            $this->assertStringContainsString('mt-16', $footerTag());
+
+            request()->attributes->set(Templates::PAGE_ATTRIBUTE, $page);
+            $this->assertStringContainsString('bg-sb-footer-bg', $footerTag());
+            $this->assertStringNotContainsString('mt-16', $footerTag());
+        } finally {
+            $finder->setPaths($paths);
+            $finder->flush();
+            request()->attributes->remove(Templates::PAGE_ATTRIBUTE);
+        }
+    }
 }

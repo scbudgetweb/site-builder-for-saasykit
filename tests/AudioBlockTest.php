@@ -156,6 +156,51 @@ class AudioBlockTest extends PageTestCase
         }
     }
 
+    public function test_an_audioboom_podcast_or_episode_link_makes_its_player(): void
+    {
+        $podcast = 'https://embeds.audioboom.com/channels/4937603/embed?v=202301';
+
+        $this->assertSame(
+            ['provider' => 'Audioboom', 'url' => $podcast, 'playUrl' => $podcast, 'height' => 295],
+            AudioBlock::embed('audioboom', 'https://audioboom.com/channels/4937603'),
+        );
+        $this->assertSame($podcast, AudioBlock::embed('audioboom', 'https://audioboom.com/channels/4937603-village-hall-talks?page=2')['url']);
+        $this->assertSame($podcast, AudioBlock::embed('audioboom', $podcast)['url']);
+        $this->assertSame(
+            ['provider' => 'Audioboom', 'url' => 'https://embeds.audioboom.com/posts/7308540/embed?v=202301', 'playUrl' => 'https://embeds.audioboom.com/posts/7308540/embed?v=202301', 'height' => 95],
+            AudioBlock::embed('audioboom', ' https://www.audioboom.com/posts/7308540-welcome-to-the-village-hall '),
+        );
+
+        foreach ([
+            'https://audioboom.com/channels/',
+            'https://audioboom.com/channels/49x37603',
+            'https://audioboom.com/users/4937603',
+            'https://audioboom.com.evil.example/channels/4937603',
+            'https://evil.example.com/audioboom.com/channels/4937603',
+            'javascript://audioboom.com/channels/4937603',
+            '<iframe src="https://embeds.audioboom.com/channels/4937603/embed"></iframe>',
+        ] as $link) {
+            $this->assertNull(AudioBlock::embed('audioboom', $link), $link);
+        }
+        $this->assertNull(AudioBlock::embed('spotify', 'https://audioboom.com/channels/4937603'));
+    }
+
+    public function test_an_audioboom_podcast_is_click_to_play_until_consent(): void
+    {
+        $this->page(['blocks' => [self::block('audio', ['source' => 'audioboom', 'embed_url' => 'https://audioboom.com/channels/4937603', 'title' => 'Village Hall Talks'])]]);
+
+        $this->get('/about-us')
+            ->assertSee('style="height: 295px"', false)
+            ->assertSee('Plays from Audioboom, which may set cookies.')
+            ->assertSee('<template x-if="playing">', false)
+            ->assertDontSee('height="295"', false);
+
+        app(SiteBuilder::class)->consentChecker(fn (string $category): bool => $category === 'marketing');
+
+        $this->get('/about-us')
+            ->assertSee('<iframe src="https://embeds.audioboom.com/channels/4937603/embed?v=202301" title="Village Hall Talks" height="295"', false);
+    }
+
     public function test_an_embedded_player_is_click_to_play_until_consent_and_never_cached(): void
     {
         $data = ['source' => 'spotify', 'embed_url' => 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', 'title' => 'Welcome talk'];
@@ -188,6 +233,10 @@ class AudioBlockTest extends PageTestCase
 
         $editBlock(['source' => 'soundcloud', 'embed_url' => 'https://open.spotify.com/episode/4rOoJ6Egrf8K2IrywzwOMk', 'title' => 'Welcome talk'])
             ->assertHasActionErrors(['embed_url']);
+        $editBlock(['source' => 'audioboom', 'embed_url' => 'https://soundcloud.com/village-hall/welcome-talk', 'title' => 'Welcome talk'])
+            ->assertHasActionErrors(['embed_url' => __('Paste an Audioboom link to a podcast (channels/…) or an episode (posts/…).')]);
+        $editBlock(['source' => 'audioboom', 'embed_url' => 'https://audioboom.com/channels/4937603', 'title' => 'Welcome talk'])
+            ->assertHasNoActionErrors();
 
         $editBlock(['source' => 'soundcloud', 'embed_url' => 'https://soundcloud.com/village-hall/welcome-talk', 'title' => 'Welcome talk'])
             ->assertHasNoActionErrors()

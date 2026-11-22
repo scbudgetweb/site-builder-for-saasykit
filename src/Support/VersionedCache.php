@@ -5,6 +5,7 @@ namespace ScBudgetWeb\SiteBuilder\Support;
 use Closure;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Once;
 use Illuminate\Support\Str;
 
 /**
@@ -14,6 +15,9 @@ use Illuminate\Support\Str;
  *
  * The version changes once the save's database transaction commits, so no request can read the new version and still
  * see the old rows. Copies left under old versions expire on their own.
+ *
+ * Callers read a copy once per request (once()), so a page that asks several times reads the cache once; a new
+ * version clears those, so a save and a render in the same request still agree.
  */
 final class VersionedCache
 {
@@ -31,6 +35,9 @@ final class VersionedCache
      */
     public static function newVersion(Repository $cache, string $versionKey): void
     {
-        DB::afterCommit(fn () => $cache->forever($versionKey, Str::random(12)));
+        DB::afterCommit(function () use ($cache, $versionKey): void {
+            $cache->forever($versionKey, Str::random(12));
+            Once::flush();
+        });
     }
 }

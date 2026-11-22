@@ -190,7 +190,15 @@ class Templates
         return is_array($templates) ? array_values(array_filter($templates, 'is_array')) : [];
     }
 
+    /**
+     * Read once per request: the header, footer and blog templates each ask (a new version clears it).
+     */
     private function cachedActive(): mixed
+    {
+        return once(fn (): mixed => $this->readActive());
+    }
+
+    private function readActive(): mixed
     {
         return VersionedCache::remember(cache()->store(), self::CACHE_KEY, self::VERSION_KEY, fn (): array => Template::query()
             ->where('is_active', true)

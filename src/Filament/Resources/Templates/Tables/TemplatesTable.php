@@ -5,11 +5,11 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Tables;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use ScBudgetWeb\SiteBuilder\Filament\LockedWhileEditing;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\Schemas\TemplateForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Template;
@@ -56,14 +56,18 @@ class TemplatesTable
                     ->sortable(),
             ])
             ->recordActions([
-                Action::make('visual')
-                    ->label(__('Visual builder'))
-                    ->tooltip(__('Build it from blocks, as it looks'))
-                    ->icon(Heroicon::OutlinedPaintBrush)
-                    ->url(fn (Template $record): string => TemplateResource::getUrl('visual', ['record' => $record])),
-                EditAction::make()
-                    ->label(__('Edit as a form'))
-                    ->tooltip(__('Its name, where it\'s shown, and its blocks as a list')),
+                LockedWhileEditing::apply(
+                    Action::make('visual')->label(__('Visual builder')),
+                    fn (Template $record): string => TemplateResource::getUrl('visual', ['record' => $record]),
+                    Heroicon::OutlinedPaintBrush,
+                    __('Build it from blocks, as it looks'),
+                ),
+                LockedWhileEditing::apply(
+                    Action::make('edit')->label(__('Edit as a form'))->authorize('update'),
+                    fn (Template $record): string => TemplateResource::getUrl('edit', ['record' => $record]),
+                    Heroicon::OutlinedPencilSquare,
+                    __('Its name, where it\'s shown, and its blocks as a list'),
+                ),
                 PageExport::recordAction(),
                 DeleteAction::make(),
             ]);

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd">
+  <channel>
+    <title>Village Hall Talks</title>
+    <link>https://podcasts.example.com/village-hall-talks</link>
+    <itunes:image href="https://podcasts.example.com/cover.png"/>
+    <item>
+      <title>Ep2: The summer fair</title>
+      <link>https://podcasts.example.com/episodes/2</link>
+      <pubDate>Tue, 03 Nov 2026 09:00:00 +0000</pubDate>
+      <itunes:duration>45:10</itunes:duration>
+      <description><![CDATA[<p>Planning the <strong>summer fair</strong> in Sometown.</p><script>alert(1)</script>]]></description>
+      <enclosure url="https://podcasts.example.com/audio/2.mp3?source=rss" length="1000" type="audio/mpeg"/>
+    </item>
+    <item>
+      <title>Ep3: Booking the hall</title>
+      <pubDate>Tue, 17 Nov 2026 09:00:00 +0000</pubDate>
+      <itunes:duration>1:02:03</itunes:duration>
+      <itunes:summary>How bookings work.</itunes:summary>
+      <itunes:image href="https://podcasts.example.com/ep3.jpg"/>
+      <enclosure url="https://podcasts.example.com/audio/3.mp3" length="1000" type="audio/mpeg"/>
+    </item>
+    <item>
+      <title>Ep1: Welcome</title>
+      <pubDate>Tue, 20 Oct 2026 09:00:00 +0000</pubDate>
+      <itunes:duration>600</itunes:duration>
+      <description>Our first episode.</description>
+      <enclosure url="https://podcasts.example.com/audio/1.m4a" length="1000" type="audio/x-m4a"/>
+    </item>
+    <item>
+      <title>A video, not audio</title>
+      <enclosure url="https://podcasts.example.com/video.mp4" length="1000" type="video/mp4"/>
+    </item>
+    <item>
+      <title>Plain http audio</title>
+      <enclosure url="http://podcasts.example.com/audio/old.mp3" length="1000" type="audio/mpeg"/>
+    </item>
+    <item>
+      <title>No audio at all</title>
+    </item>
+  </channel>
+</rss>

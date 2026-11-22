@@ -16,6 +16,7 @@ use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\VisualEditor;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageDraft;
 use ScBudgetWeb\SiteBuilder\Pages\PageService;
+use ScBudgetWeb\SiteBuilder\Pages\PageStatus;
 use ScBudgetWeb\SiteBuilder\Pages\VisualDrafts;
 
 /**
@@ -156,6 +157,29 @@ class VisualEditorTest extends PageTestCase
 
         Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
             ->assertRedirect(PageResource::getUrl('edit', ['record' => $page]));
+    }
+
+    public function test_view_page_opens_a_published_page_from_the_list_the_form_and_the_builder(): void
+    {
+        $page = $this->sectionPage();
+        $draft = $this->page(['title' => 'Coming soon', 'slug' => 'coming-soon', 'status' => PageStatus::Draft]);
+
+        Livewire::test(ListPages::class)
+            ->assertActionVisible(TestAction::make('view')->table($page))
+            ->assertActionHasUrl(TestAction::make('view')->table($page), $page->url())
+            ->assertActionShouldOpenUrlInNewTab(TestAction::make('view')->table($page))
+            ->assertActionHidden(TestAction::make('view')->table($draft));
+
+        Livewire::test(EditPage::class, ['record' => $page->getRouteKey()])->assertActionVisible('view');
+        Livewire::test(EditPage::class, ['record' => $draft->getRouteKey()])->assertActionHidden('view');
+
+        Livewire::test(VisualEditor::class, ['record' => $page->getRouteKey()])
+            ->assertActionVisible('viewPage')
+            ->assertSeeHtml('href="'.e($page->url()).'"');
+        Livewire::test(VisualEditor::class, ['record' => $draft->getRouteKey()])->assertActionHidden('viewPage');
+
+        $page->delete();
+        Livewire::test(ListPages::class)->filterTable('trashed', true)->assertActionHidden(TestAction::make('view')->table($page));
     }
 
     public function test_clicking_a_block_edits_it_in_the_draft_and_sends_the_canvas_only_its_sections_new_html(): void

@@ -11,8 +11,9 @@ use Livewire\Livewire;
 use ScBudgetWeb\SiteBuilder\Filament\Pages\ManageNavigation;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\CreatePage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\ListPages;
-use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\CreateSavedBlock;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\ListSavedBlocks;
+use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 
 /**
  * The admin screens explain themselves to someone new: tooltips on settings that need explaining, tooltips on icon
@@ -70,7 +71,9 @@ class AdminScreensHelpTest extends PageTestCase
 
     public function test_the_block_library_explains_linking(): void
     {
-        Livewire::test(CreateSavedBlock::class)
+        $item = SavedBlock::query()->create(['name' => 'Banner', 'blocks' => [self::block('banner', ['heading' => 'Hello'])]]);
+
+        Livewire::test(EditSavedBlock::class, ['record' => $item->getRouteKey()])
             ->assertFormFieldExists('blocks', fn (Builder $field): bool => str_starts_with((string) $field->getHintIconTooltip(), 'The block to reuse.'));
     }
 

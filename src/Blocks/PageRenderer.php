@@ -27,7 +27,7 @@ class PageRenderer
     public function __construct(private BlockRegistry $blocks, private BlockPresets $presets) {}
 
     /**
-     * The page's blocks as HTML, from the cache when every block can be cached (RenderCache).
+     * The page's blocks as HTML, from the cache (RenderCache), with any block that can't be cached drawn now.
      */
     public function render(Page $page, bool $marksNodes = false): HtmlString
     {
@@ -72,38 +72,15 @@ class PageRenderer
     }
 
     /**
-     * Only a saved page (not a revision preview, which fills an old version in without saving) whose blocks, including
-     * those in a Section's rows, are all cacheable.
+     * Only a saved page (not a revision preview, which fills an old version in without saving). A block that can't be
+     * cached (PageBlock::isCacheable(): live figures, a contact form, a video waiting for consent) doesn't stop it:
+     * it's a hole in the cached HTML, drawn on every request (fillHoles()), so only that block costs a render.
      *
      * @param  array<int, array{type: string, data: array<string, mixed>}>  $blocks
      */
     public function canCache(Page $page, array $blocks): bool
     {
-        return RenderCache::isEnabled() && $page->exists && ! $page->isDirty() && $this->allCacheable($blocks);
-    }
-
-    /**
-     * @param  array<int, array{type: string, data: array<string, mixed>}>  $blocks
-     */
-    private function allCacheable(array $blocks): bool
-    {
-        foreach ($blocks as $block) {
-            $blockClass = $this->blocks->find($block['type']);
-
-            if ($blockClass !== null && ! $blockClass::isCacheable($block['data'])) {
-                return false;
-            }
-
-            if (is_a($blockClass, SectionBlock::class, true)) {
-                foreach (SectionBlock::rows($block['data']) as $row) {
-                    if (! $this->allCacheable($row['blocks'])) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return RenderCache::isEnabled() && $page->exists && ! $page->isDirty();
     }
 
     /**
@@ -139,19 +116,6 @@ class PageRenderer
 
             $block['data'] = $this->presets->apply($blockClass, is_array($block['data'] ?? null) ? $block['data'] : [], $isNested);
 
-            if (! $blockClass::isVisible($block['data'])) {
-                // On the canvas, a block with nothing to show yet (e.g. just added) still needs something to click.
-                if ($marksNodes) {
-                    $rendered[] = view('site-builder::blocks.canvas-placeholder', [
-                        'uid' => is_string($block['uid'] ?? null) ? $block['uid'] : null,
-                        'type' => $blockClass::name(),
-                        'label' => $blockClass::label(),
-                    ])->render();
-                }
-
-                continue;
-            }
-
             // Display conditions depend on the visitor and the time: checked on each request, never on the canvas.
             $isConditional = ! $marksNodes && BlockConditions::has($block['data']);
 
@@ -162,6 +126,21 @@ class PageRenderer
                 $marker = '<!--sb-hole:'.Str::random(20).'-->';
                 $holes[$marker] = ['block' => $block, 'parentIsDark' => $parentIsDark, 'parentHeadingDecoration' => $parentHeadingDecoration];
                 $rendered[] = $marker;
+
+                continue;
+            }
+
+            // A hole decides whether it shows on each request (fillHoles()), so it's checked after: a block hidden
+            // when the page was cached (e.g. a form waiting for its list) can still appear without a save.
+            if (! $blockClass::isVisible($block['data'])) {
+                // On the canvas, a block with nothing to show yet (e.g. just added) still needs something to click.
+                if ($marksNodes) {
+                    $rendered[] = view('site-builder::blocks.canvas-placeholder', [
+                        'uid' => is_string($block['uid'] ?? null) ? $block['uid'] : null,
+                        'type' => $blockClass::name(),
+                        'label' => $blockClass::label(),
+                    ])->render();
+                }
 
                 continue;
             }

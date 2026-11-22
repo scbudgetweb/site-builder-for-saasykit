@@ -8,6 +8,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\LocksRecordForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
@@ -18,6 +19,7 @@ use ScBudgetWeb\SiteBuilder\Pages\PageExport;
  */
 class EditSavedBlock extends EditRecord
 {
+    use LocksRecordForm;
     use ReportsBlockValidationErrors;
 
     protected static string $resource = SavedBlockResource::class;

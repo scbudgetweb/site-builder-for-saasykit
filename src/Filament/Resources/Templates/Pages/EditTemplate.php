@@ -7,6 +7,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Support\Icons\Heroicon;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\LocksRecordForm;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ReportsBlockValidationErrors;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Templates\TemplateResource;
 use ScBudgetWeb\SiteBuilder\Models\Template;
@@ -15,6 +16,7 @@ use ScBudgetWeb\SiteBuilder\Templates\HeaderBehaviour;
 
 class EditTemplate extends EditRecord
 {
+    use LocksRecordForm;
     use ReportsBlockValidationErrors;
 
     protected static string $resource = TemplateResource::class;

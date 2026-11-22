@@ -5,13 +5,13 @@ namespace ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Tables;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockRegistry;
+use ScBudgetWeb\SiteBuilder\Filament\LockedWhileEditing;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
@@ -59,12 +59,17 @@ class SavedBlocksTable
                         ->all()),
             ])
             ->recordActions([
-                Action::make('visual')
-                    ->label(__('Visual builder'))
-                    ->tooltip(__('Change this block as it looks: click a part to edit it'))
-                    ->icon(Heroicon::OutlinedPaintBrush)
-                    ->url(fn (SavedBlock $record): string => SavedBlockResource::getUrl('visual', ['record' => $record])),
-                EditAction::make(),
+                LockedWhileEditing::apply(
+                    Action::make('visual')->label(__('Visual builder')),
+                    fn (SavedBlock $record): string => SavedBlockResource::getUrl('visual', ['record' => $record]),
+                    Heroicon::OutlinedPaintBrush,
+                    __('Change this block as it looks: click a part to edit it'),
+                ),
+                LockedWhileEditing::apply(
+                    Action::make('edit')->label(__('Edit'))->authorize('update'),
+                    fn (SavedBlock $record): string => SavedBlockResource::getUrl('edit', ['record' => $record]),
+                    Heroicon::OutlinedPencilSquare,
+                ),
                 PageExport::recordAction(),
                 EditSavedBlock::refuseDeleteWhileInUse(DeleteAction::make()),
             ]);

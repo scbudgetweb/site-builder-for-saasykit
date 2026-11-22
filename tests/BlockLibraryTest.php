@@ -13,8 +13,10 @@ use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\EditPage;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\CreateSavedBlock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\EditSavedBlock;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\LibraryVisualEditor;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Pages\ListSavedBlocks;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\SavedBlockResource;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\SavedBlocks\Schemas\SavedBlockForm;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
 
@@ -263,9 +265,38 @@ class BlockLibraryTest extends PageTestCase
         $this->assertSame([], app(BlockLibrary::class)->usedOn($item)->all());
     }
 
+    public function test_a_new_library_block_is_named_and_opens_in_the_visual_builder(): void
+    {
+        $component = Livewire::test(CreateSavedBlock::class)
+            ->assertFormFieldExists('start_with', fn ($field): bool => $field->getState() === 'section')
+            ->assertFormFieldIsHidden('blocks');
+        $choices = SavedBlockForm::startingBlocks();
+
+        $this->assertArrayHasKey('section', $choices);
+        $this->assertArrayHasKey('call_to_action', $choices);
+        $this->assertArrayNotHasKey('saved', $choices);
+
+        $component->fillForm(['name' => 'Opening hours', 'start_with' => 'saved'])->call('create')->assertHasFormErrors(['start_with']);
+        $component->fillForm(['name' => '', 'start_with' => 'section'])->call('create')->assertHasFormErrors(['name' => 'required']);
+        $this->assertSame(0, SavedBlock::query()->count());
+
+        $component->fillForm(['name' => 'Opening hours', 'start_with' => 'section'])->call('create')->assertHasNoFormErrors();
+
+        $item = SavedBlock::query()->sole();
+        $component->assertRedirect(SavedBlockResource::getUrl('visual', ['record' => $item]));
+        $this->assertSame(['Opening hours', 'section'], [$item->name, $item->type]);
+        $this->assertCount(1, $item->blocks);
+
+        Livewire::test(LibraryVisualEditor::class, ['record' => $item->getRouteKey()])->assertSuccessful();
+
+        Livewire::test(CreateSavedBlock::class)->fillForm(['name' => 'Book now', 'start_with' => 'call_to_action'])->call('create');
+        $this->assertSame('call_to_action', SavedBlock::query()->where('name', 'Book now')->sole()->type);
+    }
+
     public function test_the_library_editor_offers_every_block_except_a_link_and_no_library_actions(): void
     {
-        $component = Livewire::test(CreateSavedBlock::class);
+        $item = $this->item('Banner', 'banner', ['heading' => 'Hello']);
+        $component = Livewire::test(EditSavedBlock::class, ['record' => $item->getRouteKey()]);
         $builder = $component->instance()->form->getComponent('blocks');
         $names = array_map(fn ($block) => $block->getName(), $builder->getBlocks());
 
@@ -273,26 +304,20 @@ class BlockLibraryTest extends PageTestCase
         $this->assertContains('call_to_action', $names);
         $this->assertNotContains('saved', $names);
 
-        $component
-            ->fillForm(['name' => 'Banner', 'blocks' => ['one' => self::block('banner', ['heading' => 'Hello'])]])
-            ->call('create')
-            ->assertHasNoFormErrors();
-
-        $item = SavedBlock::query()->sole();
-        $this->assertSame('banner', $item->type);
-
-        Livewire::test(EditSavedBlock::class, ['record' => $item->getRouteKey()])
-            ->assertActionHidden(TestAction::make('saveToLibrary')->schemaComponent('blocks')->arguments(['item' => array_key_first($item->blocks)]));
+        $component->assertActionHidden(TestAction::make('saveToLibrary')->schemaComponent('blocks')->arguments(['item' => array_key_first($item->blocks)]));
     }
 
     public function test_a_problem_in_a_library_block_is_named(): void
     {
-        Livewire::test(CreateSavedBlock::class)
-            ->fillForm(['name' => 'Broken', 'blocks' => ['one' => self::block('call_to_action', ['heading' => ''])]])
-            ->call('create')
+        $item = $this->item('Broken', 'call_to_action', ['heading' => 'Book now']);
+        $key = array_key_first(Livewire::test(EditSavedBlock::class, ['record' => $item->getRouteKey()])->get('data.blocks'));
+
+        Livewire::test(EditSavedBlock::class, ['record' => $item->getRouteKey()])
+            ->set("data.blocks.{$key}.data.heading", '')
+            ->call('save')
             ->assertNotified('The library block wasn\'t saved');
 
-        $this->assertSame(0, SavedBlock::query()->count());
+        $this->assertSame('Book now', SavedBlock::query()->sole()->block()['data']['heading']);
     }
 
     public function test_images_shared_between_pages_and_the_library_are_kept_until_nothing_uses_them(): void

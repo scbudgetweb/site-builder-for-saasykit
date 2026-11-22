@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.7.4 - 2026-11-22
+
+**Upgrading:** run `npm run build`. If your app overrides `blocks/audio`, `components/layouts/app/footer` (theme) or the visual builder's view, compare them with the package's. Pages with a live block (a contact form, live figures, a video or map) are now cached around it, so only that block is drawn on each visit.
+
+### Added
+
+- Podcast block: a podcast's episodes from its RSS feed (or an Audioboom page), in the site's own style, with episode artwork, one player on your page, Show more, and a list or grid.
+- Audio: an Audioboom player, for a whole podcast or a single episode.
+- One editor at a time: a page, library block or template that someone is editing is read-only for everyone else, who sees who has it.
+- View page in the pages list and the visual builder, for published pages.
+- New library block asks for a name and what to start with, then opens in the visual builder.
+
+### Changed
+
+- Faster pages: blocks that can't be cached no longer stop the rest of the page being cached, and library blocks and templates are read once per request.
+
+### Fixed
+
+- No gap above the footer on builder pages.
+
 ## 1.7.3 - 2026-11-05
 
 **Upgrading:** run `npm run build`. If your app overrides `blocks/pricing-table`, `blocks/partials/buttons` or `livewire/contact-form`, compare them with the package's. Existing pricing tables look the same.

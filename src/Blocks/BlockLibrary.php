@@ -15,10 +15,16 @@ use ScBudgetWeb\SiteBuilder\Models\SavedBlock;
  */
 class BlockLibrary
 {
+    /** @var array<int, SavedBlock|null> this request's library items by id (null: not found), cleared by forget() */
+    private array $loaded = [];
+
+    /** Counts forget()s, so a read that a save interrupted isn't kept. */
+    private int $generation = 0;
+
     /**
      * Swaps each linked block for its library item's block, at the top level and in a Section's rows, keeping the
-     * keys. One query for every item used. A missing item, or one that can't go where it's linked (a Section linked
-     * inside a Section by hand), is left out.
+     * keys. One query for the items used, once per request (a page asks several times: its cache key, fonts, blocks).
+     * A missing item, or one that can't go where it's linked (a Section linked inside a Section by hand), is left out.
      *
      * @param  array<int|string, mixed>  $blocks
      * @return array<int|string, mixed>
@@ -31,9 +37,36 @@ class BlockLibrary
             return $blocks;
         }
 
-        $items = SavedBlock::query()->whereKey($ids)->get()->keyBy('id');
+        $missing = array_values(array_diff($ids, array_keys($this->loaded)));
+
+        $loaded = $this->loaded;
+
+        if ($missing !== []) {
+            $generation = $this->generation;
+            $found = SavedBlock::query()->whereKey($missing)->get()->keyBy('id');
+
+            foreach ($missing as $id) {
+                $loaded[$id] = $found->get($id);
+            }
+
+            // Kept for the rest of the request only when no save came in while it was read.
+            if ($generation === $this->generation) {
+                $this->loaded = $loaded;
+            }
+        }
+
+        $items = collect(array_intersect_key($loaded, array_flip($ids)))->filter();
 
         return $this->expandWith($blocks, $items, isNested: false);
+    }
+
+    /**
+     * Forgets the items read this request, after a save (RenderCache::flush()).
+     */
+    public function forget(): void
+    {
+        $this->loaded = [];
+        $this->generation++;
     }
 
     /**

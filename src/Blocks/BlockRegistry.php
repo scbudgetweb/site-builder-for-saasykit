@@ -69,6 +69,7 @@ class BlockRegistry
         Core\VideoBlock::class,
         Core\MapBlock::class,
         Core\AudioBlock::class,
+        Core\PodcastBlock::class,
         Core\LogoStripBlock::class,
         Core\SocialFollowBlock::class,
         Core\DividerBlock::class,

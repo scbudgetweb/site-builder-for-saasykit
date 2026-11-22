@@ -7,8 +7,8 @@ use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Support\VersionedCache;
 
 /**
- * Cached block HTML for pages whose blocks are all cacheable (PageBlock::isCacheable()): no live figures, nothing
- * that depends on the visitor. Every cached page shares one version, which changes whenever a page, a library block
+ * Cached block HTML for pages. A block that can't be cached (PageBlock::isCacheable(): live figures, anything that
+ * depends on the visitor) is left as a hole and drawn on each request (PageRenderer::fillHoles()). Every cached page shares one version, which changes whenever a page, a library block
  * or any setting (Branding, Navigation, Legal pages) is saved, so nothing stale is ever shown. Entries also expire
  * after a day. Turn it off with config site-builder.pages.cache.
  */
@@ -41,6 +41,7 @@ class RenderCache
      */
     public static function flush(): void
     {
+        app(BlockLibrary::class)->forget();
         VersionedCache::newVersion(cache()->store(), self::VERSION_KEY);
     }
 
@@ -77,10 +78,15 @@ class RenderCache
         return is_array($value) ? $value : $callback();
     }
 
+    /**
+     * Read once per request (a new version clears it: VersionedCache::newVersion()).
+     */
     private static function version(): string
     {
-        $version = cache()->get(self::VERSION_KEY);
+        return once(function (): string {
+            $version = cache()->get(self::VERSION_KEY);
 
-        return is_string($version) ? $version : '0';
+            return is_string($version) ? $version : '0';
+        });
     }
 }

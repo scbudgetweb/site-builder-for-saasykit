@@ -14,7 +14,7 @@ In the [page editor](pages.md), each block's card has a **Save to library** butt
 3. Leave **Link this block to the library** on to swap the block on this page for a linked one, so it updates with the library. Turn it off to put a copy in the library and leave this block as it is.
 4. **Save** the page.
 
-You can also make a library block from scratch: **New library block** in the Block library.
+You can also make a library block from scratch: **New library block** in the Block library. Give it a name, choose what it **starts with** (a Section, unless you choose another block), and click **Create**: it opens in the visual builder, ready to build.
 
 ## Using a library block on a page
 

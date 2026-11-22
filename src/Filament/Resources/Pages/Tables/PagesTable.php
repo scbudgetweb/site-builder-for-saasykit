@@ -7,7 +7,6 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreAction;
@@ -19,6 +18,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Support\Str;
+use ScBudgetWeb\SiteBuilder\Filament\LockedWhileEditing;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Pages\PageExport;
@@ -73,15 +73,21 @@ class PagesTable
                     ->color('gray')
                     ->url(fn (Page $record): string => $record->previewUrl(), shouldOpenInNewTab: true)
                     ->hidden(fn (Page $record): bool => $record->trashed()),
-                Action::make('visual')
-                    ->label(__('Visual builder'))
-                    ->tooltip(__('Change the page as it looks: click a block to edit it'))
-                    ->icon(Heroicon::OutlinedPaintBrush)
-                    ->url(fn (Page $record): string => PageResource::getUrl('visual', ['record' => $record]))
-                    ->visible(fn (Page $record): bool => ! $record->trashed() && PageResource::canEdit($record)),
-                EditAction::make()
-                    ->label(__('Edit as a form'))
-                    ->tooltip(__('The page\'s settings, and its blocks as a list')),
+                PageResource::viewPageAction(),
+                LockedWhileEditing::apply(
+                    Action::make('visual')
+                        ->label(__('Visual builder'))
+                        ->visible(fn (Page $record): bool => ! $record->trashed() && PageResource::canEdit($record)),
+                    fn (Page $record): string => PageResource::getUrl('visual', ['record' => $record]),
+                    Heroicon::OutlinedPaintBrush,
+                    __('Change the page as it looks: click a block to edit it'),
+                ),
+                LockedWhileEditing::apply(
+                    Action::make('edit')->label(__('Edit as a form'))->authorize('update'),
+                    fn (Page $record): string => PageResource::getUrl('edit', ['record' => $record]),
+                    Heroicon::OutlinedPencilSquare,
+                    __('The page\'s settings, and its blocks as a list'),
+                ),
                 Action::make('duplicate')
                     ->label(__('Duplicate'))
                     ->tooltip(__('Make a draft copy of this page to start a new one from'))

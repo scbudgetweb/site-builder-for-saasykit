@@ -14,12 +14,12 @@
 
 - **A visual builder** with live preview, drag and drop, a layers panel, undo and redo, right-click menus, copy and paste styles, and phone, tablet and desktop views. Or edit the same page as a form.
 - **Import and export** a whole page, template or library block, or one Section, row, column or block, as a file to use on this site or another.
-- **45+ blocks:** heroes, banners, features, pricing tables, testimonials, team, FAQ, tabs, stats, counters, a countdown, galleries, video, audio, maps, contact forms, mailing list sign-ups, blog posts and more. Sections hold rows of up to five columns.
+- **45+ blocks:** heroes, banners, features, pricing tables, testimonials, team, FAQ, tabs, stats, counters, a countdown, galleries, video, audio, podcasts, maps, contact forms, mailing list sign-ups, blog posts and more. Sections hold rows of up to five columns.
 - **A theme builder** for headers and footers, starting from ready-made layouts: a top bar, a header that stays at the top, shrinks or sits over the first section, a mobile menu with style, and Back to top.
 - **Blog templates** for SaaSykit's blog posts and archives.
 - **Branding** in one place: logos, colours, fonts, buttons, corners, shadows, header and footer colours and banners, used by every block and SaaSykit's own pages and dashboards.
 - **A media library**, **block library**, **revisions**, **navigation menus**, **contact messages**, **mailing lists** (Brevo) and **legal pages**.
-- **Privacy built in:** fonts and icons are stored on your site, and videos, maps, SoundCloud and Spotify wait for cookie consent.
+- **Privacy built in:** fonts and icons are stored on your site, and videos, maps, SoundCloud, Spotify and Audioboom wait for cookie consent. Podcast episodes play from their host only when play is pressed.
 
 ## The visual builder
 
@@ -115,7 +115,8 @@ Every block has a **Design** tab for spacing, sizing, typography, borders, shado
 | Gallery | Images in a grid, with captions. |
 | Video | A YouTube, Vimeo or Adilo video that waits for cookie consent. |
 | Map | A Google map of an address, with no API key, after cookie consent. |
-| Audio | An uploaded sound file, or a SoundCloud or Spotify player. |
+| Audio | An uploaded sound file, or a SoundCloud, Spotify or Audioboom player. |
+| Podcast | A podcast's episodes from its feed, in the site's own style, with one player. |
 | Logo strip | Partner logos in a row, a scrolling loop or a carousel. |
 | Social follow | Links to your social profiles, from SaaSykit's settings, with icon colours, borders and backgrounds of your own. |
 | Divider / spacer | A line, with an optional label, or space between blocks. |

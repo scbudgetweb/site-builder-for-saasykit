@@ -2,11 +2,20 @@
 
 use Illuminate\Support\Facades\Route;
 use ScBudgetWeb\SiteBuilder\Http\Controllers\PageController;
+use ScBudgetWeb\SiteBuilder\Http\Controllers\ReleaseEditLock;
 
 /*
 | Pages: the signed admin previews (any status, or an earlier revision), and published pages at /{slug}. The fallback
 | route is only tried after every other route, so a page can never hide one of the app's own URLs.
 */
+
+// Closing an editor frees its edit lock at once (navigator.sendBeacon). The signed link names the lock and its holder,
+// so it needs no session or CSRF token; it can only free a lock that person holds, which lapses anyway.
+Route::post(trim((string) config('site-builder.pages.preview_path', 'site-builder/preview'), '/').'/edit-lock/{kind}/{id}/{user}', ReleaseEditLock::class)
+    ->middleware('signed')
+    ->whereIn('kind', ['page', 'block', 'template'])
+    ->whereNumber('id')
+    ->name('site-builder.edit-lock.release');
 
 Route::middleware(config('site-builder.pages.middleware', ['web']))->group(function () {
     $previewPath = trim((string) config('site-builder.pages.preview_path', 'site-builder/preview'), '/');

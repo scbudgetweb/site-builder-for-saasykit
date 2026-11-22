@@ -2,6 +2,7 @@
 
 namespace ScBudgetWeb\SiteBuilder\Tests;
 
+use Illuminate\Support\Facades\Cache;
 use ScBudgetWeb\SiteBuilder\Blocks\BlockLibrary;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
 use ScBudgetWeb\SiteBuilder\Blocks\RenderCache;
@@ -65,9 +66,12 @@ class RenderCacheTest extends PageTestCase
         $this->assertStringContainsString('New heading', $this->render($page->fresh()));
     }
 
-    public function test_pages_with_live_figures_videos_or_maps_anywhere_are_never_cached(): void
+    public function test_live_figures_videos_and_maps_anywhere_are_drawn_on_every_request_inside_a_cached_page(): void
     {
-        app(SiteBuilder::class)->stats(['halls' => ['Halls', fn (): int => 3]]);
+        $halls = 3;
+        app(SiteBuilder::class)->stats(['halls' => ['Halls', function () use (&$halls): int {
+            return $halls;
+        }]]);
         $renderer = app(PageRenderer::class);
 
         $cases = [
@@ -78,12 +82,20 @@ class RenderCacheTest extends PageTestCase
         ];
 
         foreach ($cases as $case => $blocks) {
-            $page = $this->page(['slug' => str($case)->slug()->value(), 'blocks' => $blocks]);
-            $this->assertFalse($renderer->canCache($page, $page->blockList()), "A page with {$case} isn't cached.");
+            $page = $this->page(['slug' => str($case)->slug()->value(), 'blocks' => [self::block('text', ['content' => '<p>Around it</p>']), ...$blocks]]);
+            $holes = [];
+            $renderer->renderBlocks($page->blockList(), $page, holes: $holes);
+
+            $this->assertTrue($renderer->canCache($page, $page->blockList()), "A page with {$case} is cached.");
+            $this->assertCount(1, $holes, "Only the {$case} is drawn on each request.");
         }
 
-        $typed = $this->page(['slug' => 'typed', 'blocks' => [self::block('stats', ['items' => [['source' => 'custom', 'value' => 5, 'label' => 'Rooms']]])]]);
-        $this->assertTrue($renderer->canCache($typed, $typed->blockList()), 'Typed-in figures are cacheable.');
+        // The live figure changes without the page being saved, and shows (once its own ten-minute copy goes).
+        $page = Page::query()->where('slug', 'live-stats')->sole();
+        $this->assertStringContainsString('Around it', $this->render($page));
+        $halls = 7;
+        Cache::forget('site-builder.stats.halls');
+        $this->assertMatchesRegularExpression('/\b7\b/', $this->render(Page::query()->find($page->id)));
     }
 
     public function test_a_revision_preview_and_a_switched_off_cache_render_fresh(): void

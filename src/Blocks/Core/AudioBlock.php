@@ -18,8 +18,8 @@ use ScBudgetWeb\SiteBuilder\SiteBuilder;
  * An uploaded sound file: a card with an optional cover image, the title, artist and a short
  * description, and the browser's own player, which loads nothing until it's played (preload="none"). The file is in
  * the media library, and can be chosen from it (PageBlock::audioUpload()). Design › Items styles the card. The types
- * and largest size taken are set in Website › Media › Audio (AudioUploads). Or SoundCloud's or Spotify's own player
- * for a link, with no key, shown after a click until marketing cookies are allowed, as Video's.
+ * and largest size taken are set in Website › Media › Audio (AudioUploads). Or SoundCloud's, Spotify's or Audioboom's own
+ * player for a link, with no key, shown after a click until marketing cookies are allowed, as Video's.
  */
 class AudioBlock extends PageBlock
 {
@@ -28,6 +28,29 @@ class AudioBlock extends PageBlock
         'upload' => ['Upload a file', Heroicon::OutlinedArrowUpTray],
         'soundcloud' => ['SoundCloud', Heroicon::OutlinedCloud],
         'spotify' => ['Spotify', Heroicon::OutlinedMusicalNote],
+        'audioboom' => ['Audioboom', Heroicon::OutlinedMicrophone],
+    ];
+
+    /** Each player's link field: label, help, placeholder and the error for a link it can't play. */
+    private const LINKS = [
+        'soundcloud' => [
+            'SoundCloud link',
+            'The address of a SoundCloud track or playlist, e.g. https://soundcloud.com/…/…. No SoundCloud account or key needed.',
+            'https://soundcloud.com/…',
+            'Paste a SoundCloud link to a track or playlist.',
+        ],
+        'spotify' => [
+            'Spotify link',
+            'Share › Copy link on a Spotify episode, show, track, album or playlist. No Spotify account or key needed.',
+            'https://open.spotify.com/episode/…',
+            'Paste a Spotify link to an episode, show, track, album or playlist.',
+        ],
+        'audioboom' => [
+            'Audioboom link',
+            'A podcast\'s page (audioboom.com/channels/…) shows the whole podcast with its episodes; an episode\'s page (audioboom.com/posts/…) shows just that one, in Audioboom\'s own player. For episodes in your site\'s own style, use the Podcast block.',
+            'https://audioboom.com/channels/…',
+            'Paste an Audioboom link to a podcast (channels/…) or an episode (posts/…).',
+        ],
     ];
 
     /** A track or playlist page on soundcloud.com: user/track, or user/sets/playlist (no query or extra parts). */
@@ -35,6 +58,9 @@ class AudioBlock extends PageBlock
 
     /** An episode, show, track, album or playlist on open.spotify.com, with an optional intl-xx part, by its id. */
     private const SPOTIFY_PATTERN = '~^https?://open\.spotify\.com/(?:intl-[a-z]{2}(?:-[a-z]{2})?/)?(episode|show|track|album|playlist)/([A-Za-z0-9]{22})(?:[/?#].*)?$~';
+
+    /** A podcast (channels) or episode (posts) on audioboom.com, or its embed address, by its number. */
+    private const AUDIOBOOM_PATTERN = '~^https?://(?:www\.|embeds\.)?audioboom\.com/(channels|posts)/([0-9]{1,12})(?:[-/?#].*)?$~';
 
     public static function name(): string
     {
@@ -79,19 +105,15 @@ class AudioBlock extends PageBlock
                 ->required(fn (Get $get): bool => self::sourceOf($get('source')) === 'upload')
                 ->visible(fn (Get $get): bool => self::sourceOf($get('source')) === 'upload'),
             TextInput::make('embed_url')
-                ->label(fn (Get $get): string => self::sourceOf($get('source')) === 'spotify' ? __('Spotify link') : __('SoundCloud link'))
-                ->helperText(fn (Get $get): string => self::sourceOf($get('source')) === 'spotify'
-                    ? __('Share › Copy link on a Spotify episode, show, track, album or playlist. No Spotify account or key needed.')
-                    : __('The address of a SoundCloud track or playlist, e.g. https://soundcloud.com/…/…. No SoundCloud account or key needed.'))
-                ->placeholder(fn (Get $get): string => self::sourceOf($get('source')) === 'spotify' ? 'https://open.spotify.com/episode/…' : 'https://soundcloud.com/…')
+                ->label(fn (Get $get): string => __(self::linkWording($get('source'))[0]))
+                ->helperText(fn (Get $get): string => __(self::linkWording($get('source'))[1]))
+                ->placeholder(fn (Get $get): string => self::linkWording($get('source'))[2])
                 ->maxLength(500)
                 ->required(fn (Get $get): bool => self::sourceOf($get('source')) !== 'upload')
                 ->visible(fn (Get $get): bool => self::sourceOf($get('source')) !== 'upload')
                 ->rule(fn (Get $get): \Closure => function (string $attribute, mixed $value, \Closure $fail) use ($get): void {
                     if (filled($value) && static::embed($get('source'), $value) === null) {
-                        $fail(self::sourceOf($get('source')) === 'spotify'
-                            ? __('Paste a Spotify link to an episode, show, track, album or playlist.')
-                            : __('Paste a SoundCloud link to a track or playlist.'));
+                        $fail(__(self::linkWording($get('source'))[3]));
                     }
                 }),
             Grid::make(['default' => 1, 'sm' => 2])->schema([
@@ -121,7 +143,7 @@ class AudioBlock extends PageBlock
     }
 
     /**
-     * SoundCloud's and Spotify's own players depend on the visitor's cookie choices, so a page with one isn't cached.
+     * SoundCloud's, Spotify's and Audioboom's own players depend on the visitor's cookie choices, so a page with one isn't cached.
      */
     public static function isCacheable(array $data): bool
     {
@@ -129,7 +151,7 @@ class AudioBlock extends PageBlock
     }
 
     /**
-     * The player for a SoundCloud or Spotify link: the provider, the embed's address (built here from the link's parts,
+     * The player for a SoundCloud, Spotify or Audioboom link: the provider, the embed's address (built here from the link's parts,
      * so nothing else can be slipped in) and its height. Null for anything else.
      *
      * @return array{provider: string, url: string, playUrl: string, height: int}|null
@@ -151,7 +173,24 @@ class AudioBlock extends PageBlock
             return ['provider' => 'Spotify', 'url' => $url, 'playUrl' => $url, 'height' => in_array($matches[1], ['track', 'episode'], true) ? 152 : 352];
         }
 
+        if (self::sourceOf($source) === 'audioboom' && preg_match(self::AUDIOBOOM_PATTERN, $link, $matches)) {
+            $url = 'https://embeds.audioboom.com/'.$matches[1].'/'.$matches[2].'/embed?v=202301';
+
+            // Audioboom's own heights: a podcast's player lists its episodes; an episode's is a single bar.
+            return ['provider' => 'Audioboom', 'url' => $url, 'playUrl' => $url, 'height' => $matches[1] === 'channels' ? 295 : 95];
+        }
+
         return null;
+    }
+
+    /**
+     * The link field's wording for a player source (SoundCloud's for anything unknown).
+     *
+     * @return array{0: string, 1: string, 2: string, 3: string}
+     */
+    private static function linkWording(mixed $source): array
+    {
+        return self::LINKS[self::sourceOf($source)] ?? self::LINKS['soundcloud'];
     }
 
     private static function sourceOf(mixed $source): string

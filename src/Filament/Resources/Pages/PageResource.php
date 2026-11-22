@@ -2,8 +2,10 @@
 
 namespace ScBudgetWeb\SiteBuilder\Filament\Resources\Pages;
 
+use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
@@ -47,6 +49,21 @@ class PageResource extends Resource
             'edit' => EditPage::route('/{record}/edit'),
             'visual' => VisualEditor::route('/{record}/visual'),
         ];
+    }
+
+    /**
+     * View page: the live page in a new tab, only for a published page that isn't in the bin. The pages list, Edit as
+     * a form and the visual builder share it.
+     */
+    public static function viewPageAction(): Action
+    {
+        return Action::make('view')
+            ->label(__('View page'))
+            ->tooltip(__('Open the live page in a new tab'))
+            ->icon(Heroicon::OutlinedArrowTopRightOnSquare)
+            ->color('gray')
+            ->visible(fn (Page $record): bool => $record->isPublished() && ! $record->trashed())
+            ->url(fn (Page $record): string => $record->url(), shouldOpenInNewTab: true);
     }
 
     /**

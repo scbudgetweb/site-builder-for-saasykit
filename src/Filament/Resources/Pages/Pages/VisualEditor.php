@@ -28,6 +28,7 @@ use ScBudgetWeb\SiteBuilder\Blocks\PageBlock;
 use ScBudgetWeb\SiteBuilder\Blocks\PageRenderer;
 use ScBudgetWeb\SiteBuilder\Blocks\StyleClipboard;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\PageResource;
+use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\HoldsEditLock;
 use ScBudgetWeb\SiteBuilder\Filament\Resources\Pages\Pages\Concerns\ImportsAndExports;
 use ScBudgetWeb\SiteBuilder\Models\Page;
 use ScBudgetWeb\SiteBuilder\Models\PageDraft;
@@ -48,6 +49,7 @@ use Throwable;
  */
 class VisualEditor extends ResourcePage
 {
+    use HoldsEditLock;
     use ImportsAndExports;
     use InteractsWithRecord;
 
@@ -399,6 +401,10 @@ class VisualEditor extends ResourcePage
      */
     public function toggleLayerHidden(string $uid): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = $this->draft()->blocks ?? [];
         $found = BlockTree::find($blocks, $uid);
 
@@ -436,6 +442,10 @@ class VisualEditor extends ResourcePage
      */
     public function renameLayer(string $uid, string $label): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = $this->draft()->blocks ?? [];
         $found = BlockTree::find($blocks, $uid);
 
@@ -810,6 +820,10 @@ class VisualEditor extends ResourcePage
      */
     public function duplicateNode(string $uid): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $result = $this->isTopLevelChangeRefused($uid) ? null : BlockTree::duplicate($this->draft()->blocks ?? [], $uid);
 
         $result === null ? $this->cantDoThat() : $this->changeBlocks($result[0]);
@@ -820,6 +834,10 @@ class VisualEditor extends ResourcePage
      */
     public function deleteNode(string $uid): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = $this->isTopLevelChangeRefused($uid) ? null : BlockTree::remove($this->draft()->blocks ?? [], $uid);
 
         if ($blocks === null) {
@@ -838,6 +856,10 @@ class VisualEditor extends ResourcePage
      */
     public function stepNode(string $uid, string $direction): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = in_array($direction, ['up', 'down', 'left', 'right'], true) && ! $this->isTopLevelChangeRefused($uid) ? BlockTree::step($this->draft()->blocks ?? [], $uid, $direction) : null;
 
         $blocks === null ? $this->cantDoThat() : $this->changeBlocks($blocks);
@@ -848,6 +870,10 @@ class VisualEditor extends ResourcePage
      */
     public function dropNode(string $uid, string $targetUid, string $position): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = $this->isTopLevelChangeRefused($uid, $targetUid, self::position($position)) ? null : BlockTree::move($this->draft()->blocks ?? [], $uid, $targetUid, self::position($position));
 
         $blocks === null ? $this->cantDoThat() : $this->changeBlocks($blocks);
@@ -1136,6 +1162,10 @@ class VisualEditor extends ResourcePage
      */
     public function undo(): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         app(VisualDrafts::class)->undo($this->draft());
         $this->isPreviewing = false;
         $this->refreshCanvas();
@@ -1143,6 +1173,10 @@ class VisualEditor extends ResourcePage
 
     public function redo(): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         app(VisualDrafts::class)->redo($this->draft());
         $this->isPreviewing = false;
         $this->refreshCanvas();
@@ -1197,6 +1231,10 @@ class VisualEditor extends ResourcePage
 
     public function restoreRevision(int $revisionId): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $blocks = $this->page()->revisions()->find($revisionId)?->attributesToRestore()['blocks'] ?? null;
 
         $this->unmountAction();
@@ -1264,6 +1302,10 @@ class VisualEditor extends ResourcePage
      */
     public function pasteStyle(string $uid): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $clipboard = session(StyleClipboard::SESSION_KEY);
         $block = $this->styledBlock($uid);
 
@@ -1292,6 +1334,10 @@ class VisualEditor extends ResourcePage
      */
     public function applyStyleToAll(string $uid, string $group): void
     {
+        if ($this->refusesWhileLocked()) {
+            return;
+        }
+
         $block = $this->styledBlock($uid);
 
         if ($block === null || ! isset(StyleClipboard::GROUPS[$group])) {
@@ -1351,6 +1397,17 @@ class VisualEditor extends ResourcePage
         ];
     }
 
+    /**
+     * View page, for a published page (never a library block or template, which have no address of their own).
+     */
+    public function viewPageAction(): Action
+    {
+        return PageResource::viewPageAction()
+            ->name('viewPage')
+            ->visible(fn (): bool => ($record = $this->getRecord()) instanceof Page && $record->isPublished() && ! $record->trashed())
+            ->url(fn (): string => $this->page()->url(), shouldOpenInNewTab: true);
+    }
+
     public function editAsFormAction(): Action
     {
         return Action::make('editAsForm')
@@ -1390,13 +1447,17 @@ class VisualEditor extends ResourcePage
             ->label(fn (): string => $this->publishTexts()['label'])
             ->icon(Heroicon::OutlinedCheck)
             ->color('success')
-            ->disabled(fn (): bool => ! $drafts->hasChanges($this->draft(), $this->record()))
-            ->tooltip(fn (): ?string => $drafts->hasChanges($this->draft(), $this->record()) ? null : __('Nothing to publish yet: make a change first.'))
+            ->disabled(fn (): bool => $this->editLockHolder !== null || ! $drafts->hasChanges($this->draft(), $this->record()))
+            ->tooltip(fn (): ?string => $this->editLockMessage() ?? ($drafts->hasChanges($this->draft(), $this->record()) ? null : __('Nothing to publish yet: make a change first.')))
             ->requiresConfirmation(fn (): bool => $this->publishTexts()['warning'] !== null)
             ->modalHeading(fn (): string => $this->publishTexts()['label'].'?')
             ->modalDescription(fn (): ?string => $this->publishTexts()['warning'])
             ->modalSubmitActionLabel(fn (): string => $this->publishTexts()['label'])
             ->action(function () use ($drafts): void {
+                if ($this->refusesWhileLocked(verify: true)) {
+                    return;
+                }
+
                 $drafts->publish($this->draft(), $this->record());
                 $this->openDraft = null;
                 $texts = $this->publishTexts();
